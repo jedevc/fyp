@@ -25,8 +25,11 @@ class TokenType(Enum):
     Name = 15
     String = 16
 
+
 class Token:
-    def __init__(self, position: int, ttype: TokenType, lexeme: str = "", obj: Any = None):
+    def __init__(
+        self, position: int, ttype: TokenType, lexeme: str = "", obj: Any = None
+    ):
         self.position = position
         self.ttype = ttype
         self.lexeme = lexeme

@@ -7,13 +7,12 @@ chunk y : int,
       z : int
 """.strip()
 
-from .parser.lexer import LexErrorLocation
 
 def main():
     lex = Lexer(data)
 
     try:
-        while (token := lex.next()):
+        while token := lex.token():
             print(str(token))
     except LexError as e:
         print(e.format())
