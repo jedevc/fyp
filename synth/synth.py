@@ -12,7 +12,7 @@ def main():
     lex = Lexer(data)
 
     try:
-        while token := lex.token():
+        for token in lex.tokens():
             print(str(token))
     except LexError as e:
         print(e.format())

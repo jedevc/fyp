@@ -1,6 +1,6 @@
 import itertools
+from typing import Iterable, List, Optional
 
-from typing import Optional
 from .token import Token, TokenType
 
 SIMPLE_TOKENS = {
@@ -33,6 +33,13 @@ class Lexer:
         self.ch = None
         self.ch_prev = None
         self._advance()
+
+    def tokens(self) -> Iterable[Token]:
+        while token := self.token():
+            yield token
+
+    def tokens_list(self) -> List[Token]:
+        return list(self.tokens())
 
     def token(self) -> Optional[Token]:
         if self.done:
