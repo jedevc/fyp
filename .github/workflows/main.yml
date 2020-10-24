@@ -7,7 +7,7 @@ on:
     branches: [ master ]
 
 jobs:
-  build:
+  test:
     runs-on: ubuntu-latest
 
     steps:
@@ -31,4 +31,3 @@ jobs:
       - name: Check typing with mypy
         run: |
           mypy synth
-      
