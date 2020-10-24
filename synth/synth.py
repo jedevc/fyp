@@ -1,4 +1,4 @@
-from .parser import Lexer
+from .parser import Lexer, LexError
 
 data = """
 chunk w : int
@@ -7,8 +7,13 @@ chunk y : int,
       z : int
 """.strip()
 
-def main():
-    lex = Lexer(iter(data))
+from .parser.lexer import LexErrorLocation
 
-    while (token := lex.next()):
-        print(str(token))
+def main():
+    lex = Lexer(data)
+
+    try:
+        while (token := lex.next()):
+            print(str(token))
+    except LexError as e:
+        print(e.format())

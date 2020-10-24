@@ -1,3 +1,3 @@
-from .lexer import Lexer
+from .lexer import Lexer, LexError
 
 from .token import Token, TokenType
