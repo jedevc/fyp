@@ -29,7 +29,6 @@ class Lexer:
         self.stream = stream
 
         self.n = -1
-        self.done = False
         self.ch = None
         self.ch_prev = None
         self._advance()
@@ -37,19 +36,16 @@ class Lexer:
     def tokens(self) -> Iterable[Token]:
         while token := self.token():
             yield token
+            if token.ttype == TokenType.EOF:
+                break
 
     def tokens_list(self) -> List[Token]:
         return list(self.tokens())
 
     def token(self) -> Optional[Token]:
-        if self.done:
-            return None
-
         if self.ch is None:
-            self.done = True
             return Token(self.n, TokenType.EOF)
-
-        if self.ch == "\n":
+        elif self.ch == "\n":
             while self._isspace():
                 self._advance()
             return Token(self.n, TokenType.Newline)
@@ -105,7 +101,6 @@ class Lexer:
 
         self.n += 1
         if self.n >= len(self.stream):
-            self.done = True
             self.ch = None
         else:
             self.ch = self.stream[self.n]

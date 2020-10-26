@@ -1,4 +1,4 @@
-from .parser import Lexer, LexError
+from .parser import Lexer, LexError, Parser
 
 data = """
 chunk w : int
@@ -10,9 +10,10 @@ chunk y : int,
 
 def main():
     lex = Lexer(data)
+    tokens = lex.tokens_list()
+    for token in tokens:
+        print(str(token))
 
-    try:
-        for token in lex.tokens():
-            print(str(token))
-    except LexError as e:
-        print(e.format())
+    parser = Parser(tokens)
+    spec = parser.spec()
+    print(spec)
