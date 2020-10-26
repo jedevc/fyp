@@ -1,28 +1,37 @@
 from typing import List, Optional
 
+from .error import ParseError
 from .token import Token, TokenType
 from .node import *
 
 
 class Parser:
     def __init__(self, tokens: List[Token]):
+        assert len(tokens) >= 0
+
         self.pos = -1
         self.tokens = tokens
 
-        self.current = None
-        self.last = None
+        self.current: Optional[Token] = None
+        self.last: Optional[Token] = None
+
+    def parse(self) -> SpecNode:
         self.advance()
+
+        return self.spec()
 
     def spec(self) -> SpecNode:
         chunks = []
         while self.pos < len(self.tokens):
             if self.accept(TokenType.EOF):
                 break
-            if self.accept(TokenType.Newline):
+            elif self.accept(TokenType.Newline):
                 continue
-
-            if self.accept(TokenType.Name, "chunk"):
+            elif self.accept(TokenType.Name, "chunk"):
                 chunks.append(self.chunk())
+            else:
+                assert self.current is not None
+                raise ParseError(self.current, "unknown statement type")
 
         return SpecNode(chunks)
 
@@ -46,7 +55,7 @@ class Parser:
         elif self.accept(TokenType.EOF):
             return
         else:
-            raise RuntimeError("expected a newline")
+            raise ParseError(self.last, "expected a newline")
 
     def expect(
         self,
@@ -54,22 +63,23 @@ class Parser:
         lexeme: Optional[str] = None,
         fail_msg: Optional[str] = None,
     ) -> Token:
+        assert self.current is not None
+
         result = self.accept(ttype, lexeme)
         if result is None:
             if fail_msg:
-                raise RuntimeError(fail_msg)
+                raise ParseError(self.current, fail_msg)
             else:
-                if self.current:
-                    raise RuntimeError(f"expected {ttype} but got {self.current.ttype}")
-                else:
-                    raise RuntimeError(
-                        f"expected {ttype} but there were no more tokens"
-                    )
+                raise ParseError(
+                    self.current, f"expected {ttype} but got {self.current.ttype}"
+                )
 
         return result
 
     def accept(self, ttype: TokenType, lexeme: Optional[str] = None) -> Optional[Token]:
-        if self.current and self.current.ttype == ttype:
+        assert self.current is not None
+
+        if self.current.ttype == ttype:
             if lexeme is None or self.current.lexeme == lexeme:
                 self.advance()
                 return self.last

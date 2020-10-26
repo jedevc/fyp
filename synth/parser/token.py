@@ -27,13 +27,11 @@ class TokenType(Enum):
 
 
 class Token:
-    def __init__(
-        self, position: int, ttype: TokenType, lexeme: str = "", obj: Any = None
-    ):
+    def __init__(self, position: int, length: int, ttype: TokenType, lexeme: str = ""):
         self.position = position
+        self.length = length
         self.ttype = ttype
         self.lexeme = lexeme
-        self.obj = obj
 
     def __str__(self):
         parts = []
@@ -41,6 +39,4 @@ class Token:
             parts.append(f"ttype={self.ttype}")
         if self.lexeme:
             parts.append(f"lexeme={self.lexeme}")
-        if self.obj:
-            parts.append(f"lexeme={str(self.obj)}")
         return f"<Token {' '.join(parts)}>"
