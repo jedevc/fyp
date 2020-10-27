@@ -1,19 +1,20 @@
-from .parser import Lexer, LexError, ParseError, Parser
+import argparse
 
-data = """
-chunk w : int
-chunk x : int
-chunk y : int,
-      z : int
-""".strip()
+from .parser import Lexer, LexError, ParseError, Parser
 
 
 def main():
-    lex = Lexer(data)
+    parser = argparse.ArgumentParser()
+    parser.add_argument("infile", type=argparse.FileType("r"))
+    args = parser.parse_args()
+
+    stream = args.infile.read()
+
+    lex = Lexer(stream)
     try:
         tokens = lex.tokens_list()
     except LexError as err:
-        print(err.format(data))
+        print(err.format(stream))
         return
 
     for token in tokens:
@@ -23,6 +24,6 @@ def main():
     try:
         spec = parser.parse()
     except ParseError as err:
-        print(err.format(data))
+        print(err.format(stream))
         return
     print(spec)
