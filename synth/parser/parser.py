@@ -2,7 +2,7 @@ from typing import List, Optional
 
 from .error import ParseError
 from .token import Token, TokenType
-from .node import *
+from .node import SpecNode, ChunkNode, VariableNode
 
 
 class Parser:
@@ -92,8 +92,7 @@ class Parser:
     def peekn(self, n) -> Optional[Token]:
         if self.pos + n < len(self.tokens):
             return self.tokens[self.pos + n]
-        else:
-            return None
+        return None
 
     def advance(self):
         self.pos += 1

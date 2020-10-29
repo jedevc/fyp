@@ -4,5 +4,6 @@ set -e
 
 exec 1>&2
 
+pylint synth
 mypy synth
 black --check synth
