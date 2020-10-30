@@ -22,7 +22,8 @@ class TokenType(Enum):
     BraceClose = 12
 
     Name = 15
-    String = 16
+    Reserved = 16
+    String = 17
 
 
 class Token:

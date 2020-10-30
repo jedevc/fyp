@@ -27,7 +27,7 @@ class Parser:
                 break
             elif self.accept(TokenType.Newline):
                 continue
-            elif self.accept(TokenType.Name, "chunk"):
+            elif self.accept(TokenType.Reserved, "chunk"):
                 chunks.append(self.chunk())
             else:
                 assert self.current is not None

@@ -24,6 +24,9 @@ SIMPLE_ABSORBERS = [
 ]
 
 
+RESERVED_WORDS = {"chunk"}
+
+
 class Lexer:
     def __init__(self, stream: str):
         self.stream = stream
@@ -64,7 +67,10 @@ class Lexer:
             return Token(self.n, len(s) + 2, TokenType.String, s)
         elif self._isalpha():
             n = self._read_name()
-            return Token(self.n, len(n), TokenType.Name, n)
+            if n in RESERVED_WORDS:
+                return Token(self.n, len(n), TokenType.Reserved, n)
+            else:
+                return Token(self.n, len(n), TokenType.Name, n)
 
         self._advance()
         return Token(self.n, 1, TokenType.Unknown)
