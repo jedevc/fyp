@@ -9,7 +9,7 @@ class Node:
         raise NotImplementedError()
 
 
-class VariableNode:
+class VariableNode(Node):
     def __init__(self, name: str, vartype: str):
         super().__init__()
         self.name = name
@@ -19,7 +19,7 @@ class VariableNode:
         visitor.visit_variable(self)
 
 
-class ChunkNode:
+class ChunkNode(Node):
     def __init__(self, variables: List[VariableNode]):
         super().__init__()
         self.variables = variables
@@ -34,7 +34,7 @@ class ChunkNode:
             var.visit(visitor)
 
 
-class SpecNode:
+class SpecNode(Node):
     def __init__(self, chunks: List[ChunkNode]):
         super().__init__()
         self.chunks = chunks

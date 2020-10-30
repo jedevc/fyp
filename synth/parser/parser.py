@@ -2,7 +2,7 @@ from typing import List, Optional
 
 from .error import ParseError
 from .token import Token, TokenType
-from .node import SpecNode, ChunkNode, VariableNode
+from .node import Node, SpecNode, ChunkNode, VariableNode
 
 
 class Parser:
@@ -15,7 +15,7 @@ class Parser:
         self.current: Optional[Token] = None
         self.last: Optional[Token] = None
 
-    def parse(self) -> SpecNode:
+    def parse(self) -> Node:
         self.advance()
 
         return self.spec()
