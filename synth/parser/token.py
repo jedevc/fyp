@@ -24,6 +24,7 @@ class TokenType(Enum):
     Name = 15
     Reserved = 16
     String = 17
+    Integer = 18
 
 
 class Token:

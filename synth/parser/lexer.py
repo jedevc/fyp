@@ -71,9 +71,12 @@ class Lexer:
                 return Token(self.n, len(n), TokenType.Reserved, n)
             else:
                 return Token(self.n, len(n), TokenType.Name, n)
-
-        self._advance()
-        return Token(self.n, 1, TokenType.Unknown)
+        elif self._isnum():
+            n = self._read_num()
+            return Token(self.n, len(n), TokenType.Integer, n)
+        else:
+            self._advance()
+            return Token(self.n, 1, TokenType.Unknown)
 
     def _read_name(self) -> str:
         start = self.n
@@ -83,6 +86,17 @@ class Lexer:
 
         if self.ch is not None and not self._isspace() and self.ch not in SIMPLE_TOKENS:
             raise LexError(start, self.n, "invalid word")
+
+        return self.stream[start : self.n]
+
+    def _read_num(self) -> str:
+        start = self.n
+
+        while self._isnum():
+            self._advance()
+
+        if self.ch is not None and not self._isspace() and self.ch not in SIMPLE_TOKENS:
+            raise LexError(start, self.n, "invalid number")
 
         return self.stream[start : self.n]
 
@@ -120,6 +134,11 @@ class Lexer:
         if self.ch is None:
             return False
         return "a" <= self.ch <= "z" or "A" <= self.ch <= "Z"
+
+    def _isnum(self):
+        if self.ch is None:
+            return False
+        return "0" <= self.ch <= "9"
 
     def _isalnum(self):
         if self.ch is None:
