@@ -2,7 +2,7 @@ from typing import List, Optional
 
 from .error import ParseError
 from .token import Token, TokenType
-from .node import Node, SpecNode, ChunkNode, VariableNode
+from .node import Node, SpecNode, ChunkNode, TypeNode, VariableNode
 
 
 class Parser:
@@ -45,9 +45,19 @@ class Parser:
     def variable(self) -> VariableNode:
         var = self.expect(TokenType.Name)
         self.expect(TokenType.Colon, fail_msg="expected type specifier after name")
-        var_type = self.expect(TokenType.Name)
+        var_type = self.variable_type()
 
-        return VariableNode(var.lexeme, var_type.lexeme)
+        return VariableNode(var.lexeme, var_type)
+
+    def variable_type(self) -> TypeNode:
+        base = self.expect(TokenType.Name)
+        if self.accept(TokenType.BracketOpen):
+            size = self.expect(TokenType.Integer)
+            self.expect(TokenType.BracketClose)
+
+            return TypeNode(base.lexeme, int(size.lexeme))
+
+        return TypeNode(base.lexeme)
 
     def end_of_line(self):
         if self.accept(TokenType.Newline):

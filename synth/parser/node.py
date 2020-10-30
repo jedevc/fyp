@@ -9,14 +9,25 @@ class Node:
         raise NotImplementedError()
 
 
+class TypeNode(Node):
+    def __init__(self, base: str, size: int = 1):
+        super().__init__()
+        self.base = base
+        self.size = size
+
+    def visit(self, visitor: "Visitor"):
+        visitor.visit_type(self)
+
+
 class VariableNode(Node):
-    def __init__(self, name: str, vartype: str):
+    def __init__(self, name: str, vartype: TypeNode):
         super().__init__()
         self.name = name
         self.vartype = vartype
 
     def visit(self, visitor: "Visitor"):
         visitor.visit_variable(self)
+        self.vartype.visit(visitor)
 
 
 class ChunkNode(Node):
@@ -57,6 +68,9 @@ class Visitor:
         pass
 
     def visit_chunk(self, node: ChunkNode):
+        pass
+
+    def visit_type(self, node: TypeNode):
         pass
 
     def visit_variable(self, node: VariableNode):
