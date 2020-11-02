@@ -1,6 +1,7 @@
 import argparse
 
 from .parser import Lexer, LexError, ParseError, Parser
+from .passes import PrinterVisitor
 
 
 def main():
@@ -27,3 +28,6 @@ def main():
         print(err.format(stream))
         return
     print(spec)
+
+    visitor = PrinterVisitor()
+    spec.accept(visitor)
