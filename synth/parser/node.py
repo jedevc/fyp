@@ -1,11 +1,11 @@
-from typing import List, Optional
+from typing import Any, List, Optional
 
 
 class Node:
     def __init__(self):
         pass
 
-    def visit(self, visitor: "Visitor"):
+    def accept(self, visitor: "Visitor") -> Any:
         raise NotImplementedError()
 
 
@@ -15,8 +15,8 @@ class TypeNode(Node):
         self.base = base
         self.size = size
 
-    def visit(self, visitor: "Visitor"):
-        visitor.visit_type(self)
+    def accept(self, visitor: "Visitor") -> Any:
+        return visitor.visit_type(self)
 
 
 class VariableNode(Node):
@@ -25,9 +25,8 @@ class VariableNode(Node):
         self.name = name
         self.vartype = vartype
 
-    def visit(self, visitor: "Visitor"):
-        visitor.visit_variable(self)
-        self.vartype.visit(visitor)
+    def accept(self, visitor: "Visitor") -> Any:
+        return visitor.visit_variable(self)
 
 
 class ChunkNode(Node):
@@ -39,10 +38,8 @@ class ChunkNode(Node):
     def lookup(self, name: str) -> Optional[VariableNode]:
         return self._variable_map.get(name)
 
-    def visit(self, visitor: "Visitor"):
-        visitor.visit_chunk(self)
-        for var in self.variables:
-            var.visit(visitor)
+    def accept(self, visitor: "Visitor") -> Any:
+        return visitor.visit_chunk(self)
 
 
 class SpecNode(Node):
@@ -57,24 +54,22 @@ class SpecNode(Node):
                 return var
         return None
 
-    def visit(self, visitor: "Visitor"):
-        visitor.visit_spec(self)
-        for chunk in self.chunks:
-            chunk.visit(visitor)
+    def accept(self, visitor: "Visitor") -> Any:
+        return visitor.visit_spec(self)
 
 
 class Visitor:
     def __init__(self):
         pass
 
-    def visit_chunk(self, node: ChunkNode):
+    def visit_chunk(self, node: ChunkNode) -> Any:
         pass
 
-    def visit_type(self, node: TypeNode):
+    def visit_type(self, node: TypeNode) -> Any:
         pass
 
-    def visit_variable(self, node: VariableNode):
+    def visit_variable(self, node: VariableNode) -> Any:
         pass
 
-    def visit_spec(self, node: SpecNode):
+    def visit_spec(self, node: SpecNode) -> Any:
         pass
