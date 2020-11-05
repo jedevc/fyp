@@ -37,7 +37,7 @@ class Parser:
 
     def chunk(self) -> ChunkNode:
         variables = [self.variable()]
-        if self.accept(TokenType.Comma):
+        while self.accept(TokenType.Comma):
             variables.append(self.variable())
         self.end_of_line()
         return ChunkNode(variables)

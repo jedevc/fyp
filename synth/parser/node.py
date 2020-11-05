@@ -1,4 +1,4 @@
-from typing import Any, List, Optional
+from typing import Any, List
 
 
 class Node:
@@ -33,10 +33,6 @@ class ChunkNode(Node):
     def __init__(self, variables: List[VariableNode]):
         super().__init__()
         self.variables = variables
-        self._variable_map = {node.name: node for node in variables}
-
-    def lookup(self, name: str) -> Optional[VariableNode]:
-        return self._variable_map.get(name)
 
     def accept(self, visitor: "Visitor") -> Any:
         return visitor.visit_chunk(self)
@@ -46,13 +42,6 @@ class SpecNode(Node):
     def __init__(self, chunks: List[ChunkNode]):
         super().__init__()
         self.chunks = chunks
-
-    def lookup(self, name: str) -> Optional[VariableNode]:
-        for chunk in self.chunks:
-            var = chunk.lookup(name)
-            if var is not None:
-                return var
-        return None
 
     def accept(self, visitor: "Visitor") -> Any:
         return visitor.visit_spec(self)
