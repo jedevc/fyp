@@ -3,8 +3,6 @@ import argparse
 from .parser import Lexer, LexError, ParseError, Parser
 from .passes import PrinterVisitor, ChunkifyVisitor
 
-from .chunk import Variable
-
 
 def main():
     parser = argparse.ArgumentParser()
@@ -37,7 +35,8 @@ def main():
     visitor = ChunkifyVisitor()
     chunk = spec.accept(visitor)
     print(chunk)
-    chunk[-1].add(Variable("test", "int", 1))
+    # chunk[-1].add(Variable("test", "int", 1))
+    print(str(chunk[-1].constraint))
 
     for var in chunk[-1].variables:
         print(var.name)

@@ -5,4 +5,12 @@ from .error import LexError, ParseError
 
 from .token import Token, TokenType
 
-from .node import Node, Visitor, TypeNode, VariableNode, ChunkNode, SpecNode
+from .node import (
+    Node,
+    Visitor,
+    TypeNode,
+    VariableNode,
+    SpecialVariableNode,
+    ChunkNode,
+    SpecNode,
+)

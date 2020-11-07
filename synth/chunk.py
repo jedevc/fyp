@@ -8,14 +8,30 @@ class Variable:
         self.size = size
 
 
+class ChunkConstraint:
+    def __init__(self, eof=False):
+        self.eof = eof
+
+    def join(self, other) -> "ChunkConstraint":
+        return ChunkConstraint(
+            eof=self.eof or other.eof,
+        )
+
+    def __str__(self) -> str:
+        return f"<ChunkConstraint eof={self.eof}>"
+
+
 class Chunk:
-    def __init__(self, variables: List[Variable]):
+    def __init__(
+        self, variables: List[Variable], constraint: Optional[ChunkConstraint] = None
+    ):
         self._vars = variables
         self._table = {
             var.name: i
             for i, var in enumerate(variables)
             if not var.name.startswith("_")
         }
+        self.constraint = constraint
 
     @property
     def variables(self):

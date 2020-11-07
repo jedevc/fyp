@@ -1,4 +1,4 @@
-from typing import Any, List
+from typing import Any, List, Union
 
 
 class Node:
@@ -29,8 +29,17 @@ class VariableNode(Node):
         return visitor.visit_variable(self)
 
 
+class SpecialVariableNode(Node):
+    def __init__(self, name: str):
+        super().__init__()
+        self.name = name
+
+    def accept(self, visitor: "Visitor") -> Any:
+        return visitor.visit_special_variable(self)
+
+
 class ChunkNode(Node):
-    def __init__(self, variables: List[VariableNode]):
+    def __init__(self, variables: List[Union[VariableNode, SpecialVariableNode]]):
         super().__init__()
         self.variables = variables
 
@@ -58,6 +67,9 @@ class Visitor:
         pass
 
     def visit_variable(self, node: VariableNode) -> Any:
+        pass
+
+    def visit_special_variable(self, node: SpecialVariableNode) -> Any:
         pass
 
     def visit_spec(self, node: SpecNode) -> Any:

@@ -1,6 +1,13 @@
 import sys
 
-from ..parser import Visitor, ChunkNode, TypeNode, VariableNode, SpecNode
+from ..parser import (
+    Visitor,
+    ChunkNode,
+    TypeNode,
+    VariableNode,
+    SpecialVariableNode,
+    SpecNode,
+)
 
 
 class PrinterVisitor(Visitor):
@@ -25,6 +32,9 @@ class PrinterVisitor(Visitor):
     def visit_variable(self, node: VariableNode):
         self._print(f"{node.name} : ")
         node.vartype.accept(self)
+
+    def visit_special_variable(self, node: SpecialVariableNode):
+        self._print(f"${node.name}")
 
     def visit_type(self, node: TypeNode):
         self._print(node.base)

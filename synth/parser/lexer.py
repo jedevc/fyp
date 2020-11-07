@@ -24,7 +24,7 @@ SIMPLE_ABSORBERS = [
 ]
 
 
-RESERVED_WORDS = {"chunk"}
+RESERVED_WORDS = {"block", "chunk"}
 
 
 class Lexer:
@@ -65,7 +65,7 @@ class Lexer:
         elif self.ch == "'" or self.ch == '"':
             s = self._read_str()
             return Token(self.n, len(s) + 2, TokenType.String, s)
-        elif self._isalpha():
+        elif self._isalpha() or self.ch == "$":
             n = self._read_name()
             if n in RESERVED_WORDS:
                 return Token(self.n, len(n), TokenType.Reserved, n)
@@ -81,6 +81,7 @@ class Lexer:
     def _read_name(self) -> str:
         start = self.n
 
+        self._advance()
         while self._isalnum():
             self._advance()
 
@@ -92,6 +93,7 @@ class Lexer:
     def _read_num(self) -> str:
         start = self.n
 
+        self._advance()
         while self._isnum():
             self._advance()
 

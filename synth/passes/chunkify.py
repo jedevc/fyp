@@ -1,8 +1,15 @@
 from typing import List, Tuple
 
-from ..parser import Visitor, SpecNode, ChunkNode, TypeNode, VariableNode
+from ..parser import (
+    Visitor,
+    SpecNode,
+    ChunkNode,
+    TypeNode,
+    VariableNode,
+    SpecialVariableNode,
+)
 
-from ..chunk import Chunk, Variable
+from ..chunk import Chunk, ChunkConstraint, Variable
 
 
 class ChunkifyVisitor(Visitor):
@@ -13,13 +20,27 @@ class ChunkifyVisitor(Visitor):
         return chunks
 
     def visit_chunk(self, node: ChunkNode) -> Chunk:
+        constraint = ChunkConstraint()
         variables = []
         for var in node.variables:
-            variables.append(var.accept(self))
-        return Chunk(variables)
+            res = var.accept(self)
+            if isinstance(res, ChunkConstraint):
+                constraint = constraint.join(res)
+            elif isinstance(res, Variable):
+                variables.append(res)
+            else:
+                raise RuntimeError()
+
+        return Chunk(variables, constraint)
 
     def visit_variable(self, node: VariableNode) -> Variable:
         return Variable(node.name, *node.vartype.accept(self))
+
+    def visit_special_variable(self, node: SpecialVariableNode) -> ChunkConstraint:
+        if node.name == "eof":
+            return ChunkConstraint(eof=True)
+        else:
+            raise RuntimeError(f"invalid special variable {node.name}")
 
     def visit_type(self, node: TypeNode) -> Tuple[str, int]:
         return node.base, node.size

@@ -1,8 +1,8 @@
-from typing import List, Optional
+from typing import List, Optional, Union
 
 from .error import ParseError
 from .token import Token, TokenType
-from .node import Node, SpecNode, ChunkNode, TypeNode, VariableNode
+from .node import Node, SpecNode, ChunkNode, TypeNode, VariableNode, SpecialVariableNode
 
 
 class Parser:
@@ -42,8 +42,11 @@ class Parser:
         self.end_of_line()
         return ChunkNode(variables)
 
-    def variable(self) -> VariableNode:
+    def variable(self) -> Union[VariableNode, SpecialVariableNode]:
         var = self.expect(TokenType.Name)
+        if var.lexeme[0] == "$":
+            return SpecialVariableNode(var.lexeme[1:])
+
         self.expect(TokenType.Colon, fail_msg="expected type specifier after name")
         var_type = self.variable_type()
 
