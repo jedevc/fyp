@@ -4,8 +4,8 @@ from ..parser import (
     Visitor,
     ChunkNode,
     TypeNode,
-    VariableNode,
-    SpecialVariableNode,
+    DeclarationNode,
+    SpecialDeclarationNode,
     SpecNode,
 )
 
@@ -29,11 +29,11 @@ class PrinterVisitor(Visitor):
                 self._println(",")
                 self._print("      ")
 
-    def visit_variable(self, node: VariableNode):
+    def visit_variable(self, node: DeclarationNode):
         self._print(f"{node.name} : ")
         node.vartype.accept(self)
 
-    def visit_special_variable(self, node: SpecialVariableNode):
+    def visit_special_variable(self, node: SpecialDeclarationNode):
         self._print(f"${node.name}")
 
     def visit_type(self, node: TypeNode):

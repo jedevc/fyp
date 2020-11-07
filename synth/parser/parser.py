@@ -2,7 +2,14 @@ from typing import List, Optional, Union
 
 from .error import ParseError
 from .token import Token, TokenType
-from .node import Node, SpecNode, ChunkNode, TypeNode, VariableNode, SpecialVariableNode
+from .node import (
+    Node,
+    SpecNode,
+    ChunkNode,
+    TypeNode,
+    DeclarationNode,
+    SpecialDeclarationNode,
+)
 
 
 class Parser:
@@ -42,15 +49,15 @@ class Parser:
         self.end_of_line()
         return ChunkNode(variables)
 
-    def variable(self) -> Union[VariableNode, SpecialVariableNode]:
+    def variable(self) -> Union[DeclarationNode, SpecialDeclarationNode]:
         var = self.expect(TokenType.Name)
         if var.lexeme[0] == "$":
-            return SpecialVariableNode(var.lexeme[1:])
+            return SpecialDeclarationNode(var.lexeme[1:])
 
         self.expect(TokenType.Colon, fail_msg="expected type specifier after name")
         var_type = self.variable_type()
 
-        return VariableNode(var.lexeme, var_type)
+        return DeclarationNode(var.lexeme, var_type)
 
     def variable_type(self) -> TypeNode:
         base = self.expect(TokenType.Name)

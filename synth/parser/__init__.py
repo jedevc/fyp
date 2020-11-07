@@ -9,8 +9,8 @@ from .node import (
     Node,
     Visitor,
     TypeNode,
-    VariableNode,
-    SpecialVariableNode,
+    DeclarationNode,
+    SpecialDeclarationNode,
     ChunkNode,
     SpecNode,
 )

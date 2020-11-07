@@ -5,8 +5,8 @@ from ..parser import (
     SpecNode,
     ChunkNode,
     TypeNode,
-    VariableNode,
-    SpecialVariableNode,
+    DeclarationNode,
+    SpecialDeclarationNode,
 )
 
 from ..chunk import Chunk, ChunkConstraint, Variable
@@ -33,10 +33,10 @@ class ChunkifyVisitor(Visitor):
 
         return Chunk(variables, constraint)
 
-    def visit_variable(self, node: VariableNode) -> Variable:
+    def visit_variable(self, node: DeclarationNode) -> Variable:
         return Variable(node.name, *node.vartype.accept(self))
 
-    def visit_special_variable(self, node: SpecialVariableNode) -> ChunkConstraint:
+    def visit_special_variable(self, node: SpecialDeclarationNode) -> ChunkConstraint:
         if node.name == "eof":
             return ChunkConstraint(eof=True)
         else:

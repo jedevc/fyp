@@ -19,7 +19,7 @@ class TypeNode(Node):
         return visitor.visit_type(self)
 
 
-class VariableNode(Node):
+class DeclarationNode(Node):
     def __init__(self, name: str, vartype: TypeNode):
         super().__init__()
         self.name = name
@@ -29,7 +29,7 @@ class VariableNode(Node):
         return visitor.visit_variable(self)
 
 
-class SpecialVariableNode(Node):
+class SpecialDeclarationNode(Node):
     def __init__(self, name: str):
         super().__init__()
         self.name = name
@@ -39,7 +39,7 @@ class SpecialVariableNode(Node):
 
 
 class ChunkNode(Node):
-    def __init__(self, variables: List[Union[VariableNode, SpecialVariableNode]]):
+    def __init__(self, variables: List[Union[DeclarationNode, SpecialDeclarationNode]]):
         super().__init__()
         self.variables = variables
 
@@ -66,10 +66,10 @@ class Visitor:
     def visit_type(self, node: TypeNode) -> Any:
         pass
 
-    def visit_variable(self, node: VariableNode) -> Any:
+    def visit_variable(self, node: DeclarationNode) -> Any:
         pass
 
-    def visit_special_variable(self, node: SpecialVariableNode) -> Any:
+    def visit_special_variable(self, node: SpecialDeclarationNode) -> Any:
         pass
 
     def visit_spec(self, node: SpecNode) -> Any:
