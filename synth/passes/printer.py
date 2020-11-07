@@ -20,6 +20,8 @@ class PrinterVisitor(Visitor):
         super().__init__()
         self.output = output
 
+        self.indent = 0
+
     def visit_spec(self, node: SpecNode):
         for chunk in node.chunks:
             chunk.accept(self)
@@ -29,13 +31,14 @@ class PrinterVisitor(Visitor):
 
     def visit_chunk(self, node: ChunkNode):
         self._print("chunk ")
+        self.indent += 6
         for i, var in enumerate(node.variables):
             var.accept(self)
             if i == len(node.variables) - 1:
                 self._println()
             else:
                 self._println(",")
-                self._print("      ")
+        self.indent -= 6
 
     def visit_declaration(self, node: DeclarationNode):
         self._print(f"{node.name} : ")
@@ -52,10 +55,14 @@ class PrinterVisitor(Visitor):
     def visit_block(self, node: BlockNode):
         self._print("block ")
         self._print(node.label)
+        self.indent += 4
         self._println(" {")
-        for statement in node.statements:
+        for i, statement in enumerate(node.statements):
             statement.accept(self)
-            self._println()
+            if i != len(node.statements) - 1:
+                self._println()
+        self.indent -= 4
+        self._println()
         self._println("}")
 
     def visit_assignment(self, node: AssignmentNode):
@@ -86,3 +93,5 @@ class PrinterVisitor(Visitor):
 
     def _println(self, msg=""):
         print(msg, file=self.output)
+        if self.indent > 0:
+            print(self.indent * " ", file=self.output, end="")
