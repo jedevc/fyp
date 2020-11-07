@@ -11,6 +11,13 @@ from .node import (
     TypeNode,
     DeclarationNode,
     SpecialDeclarationNode,
+    AssignmentNode,
+    FunctionNode,
+    VariableNode,
+    CallNode,
     ChunkNode,
+    BlockNode,
     SpecNode,
+    Expression,
+    Statement,
 )

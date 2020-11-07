@@ -1,12 +1,17 @@
 import sys
 
 from ..parser import (
-    Visitor,
+    SpecNode,
+    BlockNode,
+    CallNode,
+    AssignmentNode,
+    FunctionNode,
+    VariableNode,
     ChunkNode,
     TypeNode,
     DeclarationNode,
     SpecialDeclarationNode,
-    SpecNode,
+    Visitor,
 )
 
 
@@ -18,6 +23,9 @@ class PrinterVisitor(Visitor):
     def visit_spec(self, node: SpecNode):
         for chunk in node.chunks:
             chunk.accept(self)
+        self._println()
+        for block in node.blocks:
+            block.accept(self)
 
     def visit_chunk(self, node: ChunkNode):
         self._print("chunk ")
@@ -29,17 +37,49 @@ class PrinterVisitor(Visitor):
                 self._println(",")
                 self._print("      ")
 
-    def visit_variable(self, node: DeclarationNode):
+    def visit_declaration(self, node: DeclarationNode):
         self._print(f"{node.name} : ")
         node.vartype.accept(self)
 
-    def visit_special_variable(self, node: SpecialDeclarationNode):
+    def visit_special_declaration(self, node: SpecialDeclarationNode):
         self._print(f"${node.name}")
 
     def visit_type(self, node: TypeNode):
         self._print(node.base)
         if node.size > 1:
             self._print(f"[{node.size}]")
+
+    def visit_block(self, node: BlockNode):
+        self._print("block ")
+        self._print(node.label)
+        self._println(" {")
+        for statement in node.statements:
+            statement.accept(self)
+            self._println()
+        self._println("}")
+
+    def visit_assignment(self, node: AssignmentNode):
+        self._print(node.name)
+        self._print(" = ")
+        node.expression.accept(self)
+
+    def visit_call(self, node: CallNode):
+        self._print("call ")
+        self._print(node.target)
+
+    def visit_variable(self, node: VariableNode):
+        if node.address:
+            self._print("&")
+        self._print(node.target)
+
+    def visit_function(self, node: FunctionNode):
+        self._print(node.name)
+        self._print("(")
+        for i, arg in enumerate(node.arguments):
+            arg.accept(self)
+            if i != len(node.arguments) - 1:
+                self._print(", ")
+        self._print(")")
 
     def _print(self, msg=""):
         print(msg, end="", file=self.output)

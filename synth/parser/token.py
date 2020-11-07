@@ -26,6 +26,8 @@ class TokenType(Enum):
     String = 17
     Integer = 18
 
+    AddressOf = 19
+
 
 class Token:
     def __init__(self, position: int, length: int, ttype: TokenType, lexeme: str = ""):

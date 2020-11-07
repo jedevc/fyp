@@ -5,10 +5,16 @@ from .token import Token, TokenType
 from .node import (
     Node,
     SpecNode,
+    BlockNode,
+    CallNode,
+    AssignmentNode,
+    FunctionNode,
+    VariableNode,
     ChunkNode,
     TypeNode,
     DeclarationNode,
     SpecialDeclarationNode,
+    Expression,
 )
 
 
@@ -22,6 +28,19 @@ class Parser:
         self.current: Optional[Token] = None
         self.last: Optional[Token] = None
 
+        self.stack: List[int] = []
+
+    def save(self):
+        self.stack.append(self.pos)
+
+    def cancel(self):
+        self.stack.pop()
+
+    def backtrack(self):
+        self.pos = self.stack.pop()
+        self.current = self.tokens[self.pos]
+        self.last = self.tokens[self.pos - 1]
+
     def parse(self) -> Node:
         self.advance()
 
@@ -29,6 +48,7 @@ class Parser:
 
     def spec(self) -> SpecNode:
         chunks = []
+        blocks = []
         while self.pos < len(self.tokens):
             if self.accept(TokenType.EOF):
                 break
@@ -36,30 +56,84 @@ class Parser:
                 continue
             elif self.accept(TokenType.Reserved, "chunk"):
                 chunks.append(self.chunk())
+            elif self.accept(TokenType.Reserved, "block"):
+                blocks.append(self.block())
             else:
                 assert self.current is not None
                 raise ParseError(self.current, "unknown statement type")
 
-        return SpecNode(chunks)
+        return SpecNode(chunks, blocks)
 
     def chunk(self) -> ChunkNode:
-        variables = [self.variable()]
+        variables = [self.declaration()]
         while self.accept(TokenType.Comma):
-            variables.append(self.variable())
+            variables.append(self.declaration())
         self.end_of_line()
         return ChunkNode(variables)
 
-    def variable(self) -> Union[DeclarationNode, SpecialDeclarationNode]:
+    def block(self) -> BlockNode:
+        block_name = self.expect(TokenType.Name).lexeme
+        self.expect(TokenType.BraceOpen)
+
+        statements = []
+        while True:
+            if self.accept(TokenType.BraceClose):
+                break
+
+            statement = self.any_of(self.call, self.assignment, self.expression)
+            statements.append(statement)
+            self.end_of_line()
+
+        return BlockNode(block_name, statements)
+
+    def call(self) -> CallNode:
+        self.expect(TokenType.Reserved, "call")
+        target = self.expect(TokenType.Name)
+        return CallNode(target.lexeme)
+
+    def assignment(self) -> AssignmentNode:
+        target = self.expect(TokenType.Name)
+        self.expect(TokenType.Equals)
+        exp = self.expression()
+        return AssignmentNode(target.lexeme, exp)
+
+    def expression(self) -> Expression:
+        return self.any_of(self.function, self.variable)
+
+    def function(self) -> FunctionNode:
+        name = self.expect(TokenType.Name)
+        args = []
+
+        self.expect(TokenType.ParenOpen)
+        while True:
+            lookahead = self.peek()
+            if lookahead and lookahead.ttype == TokenType.ParenClose:
+                break
+
+            arg = self.expression()
+            args.append(arg)
+            if not self.accept(TokenType.Comma):
+                break
+        self.expect(TokenType.ParenClose)
+
+        return FunctionNode(name.lexeme, args)
+
+    def variable(self) -> VariableNode:
+        addressed = self.accept(TokenType.AddressOf) is not None
+        name = self.expect(TokenType.Name)
+        return VariableNode(name.lexeme, addressed)
+
+    def declaration(self) -> Union[DeclarationNode, SpecialDeclarationNode]:
         var = self.expect(TokenType.Name)
         if var.lexeme[0] == "$":
             return SpecialDeclarationNode(var.lexeme[1:])
 
         self.expect(TokenType.Colon, fail_msg="expected type specifier after name")
-        var_type = self.variable_type()
+        var_type = self.declaration_type()
 
         return DeclarationNode(var.lexeme, var_type)
 
-    def variable_type(self) -> TypeNode:
+    def declaration_type(self) -> TypeNode:
         base = self.expect(TokenType.Name)
         if self.accept(TokenType.BracketOpen):
             size = self.expect(TokenType.Integer)
@@ -76,6 +150,24 @@ class Parser:
             return
         else:
             raise ParseError(self.last, "expected a newline")
+
+    def any_of(self, *args):
+        # FIXME: this function is *very* annoying to try and type
+
+        result = None
+        for attempt in args:
+            try:
+                self.save()
+                result = attempt()
+                break
+            except ParseError:
+                self.backtrack()
+            else:
+                self.cancel()
+
+        if result is None:
+            raise RuntimeError("yikes no expression")
+        return result
 
     def expect(
         self,

@@ -35,8 +35,9 @@ def main():
     visitor = ChunkifyVisitor()
     chunk = spec.accept(visitor)
     print(chunk)
+    # print(chunk)
     # chunk[-1].add(Variable("test", "int", 1))
-    print(str(chunk[-1].constraint))
+    # print(str(chunk[-1].constraint))
 
-    for var in chunk[-1].variables:
-        print(var.name)
+    # for var in chunk[-1].variables:
+    #     print(var.name)

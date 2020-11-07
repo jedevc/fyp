@@ -15,6 +15,7 @@ SIMPLE_TOKENS = {
     ")": TokenType.ParenClose,
     "{": TokenType.BraceOpen,
     "}": TokenType.BraceClose,
+    "&": TokenType.AddressOf,
 }
 SIMPLE_ABSORBERS = [
     TokenType.Comma,
@@ -24,7 +25,7 @@ SIMPLE_ABSORBERS = [
 ]
 
 
-RESERVED_WORDS = {"block", "chunk"}
+RESERVED_WORDS = {"block", "chunk", "call"}
 
 
 class Lexer:
