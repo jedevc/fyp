@@ -102,18 +102,15 @@ class Parser:
 
     def function(self) -> FunctionNode:
         name = self.expect(TokenType.Name)
-        args = []
 
         self.expect(TokenType.ParenOpen)
-        while True:
-            lookahead = self.peek()
-            if lookahead and lookahead.ttype == TokenType.ParenClose:
-                break
+        if self.accept(TokenType.ParenClose):
+            return FunctionNode(name.lexeme, [])
 
+        args = [self.expression()]
+        while self.accept(TokenType.Comma):
             arg = self.expression()
             args.append(arg)
-            if not self.accept(TokenType.Comma):
-                break
         self.expect(TokenType.ParenClose)
 
         return FunctionNode(name.lexeme, args)
