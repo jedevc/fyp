@@ -10,6 +10,7 @@ from .node import (
     AssignmentNode,
     FunctionNode,
     VariableNode,
+    ValueNode,
     ChunkNode,
     TypeNode,
     DeclarationNode,
@@ -98,6 +99,10 @@ class Parser:
         return AssignmentNode(target.lexeme, exp)
 
     def expression(self) -> Expression:
+        if self.accept(TokenType.Integer) or self.accept(TokenType.String):
+            assert self.last is not None
+            return ValueNode(self.last.lexeme)
+
         return self.any_of(self.function, self.variable)
 
     def function(self) -> FunctionNode:

@@ -7,6 +7,7 @@ from ..parser import (
     AssignmentNode,
     FunctionNode,
     VariableNode,
+    ValueNode,
     ChunkNode,
     TypeNode,
     DeclarationNode,
@@ -88,6 +89,14 @@ class PrinterVisitor(Visitor):
                 self._print(", ")
         self._print(")")
 
+    def visit_value(self, node: ValueNode):
+        if node.is_str():
+            self._print(quote(node.value))
+        elif node.is_int():
+            self._print(node.value)
+        else:
+            raise RuntimeError()
+
     def _print(self, msg=""):
         print(msg, end="", file=self.output)
 
@@ -95,3 +104,13 @@ class PrinterVisitor(Visitor):
         print(msg, file=self.output)
         if self.indent > 0:
             print(self.indent * " ", file=self.output, end="")
+
+
+def quote(s):
+    if '"' not in s:
+        return '"' + s + '"'
+    elif "'" not in s:
+        return "'" + s + "'"
+    else:
+        # shouldn't be possible?
+        return "`" + s + "`"

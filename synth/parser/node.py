@@ -1,7 +1,7 @@
 from typing import Any, List, Union
 
 
-Expression = Union["FunctionNode", "VariableNode"]
+Expression = Union["FunctionNode", "VariableNode", "ValueNode"]
 Statement = Union["AssignmentNode", "CallNode", Expression]
 
 
@@ -80,6 +80,21 @@ class VariableNode(Node):
         return visitor.visit_variable(self)
 
 
+class ValueNode(Node):
+    def __init__(self, value: Union[str, int]):
+        super().__init__()
+        self.value = value
+
+    def is_str(self):
+        return isinstance(self.value, str)
+
+    def is_int(self):
+        return isinstance(self.value, int)
+
+    def accept(self, visitor: "Visitor") -> Any:
+        return visitor.visit_value(self)
+
+
 class AssignmentNode(Node):
     def __init__(self, name: str, expression: Expression):
         super().__init__()
@@ -127,6 +142,9 @@ class Visitor:
         pass
 
     def visit_function(self, node: FunctionNode) -> Any:
+        pass
+
+    def visit_value(self, node: ValueNode) -> Any:
         pass
 
     def visit_call(self, node: CallNode) -> Any:

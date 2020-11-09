@@ -14,6 +14,7 @@ from .node import (
     AssignmentNode,
     FunctionNode,
     VariableNode,
+    ValueNode,
     CallNode,
     ChunkNode,
     BlockNode,
