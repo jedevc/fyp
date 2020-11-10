@@ -16,14 +16,11 @@ SIMPLE_TOKENS = {
     "{": TokenType.BraceOpen,
     "}": TokenType.BraceClose,
     "&": TokenType.AddressOf,
+    "+": TokenType.Plus,
+    "-": TokenType.Minus,
+    "*": TokenType.Times,
+    # "/": TokenType.Divide,  # this one is more complex...
 }
-SIMPLE_ABSORBERS = [
-    TokenType.Comma,
-    TokenType.ParenOpen,
-    TokenType.BracketOpen,
-    TokenType.BraceOpen,
-]
-
 
 RESERVED_WORDS = {"block", "chunk", "call"}
 
@@ -38,8 +35,22 @@ class Lexer:
         self._advance()
 
     def tokens(self) -> Iterable[Token]:
-        while token := self.token():
+        last = None
+        while True:
+            token = self.token()
+            if token is None:
+                # skip missing tokens
+                continue
+
+            # de-duplicate newlines
+            if token.ttype == TokenType.Newline:
+                if last and last.ttype == TokenType.Newline:
+                    continue
+
             yield token
+            last = token
+
+            # the last token of the stream should be an end-of-file
             if token.ttype == TokenType.EOF:
                 break
 
@@ -50,19 +61,39 @@ class Lexer:
         if self.ch is None:
             return Token(self.n, 1, TokenType.EOF)
         elif self.ch == "\n":
-            while self._isspace():
+            n = self.n
+            self._advance()
+            while self._isspace() and self.ch != "\n":
                 self._advance()
-            return Token(self.n, 1, TokenType.Newline)
+            return Token(n, 1, TokenType.Newline)
         elif self._isspace():
             while self._isspace() and self.ch != "\n":
                 self._advance()
-            return self.token()
+            return None
         elif ttype := SIMPLE_TOKENS.get(self.ch):
             self._advance()
-            if ttype in SIMPLE_ABSORBERS:
-                while self._isspace():
-                    self._advance()
             return Token(self.n, 1, ttype)
+        elif self.ch == "/":
+            self._advance()
+            if self.ch == "/":
+                while self.ch is not None and self.ch != "\n":
+                    self._advance()
+                return self.token()
+            elif self.ch == "*":
+                start = self.n
+                while True:
+                    self._advance()
+                    if self.ch is None:
+                        raise LexError(start, self.n, "unfinished comment")
+                    elif self.ch == "*":
+                        self._advance()
+                        if self.ch == "/":
+                            self._advance()
+                            break
+
+                return None
+            else:
+                return Token(self.n, 1, TokenType.Divide)
         elif self.ch == "'" or self.ch == '"':
             s = self._read_str()
             return Token(self.n, len(s) + 2, TokenType.String, s)

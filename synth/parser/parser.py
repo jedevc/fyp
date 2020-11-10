@@ -68,6 +68,7 @@ class Parser:
     def chunk(self) -> ChunkNode:
         variables = [self.declaration()]
         while self.accept(TokenType.Comma):
+            self.accept(TokenType.Newline)
             variables.append(self.declaration())
         self.end_of_line()
         return ChunkNode(variables)
@@ -75,6 +76,7 @@ class Parser:
     def block(self) -> BlockNode:
         block_name = self.expect(TokenType.Name).lexeme
         self.expect(TokenType.BraceOpen)
+        self.accept(TokenType.Newline)
 
         statements = []
         while True:

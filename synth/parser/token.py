@@ -28,6 +28,11 @@ class TokenType(Enum):
 
     AddressOf = 19
 
+    Plus = 20
+    Minus = 21
+    Times = 22
+    Divide = 23
+
 
 class Token:
     def __init__(self, position: int, length: int, ttype: TokenType, lexeme: str = ""):
