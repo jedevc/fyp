@@ -16,6 +16,7 @@ from .node import (
     DeclarationNode,
     SpecialDeclarationNode,
     Expression,
+    Statement,
 )
 
 
@@ -70,7 +71,7 @@ class Parser:
         while self.accept(TokenType.Comma):
             self.accept(TokenType.Newline)
             variables.append(self.declaration())
-        self.end_of_line()
+        self.end_of_line(after="chunk")
         return ChunkNode(variables)
 
     def block(self) -> BlockNode:
@@ -83,29 +84,35 @@ class Parser:
             if self.accept(TokenType.BraceClose):
                 break
 
-            statement = self.any_of(self.call, self.assignment, self.expression)
-            statements.append(statement)
-            self.end_of_line()
+            stmt: Statement
+            if self.accept(TokenType.Reserved, "call"):
+                target = self.expect(TokenType.Name)
+                stmt = CallNode(target.lexeme)
+            elif (
+                peek := self.peek()
+            ) and peek.ttype == TokenType.Equals:  # pylint: disable=used-before-assignment
+                target = self.expect(TokenType.Name)
+                self.expect(TokenType.Equals)
+                exp = self.expression()
+                stmt = AssignmentNode(target.lexeme, exp)
+            else:
+                stmt = self.expression()
+
+            statements.append(stmt)
+            self.end_of_line(after="statement")
 
         return BlockNode(block_name, statements)
-
-    def call(self) -> CallNode:
-        self.expect(TokenType.Reserved, "call")
-        target = self.expect(TokenType.Name)
-        return CallNode(target.lexeme)
-
-    def assignment(self) -> AssignmentNode:
-        target = self.expect(TokenType.Name)
-        self.expect(TokenType.Equals)
-        exp = self.expression()
-        return AssignmentNode(target.lexeme, exp)
 
     def expression(self) -> Expression:
         if self.accept(TokenType.Integer) or self.accept(TokenType.String):
             assert self.last is not None
             return ValueNode(self.last.lexeme)
-
-        return self.any_of(self.function, self.variable)
+        elif (
+            peek := self.peek()
+        ) and peek.ttype == TokenType.ParenOpen:  # pylint: disable=used-before-assignment
+            return self.function()
+        else:
+            return self.variable()
 
     def function(self) -> FunctionNode:
         name = self.expect(TokenType.Name)
@@ -147,31 +154,21 @@ class Parser:
 
         return TypeNode(base.lexeme)
 
-    def end_of_line(self):
+    def end_of_line(self, after: Optional[str] = None):
         if self.accept(TokenType.Newline):
             return
         elif self.accept(TokenType.EOF):
             return
         else:
-            raise ParseError(self.last, "expected a newline")
+            msg = "expected a newline"
+            if after:
+                msg += " after " + after
 
-    def any_of(self, *args):
-        # FIXME: this function is *very* annoying to try and type
-
-        result = None
-        for attempt in args:
-            try:
-                self.save()
-                result = attempt()
-                break
-            except ParseError:
-                self.backtrack()
+            if self.last is not None:
+                raise ParseError(self.last, msg)
             else:
-                self.cancel()
-
-        if result is None:
-            raise RuntimeError("yikes no expression")
-        return result
+                assert self.current is not None
+                raise ParseError(self.current, msg)
 
     def expect(
         self,
