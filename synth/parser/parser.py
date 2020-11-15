@@ -21,6 +21,23 @@ from .node import (
 )
 
 
+class NodeFactory:
+    def __init__(self, parser: "Parser"):
+        self.parser = parser
+        self.starts: List[int] = []
+
+    def node_enter(self):
+        self.starts.append(self.parser.pos)
+
+    def node_cancel(self):
+        self.starts.pop()
+
+    def node_exit(self, node, *args):
+        start = self.parser.tokens[self.starts.pop()]
+        end = self.parser.tokens[self.parser.pos - 1]
+        return node(start, end, *args)
+
+
 class Parser:
     def __init__(self, tokens: List[Token]):
         assert len(tokens) >= 0
@@ -31,18 +48,7 @@ class Parser:
         self.current: Optional[Token] = None
         self.last: Optional[Token] = None
 
-        self.stack: List[int] = []
-
-    def save(self):
-        self.stack.append(self.pos)
-
-    def cancel(self):
-        self.stack.pop()
-
-    def backtrack(self):
-        self.pos = self.stack.pop()
-        self.current = self.tokens[self.pos]
-        self.last = self.tokens[self.pos - 1]
+        self.factory = NodeFactory(self)
 
     def parse(self) -> Node:
         self.advance()
@@ -50,6 +56,8 @@ class Parser:
         return self.spec()
 
     def spec(self) -> SpecNode:
+        self.factory.node_enter()
+
         chunks = []
         blocks = []
         while self.pos < len(self.tokens):
@@ -57,25 +65,37 @@ class Parser:
                 break
             elif self.accept(TokenType.Newline):
                 continue
-            elif self.accept(TokenType.Reserved, "chunk"):
+
+            assert self.current is not None
+            if self.current.ttype != TokenType.Reserved:
+                raise ParseError(self.current, "expected opening")
+
+            if self.current.lexeme == "chunk":
                 chunks.append(self.chunk())
-            elif self.accept(TokenType.Reserved, "block"):
+            elif self.current.lexeme == "block":
                 blocks.append(self.block())
             else:
-                assert self.current is not None
                 raise ParseError(self.current, "unknown statement type")
 
-        return SpecNode(chunks, blocks)
+        return self.factory.node_exit(SpecNode, chunks, blocks)
 
     def chunk(self) -> ChunkNode:
+        self.factory.node_enter()
+
+        self.expect(TokenType.Reserved, "chunk")
         variables = [self.declaration()]
         while self.accept(TokenType.Comma):
             self.accept(TokenType.Newline)
             variables.append(self.declaration())
         self.end_of_line(after="chunk")
-        return ChunkNode(variables)
+
+        return self.factory.node_exit(ChunkNode, variables)
 
     def block(self) -> BlockNode:
+        self.factory.node_enter()
+
+        self.expect(TokenType.Reserved, "block")
+
         block_name = self.expect(TokenType.Name).lexeme
         self.expect(TokenType.BraceOpen)
         self.accept(TokenType.Newline)
@@ -85,42 +105,50 @@ class Parser:
             if self.accept(TokenType.BraceClose):
                 break
 
+            self.factory.node_enter()
             stmt: Statement
             if self.accept(TokenType.Reserved, "call"):
                 target = self.expect(TokenType.Name)
-                stmt = CallNode(target.lexeme)
+                stmt = self.factory.node_exit(CallNode, target.lexeme)
             elif (
                 peek := self.peek()
             ) and peek.ttype == TokenType.Equals:  # pylint: disable=used-before-assignment
                 target = self.expect(TokenType.Name)
                 self.expect(TokenType.Equals)
                 exp = self.expression()
-                stmt = AssignmentNode(target.lexeme, exp)
+                stmt = self.factory.node_exit(AssignmentNode, target.lexeme, exp)
             else:
+                self.factory.node_cancel()
                 stmt = self.expression()
 
             statements.append(stmt)
             self.end_of_line(after="statement")
 
-        return BlockNode(block_name, statements)
+        return self.factory.node_exit(BlockNode, block_name, statements)
 
     def expression(self) -> Expression:
+        self.factory.node_enter()
+
         if self.accept(TokenType.Integer) or self.accept(TokenType.String):
             assert self.last is not None
-            return ValueNode(self.last.lexeme)
+            return self.factory.node_exit(ValueNode, self.last.lexeme)
         elif (
             peek := self.peek()
         ) and peek.ttype == TokenType.ParenOpen:  # pylint: disable=used-before-assignment
+            self.factory.node_cancel()
             return self.function()
         else:
+            self.factory.node_cancel()
             return self.variable()
 
     def function(self) -> FunctionNode:
+        self.factory.node_enter()
+
         name = self.expect(TokenType.Name)
 
         self.expect(TokenType.ParenOpen)
         if self.accept(TokenType.ParenClose):
-            return FunctionNode(name.lexeme, [])
+            return self.factory.node_exit(FunctionNode, name.lexeme, [])
 
         args = [self.expression()]
         while self.accept(TokenType.Comma):
@@ -128,32 +156,38 @@ class Parser:
             args.append(arg)
         self.expect(TokenType.ParenClose)
 
-        return FunctionNode(name.lexeme, args)
+        return self.factory.node_exit(FunctionNode, name.lexeme, args)
 
     def variable(self) -> VariableNode:
+        self.factory.node_enter()
+
         addressed = self.accept(TokenType.AddressOf) is not None
         name = self.expect(TokenType.Name)
-        return VariableNode(name.lexeme, addressed)
+        return self.factory.node_exit(VariableNode, name.lexeme, addressed)
 
     def declaration(self) -> Union[DeclarationNode, SpecialDeclarationNode]:
+        self.factory.node_enter()
+
         var = self.expect(TokenType.Name)
         if var.lexeme[0] == "$":
-            return SpecialDeclarationNode(var.lexeme[1:])
+            return self.factory.node_exit(SpecialDeclarationNode, var.lexeme[1:])
 
         self.expect(TokenType.Colon, fail_msg="expected type specifier after name")
         var_type = self.declaration_type()
 
-        return DeclarationNode(var.lexeme, var_type)
+        return self.factory.node_exit(DeclarationNode, var.lexeme, var_type)
 
     def declaration_type(self) -> TypeNode:
+        self.factory.node_enter()
+
         base = self.expect(TokenType.Name)
         if self.accept(TokenType.BracketOpen):
             size = self.expect(TokenType.Integer)
             self.expect(TokenType.BracketClose)
 
-            return TypeNode(base.lexeme, int(size.lexeme))
+            return self.factory.node_exit(TypeNode, base.lexeme, int(size.lexeme))
 
-        return TypeNode(base.lexeme)
+        return self.factory.node_exit(TypeNode, base.lexeme)
 
     def end_of_line(self, after: Optional[str] = None):
         if self.accept(TokenType.Newline):

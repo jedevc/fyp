@@ -1,6 +1,7 @@
 import itertools
 
 from .token import Token
+from .node import Node
 
 
 class LexError(BaseException):
@@ -29,6 +30,24 @@ class ParseError(BaseException):
         return "\n".join(
             [
                 f"Parse error: {self.msg}",
+                "",
+                self.location.format(stream),
+            ]
+        )
+
+
+class ProcessingError(BaseException):
+    def __init__(self, node: Node, msg: str):
+        super().__init__()
+        start = node.token_start.position - node.token_start.length
+        end = node.token_end.position - 1
+        self.location = ErrorLocation(start, end)
+        self.msg = msg
+
+    def format(self, stream):
+        return "\n".join(
+            [
+                f"Processing error: {self.msg}",
                 "",
                 self.location.format(stream),
             ]

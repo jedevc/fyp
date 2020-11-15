@@ -1,6 +1,6 @@
 import argparse
 
-from .parser import Lexer, LexError, ParseError, Parser
+from .parser import Lexer, LexError, ParseError, ProcessingError, Parser
 from .passes import PrinterVisitor, ChunkifyVisitor
 
 
@@ -31,10 +31,16 @@ def main():
 
     visitor = PrinterVisitor()
     spec.accept(visitor)
+    print(spec.blocks[0].token_start)
 
-    visitor = ChunkifyVisitor()
-    chunk = spec.accept(visitor)
-    print(chunk)
+    try:
+        visitor = ChunkifyVisitor()
+        chunk = spec.accept(visitor)
+        print(chunk)
+    except ProcessingError as err:
+        print(err.format(stream))
+        return
+
     # print(chunk)
     # chunk[-1].add(Variable("test", "int", 1))
     # print(str(chunk[-1].constraint))

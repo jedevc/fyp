@@ -1,7 +1,7 @@
 from .lexer import Lexer
 from .parser import Parser
 
-from .error import LexError, ParseError
+from .error import LexError, ParseError, ProcessingError
 
 from .token import Token, TokenType
 

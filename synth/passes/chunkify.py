@@ -8,6 +8,7 @@ from ..parser import (
     DeclarationNode,
     SpecialDeclarationNode,
 )
+from ..parser.error import ProcessingError
 
 from ..chunk import Chunk, ChunkConstraint, Variable
 
@@ -42,7 +43,7 @@ class ChunkifyVisitor(Visitor):
         if node.name == "eof":
             return ChunkConstraint(eof=True)
         else:
-            raise RuntimeError(f"invalid special variable {node.name}")
+            raise ProcessingError(node, f"invalid special variable {node.name}")
 
     def visit_type(self, node: TypeNode) -> Tuple[str, int]:
         return node.base, node.size
