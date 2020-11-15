@@ -35,11 +35,10 @@ class PrinterVisitor(Visitor):
         self.indent += 6
         for i, var in enumerate(node.variables):
             var.accept(self)
-            if i == len(node.variables) - 1:
-                self._println()
-            else:
+            if i != len(node.variables) - 1:
                 self._println(",")
         self.indent -= 6
+        self._println()
 
     def visit_declaration(self, node: DeclarationNode):
         self._print(f"{node.name} : ")
