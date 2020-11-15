@@ -1,7 +1,7 @@
 import argparse
 
 from .parser import Lexer, LexError, ParseError, ProcessingError, Parser
-from .passes import PrinterVisitor, ChunkifyVisitor
+from .passes import PrinterVisitor, TypeCheckVisitor, ChunkifyVisitor
 
 
 def main():
@@ -28,6 +28,13 @@ def main():
         print(err.format(stream))
         return
     print(spec)
+
+    try:
+        visitor = TypeCheckVisitor()
+        spec.accept(visitor)
+    except ProcessingError as err:
+        print(err.format(stream))
+        return
 
     visitor = PrinterVisitor()
     spec.accept(visitor)
