@@ -34,6 +34,31 @@ class TokenType(Enum):
     Divide = 23
 
 
+PRINTABLE_NAMES = {
+    TokenType.Newline: "newline",
+    TokenType.Dot: "dot",
+    TokenType.Comma: "comma",
+    TokenType.Colon: "colon",
+    TokenType.Semicolon: "semicolon",
+    TokenType.Equals: "equals",
+    TokenType.BracketOpen: "opening square bracket",
+    TokenType.BracketClose: "closing square bracket",
+    TokenType.ParenOpen: "opening paranthesis",
+    TokenType.ParenClose: "closing paranethesis",
+    TokenType.BraceOpen: "opening curly brace",
+    TokenType.BraceClose: "closing curly brace",
+    TokenType.Name: "name",
+    TokenType.Reserved: "reserved name",
+    TokenType.String: "string",
+    TokenType.Integer: "integer",
+    TokenType.AddressOf: "address",
+    TokenType.Plus: "plus",
+    TokenType.Minus: "minus",
+    TokenType.Times: "times",
+    TokenType.Divide: "divide1",
+}
+
+
 class Token:
     def __init__(self, position: int, length: int, ttype: TokenType, lexeme: str = ""):
         self.position = position

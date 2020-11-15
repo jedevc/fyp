@@ -1,5 +1,6 @@
 from typing import List, Optional, Union
 
+from . import token
 from .error import ParseError
 from .token import Token, TokenType
 from .node import (
@@ -183,8 +184,10 @@ class Parser:
             if fail_msg:
                 raise ParseError(self.current, fail_msg)
             else:
+                ttype_name = token.PRINTABLE_NAMES[ttype]
+                current_name = token.PRINTABLE_NAMES[self.current.ttype]
                 raise ParseError(
-                    self.current, f"expected {ttype} but got {self.current.ttype}"
+                    self.current, f"expected {ttype_name} but got {current_name}"
                 )
 
         return result
