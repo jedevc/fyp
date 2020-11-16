@@ -129,9 +129,12 @@ class Parser:
     def expression(self) -> Expression:
         self.factory.node_enter()
 
-        if self.accept(TokenType.Integer) or self.accept(TokenType.String):
+        if self.accept(TokenType.String):
             assert self.last is not None
             return self.factory.node_exit(ValueNode, self.last.lexeme)
+        if self.accept(TokenType.Integer):
+            assert self.last is not None
+            return self.factory.node_exit(ValueNode, int(self.last.lexeme))
         elif (
             peek := self.peek()
         ) and peek.ttype == TokenType.ParenOpen:  # pylint: disable=used-before-assignment
