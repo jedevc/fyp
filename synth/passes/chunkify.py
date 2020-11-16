@@ -3,12 +3,12 @@ from typing import List, Tuple
 from ..parser import (
     ChunkNode,
     DeclarationNode,
+    ProcessingError,
     SpecNode,
     SpecialDeclarationNode,
     TypeNode,
     Visitor,
 )
-from ..parser.error import ProcessingError
 
 from ..chunk import Chunk, ChunkConstraint, Variable
 

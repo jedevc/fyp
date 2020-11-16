@@ -1,7 +1,7 @@
 import argparse
 
 from .parser import Lexer, LexError, ParseError, ProcessingError, Parser
-from .passes import PrinterVisitor, TypeCheckVisitor, ChunkifyVisitor
+from .passes import PrinterVisitor, TypeCheckVisitor, ChunkifyVisitor, BlockifyVisitor
 
 
 def main():
@@ -42,8 +42,16 @@ def main():
 
     try:
         visitor = ChunkifyVisitor()
-        chunk = spec.accept(visitor)
-        print(chunk)
+        chunks = spec.accept(visitor)
+        print(chunks)
+    except ProcessingError as err:
+        print(err.format(stream))
+        return
+
+    try:
+        visitor = BlockifyVisitor(chunks)
+        blocks = spec.accept(visitor)
+        print(blocks)
     except ProcessingError as err:
         print(err.format(stream))
         return
