@@ -4,20 +4,20 @@ from . import token
 from .error import ParseError
 from .token import Token, TokenType
 from .node import (
-    Node,
-    SpecNode,
+    AssignmentNode,
     BlockNode,
     CallNode,
-    AssignmentNode,
-    FunctionNode,
-    VariableNode,
-    ValueNode,
     ChunkNode,
-    TypeNode,
     DeclarationNode,
-    SpecialDeclarationNode,
     Expression,
+    FunctionNode,
+    Node,
+    SpecNode,
+    SpecialDeclarationNode,
     Statement,
+    TypeNode,
+    ValueNode,
+    VariableNode,
 )
 
 

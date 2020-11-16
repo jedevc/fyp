@@ -1,12 +1,12 @@
 from typing import List, Tuple
 
 from ..parser import (
-    Visitor,
-    SpecNode,
     ChunkNode,
-    TypeNode,
     DeclarationNode,
+    SpecNode,
     SpecialDeclarationNode,
+    TypeNode,
+    Visitor,
 )
 from ..parser.error import ProcessingError
 

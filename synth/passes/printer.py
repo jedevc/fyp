@@ -1,17 +1,17 @@
 import sys
 
 from ..parser import (
-    SpecNode,
+    AssignmentNode,
     BlockNode,
     CallNode,
-    AssignmentNode,
-    FunctionNode,
-    VariableNode,
-    ValueNode,
     ChunkNode,
-    TypeNode,
     DeclarationNode,
+    FunctionNode,
+    SpecNode,
     SpecialDeclarationNode,
+    TypeNode,
+    ValueNode,
+    VariableNode,
     Visitor,
 )
 

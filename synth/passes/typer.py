@@ -1,9 +1,9 @@
 from ..parser import (
-    Visitor,
-    SpecNode,
     ChunkNode,
     DeclarationNode,
     ProcessingError,
+    SpecNode,
+    Visitor,
 )
 
 
