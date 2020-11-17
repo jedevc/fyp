@@ -21,12 +21,16 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install black mypy pylint
+          pip install black isort mypy pylint
           if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
-          
+
       - name: Check formatting with black
         run: |
           black --check synth
+          
+      - name: Check import ordering with isort
+        run: |
+          isort --multi-line=3 --trailing-comma --force-grid-wrap=0 --use-parentheses --line-width=88 --check synth
           
       - name: Check typing with mypy
         run: |
