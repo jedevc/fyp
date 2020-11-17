@@ -18,10 +18,12 @@ class Block:
         self.functions.append(function)
 
     @property
-    def code(self):
+    def code(self) -> str:
         parts = []
         parts += [func.code for func in self.functions]
-        parts += [stmt.code for stmt in self.statements]
+        # TODO: we shouldn't allow statements encoded here to be translated to code
+        parts += [stmt.code + ";" for stmt in self.statements]
+        return "\n".join(parts)
 
 
 class FunctionDefinition:
@@ -34,7 +36,7 @@ class FunctionDefinition:
         self.statements.append(statement)
 
     @property
-    def code(self):
+    def code(self) -> str:
         lines = [f"\t{stmt};" for stmt in self.statements]
         block = "{\n" + "\n".join(lines) + "\n}"
         return f"void {self.func}() {block}"
@@ -51,8 +53,8 @@ class Assignment:
         self.value = value
 
     @property
-    def code(self):
-        return f"{self.variable.n} = {self.value.code}"
+    def code(self) -> str:
+        return f"{self.variable} = {self.value.code}"
 
 
 class Call:
@@ -60,7 +62,7 @@ class Call:
         self.block = block
 
     @property
-    def code(self):
+    def code(self) -> str:
         raise RuntimeError("calls cannot be translated directly into code")
 
 
@@ -70,7 +72,7 @@ class Function:
         self.args = args
 
     @property
-    def code(self):
+    def code(self) -> str:
         return f"{self.func}({', '.join(arg.code for arg in self.args)})"
 
 
@@ -81,8 +83,22 @@ class Variable:
         self.address = address
 
     @property
-    def code(self):
+    def code(self) -> str:
         if self.address:
-            return "&" + self.variable.name
+            return "&" + self.variable
         else:
-            return self.variable.name
+            return self.variable
+
+
+class Value:
+    def __init__(self, value: Union[str, int]):
+        self.value = value
+
+    @property
+    def code(self) -> str:
+        if isinstance(self.value, str):
+            return '"' + self.value + '"'
+        elif isinstance(self.value, int):
+            return str(self.value)
+        else:
+            raise RuntimeError("value is of invalid type")

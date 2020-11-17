@@ -94,10 +94,10 @@ class ValueNode(Node):
         super().__init__(start, end)
         self.value = value
 
-    def is_str(self):
+    def is_str(self) -> bool:
         return isinstance(self.value, str)
 
-    def is_int(self):
+    def is_int(self) -> bool:
         return isinstance(self.value, int)
 
     def accept(self, visitor: "Visitor") -> Any:

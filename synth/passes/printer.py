@@ -89,23 +89,24 @@ class PrinterVisitor(Visitor):
         self._print(")")
 
     def visit_value(self, node: ValueNode):
+        val = str(node.value)
         if node.is_str():
-            self._print(quote(node.value))
+            self._print(quote(val))
         elif node.is_int():
-            self._print(node.value)
+            self._print(val)
         else:
             raise RuntimeError()
 
-    def _print(self, msg=""):
+    def _print(self, msg: str = ""):
         print(msg, end="", file=self.output)
 
-    def _println(self, msg=""):
+    def _println(self, msg: str = ""):
         print(msg, file=self.output)
         if self.indent > 0:
             print(self.indent * " ", file=self.output, end="")
 
 
-def quote(s):
+def quote(s: str) -> str:
     if '"' not in s:
         return '"' + s + '"'
     elif "'" not in s:

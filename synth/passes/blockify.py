@@ -12,7 +12,7 @@ from ..parser import (
 )
 
 from ..chunk import Chunk
-from ..block import Block, Assignment, Function, Variable, Call
+from ..block import Block, Assignment, Function, Variable, Call, Value
 
 
 class BlockifyVisitor(Visitor):
@@ -50,8 +50,7 @@ class BlockifyVisitor(Visitor):
         return Function(node.name, [expr.accept(self) for expr in node.arguments])
 
     def visit_value(self, node: ValueNode):
-        # FIXME: no valid return value :(
-        raise NotImplementedError()
+        return Value(node.value)
 
     def visit_variable(self, node: VariableNode) -> Variable:
         return Variable(self._lookup_var(node.target), node.target, node.address)
