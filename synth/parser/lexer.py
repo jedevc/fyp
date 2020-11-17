@@ -22,7 +22,7 @@ SIMPLE_TOKENS = {
     # "/": TokenType.Divide,  # this one is more complex...
 }
 
-RESERVED_WORDS = {"block", "chunk", "call"}
+RESERVED_WORDS = {"block", "chunk", "global", "call"}
 
 
 class Lexer:

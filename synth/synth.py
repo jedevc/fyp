@@ -42,8 +42,8 @@ def main():
 
     try:
         visitor = ChunkifyVisitor()
-        chunks = spec.accept(visitor)
-        print(chunks)
+        spec.accept(visitor)
+        chunks = visitor.result()
     except ProcessingError as err:
         print(err.format(stream))
         return

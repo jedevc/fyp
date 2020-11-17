@@ -8,6 +8,7 @@ from .node import (
     DeclarationNode,
     Expression,
     FunctionNode,
+    GlobalChunkNode,
     Node,
     SpecialDeclarationNode,
     SpecNode,

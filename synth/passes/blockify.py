@@ -1,7 +1,7 @@
 from typing import Dict, List
 
 from ..block import Assignment, Block, Call, Function, Value, Variable
-from ..chunk import Chunk
+from ..chunk import Chunk, ChunkSet
 from ..parser import (
     AssignmentNode,
     BlockNode,
@@ -15,19 +15,17 @@ from ..parser import (
 
 
 class BlockifyVisitor(Visitor):
-    def __init__(self, chunks: List[Chunk]):
+    def __init__(self, chunks: ChunkSet):
         super().__init__()
         self.chunks = chunks
         self.blocks: Dict[str, Block] = {}
 
     def _lookup_var(self, name: str) -> Chunk:
-        # FIXME: this is terribly inefficient
-        for chunk in self.chunks:
-            if chunk.lookup(name):
-                return chunk
-
-        # FIXME: lovely way of panicking :)
-        raise RuntimeError()
+        chunk = self.chunks.find(name)
+        if chunk is None:
+            # FIXME: lovely way of panicking :)
+            raise RuntimeError()
+        return chunk
 
     def visit_spec(self, node: SpecNode) -> List[Block]:
         self.blocks = {block.label: Block() for block in node.blocks}

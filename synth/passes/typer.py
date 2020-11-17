@@ -1,4 +1,11 @@
-from ..parser import ChunkNode, DeclarationNode, ProcessingError, SpecNode, Visitor
+from ..parser import (
+    ChunkNode,
+    DeclarationNode,
+    GlobalChunkNode,
+    ProcessingError,
+    SpecNode,
+    Visitor,
+)
 
 
 class TypeCheckVisitor(Visitor):
@@ -11,6 +18,10 @@ class TypeCheckVisitor(Visitor):
             chunk.accept(self)
 
     def visit_chunk(self, node: ChunkNode):
+        for var in node.variables:
+            var.accept(self)
+
+    def visit_global(self, node: GlobalChunkNode):
         for var in node.variables:
             var.accept(self)
 

@@ -1,9 +1,10 @@
-from typing import List, Tuple
+from typing import Tuple
 
-from ..chunk import Chunk, ChunkConstraint, Variable
+from ..chunk import Chunk, ChunkConstraint, ChunkSet, Variable
 from ..parser import (
     ChunkNode,
     DeclarationNode,
+    GlobalChunkNode,
     ProcessingError,
     SpecialDeclarationNode,
     SpecNode,
@@ -13,13 +14,20 @@ from ..parser import (
 
 
 class ChunkifyVisitor(Visitor):
-    def visit_spec(self, node: SpecNode) -> List[Chunk]:
-        chunks = []
-        for chunk in node.chunks:
-            chunks.append(chunk.accept(self))
-        return chunks
+    def __init__(self):
+        super().__init__()
 
-    def visit_chunk(self, node: ChunkNode) -> Chunk:
+        self.chunks = []
+        self.globals = []
+
+    def result(self) -> ChunkSet:
+        return ChunkSet(self.globals, self.chunks)
+
+    def visit_spec(self, node: SpecNode):
+        for chunk in node.chunks:
+            chunk.accept(self)
+
+    def visit_chunk(self, node: ChunkNode):
         constraint = ChunkConstraint()
         variables = []
         for var in node.variables:
@@ -31,7 +39,21 @@ class ChunkifyVisitor(Visitor):
             else:
                 raise RuntimeError()
 
-        return Chunk(variables, constraint)
+        chunk = Chunk(variables, constraint)
+        self.chunks.append(chunk)
+
+    def visit_global(self, node: GlobalChunkNode):
+        variables = []
+        for var in node.variables:
+            res = var.accept(self)
+            if isinstance(res, Variable):
+                variables.append(res)
+            elif isinstance(res, ChunkConstraint):
+                raise ProcessingError(var, "cannot process global chunk constraints")
+            else:
+                raise RuntimeError()
+
+        self.globals.extend(variables)
 
     def visit_declaration(self, node: DeclarationNode) -> Variable:
         return Variable(node.name, *node.vartype.accept(self))

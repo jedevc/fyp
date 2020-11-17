@@ -58,6 +58,11 @@ class ChunkNode(Node):
         return visitor.visit_chunk(self)
 
 
+class GlobalChunkNode(ChunkNode):
+    def accept(self, visitor: "Visitor") -> Any:
+        return visitor.visit_global(self)
+
+
 class FunctionNode(Node):
     def __init__(
         self, start: Token, end: Token, name: str, arguments: List[Expression]
@@ -143,6 +148,9 @@ class Visitor:
         pass
 
     def visit_chunk(self, node: ChunkNode) -> Any:
+        pass
+
+    def visit_global(self, node: GlobalChunkNode) -> Any:
         pass
 
     def visit_block(self, node: BlockNode) -> Any:

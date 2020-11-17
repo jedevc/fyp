@@ -7,6 +7,7 @@ from ..parser import (
     ChunkNode,
     DeclarationNode,
     FunctionNode,
+    GlobalChunkNode,
     SpecialDeclarationNode,
     SpecNode,
     TypeNode,
@@ -32,6 +33,17 @@ class PrinterVisitor(Visitor):
 
     def visit_chunk(self, node: ChunkNode):
         self._print("chunk ")
+        self.indent += 6
+        for i, var in enumerate(node.variables):
+            var.accept(self)
+            if i != len(node.variables) - 1:
+                self._println(",")
+        self.indent -= 6
+        self._println()
+
+    def visit_global(self, node: GlobalChunkNode):
+        # FIXME: abstract with similar code in visit_chunk
+        self._print("global ")
         self.indent += 6
         for i, var in enumerate(node.variables):
             var.accept(self)

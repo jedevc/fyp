@@ -1,4 +1,4 @@
-from typing import List, Optional
+from typing import List, Optional, Union
 
 
 class Variable:
@@ -34,7 +34,7 @@ class Chunk:
         self.constraint = constraint
 
     @property
-    def variables(self):
+    def variables(self) -> List[Variable]:
         return self._vars
 
     def lookup(self, name: str) -> Optional[Variable]:
@@ -47,19 +47,46 @@ class Chunk:
         else:
             return self._vars[i]
 
-    def add(self, variable: Variable):
-        for i, var in enumerate(self._vars):
-            if not var.name.startswith("_"):
-                continue
+    # def add(self, variable: Variable):
+    #     for i, var in enumerate(self._vars):
+    #         if not var.name.startswith("_"):
+    #             continue
 
-            if var.vtype == variable.vtype:
-                if var.size == variable.size:
-                    self._vars[i] = variable
-                    self._table[variable.name] = i
-                    return
-                elif var.size >= variable.size:
-                    self._vars.insert(i, variable)
-                    self._table[variable.name] = i
-                    return
+    #         if var.vtype == variable.vtype:
+    #             if var.size == variable.size:
+    #                 self._vars[i] = variable
+    #                 self._table[variable.name] = i
+    #                 return
+    #             elif var.size >= variable.size:
+    #                 self._vars.insert(i, variable)
+    #                 self._table[variable.name] = i
+    #                 return
 
-        raise RuntimeError("no space")
+    #     raise RuntimeError("no space")
+
+
+class ChunkSet(Chunk):
+    def __init__(self, globs: List[Variable], chunks: List[Chunk]):
+        super().__init__(globs)
+        self.chunks = chunks
+
+    @property
+    def globals(self) -> List[Variable]:
+        return super().variables
+
+    @property
+    def variables(self) -> List[Variable]:
+        result = list(super().variables)
+        for chunk in self.chunks:
+            result.extend(chunk.variables)
+        return result
+
+    def find(self, name: str) -> Union[Chunk, "ChunkSet", None]:
+        if name in self._table:
+            return self
+
+        for chunk in self.chunks:
+            if chunk.lookup(name):
+                return chunk
+
+        return None
