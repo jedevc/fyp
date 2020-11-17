@@ -1,10 +1,4 @@
-from ..parser import (
-    ChunkNode,
-    DeclarationNode,
-    ProcessingError,
-    SpecNode,
-    Visitor,
-)
+from ..parser import ChunkNode, DeclarationNode, ProcessingError, SpecNode, Visitor
 
 
 class TypeCheckVisitor(Visitor):

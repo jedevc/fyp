@@ -1,7 +1,7 @@
 import itertools
 
-from .token import Token
 from .node import Node
+from .token import Token
 
 
 class LexError(BaseException):

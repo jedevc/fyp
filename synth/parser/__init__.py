@@ -1,10 +1,5 @@
-from .lexer import Lexer
-from .parser import Parser
-
 from .error import LexError, ParseError, ProcessingError
-
-from .token import Token, TokenType
-
+from .lexer import Lexer
 from .node import (
     AssignmentNode,
     BlockNode,
@@ -14,11 +9,13 @@ from .node import (
     Expression,
     FunctionNode,
     Node,
-    SpecNode,
     SpecialDeclarationNode,
+    SpecNode,
     Statement,
     TypeNode,
     ValueNode,
     VariableNode,
     Visitor,
 )
+from .parser import Parser
+from .token import Token, TokenType

@@ -1,7 +1,7 @@
 from typing import Iterable, List, Optional
 
-from .token import Token, TokenType
 from .error import LexError
+from .token import Token, TokenType
 
 SIMPLE_TOKENS = {
     ".": TokenType.Dot,

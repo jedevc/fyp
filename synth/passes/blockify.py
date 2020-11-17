@@ -1,18 +1,17 @@
-from typing import List, Dict
+from typing import Dict, List
 
+from ..block import Assignment, Block, Call, Function, Value, Variable
+from ..chunk import Chunk
 from ..parser import (
-    Visitor,
-    SpecNode,
-    BlockNode,
     AssignmentNode,
+    BlockNode,
+    CallNode,
     FunctionNode,
+    SpecNode,
     ValueNode,
     VariableNode,
-    CallNode,
+    Visitor,
 )
-
-from ..chunk import Chunk
-from ..block import Block, Assignment, Function, Variable, Call, Value
 
 
 class BlockifyVisitor(Visitor):

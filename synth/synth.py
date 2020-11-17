@@ -1,7 +1,7 @@
 import argparse
 
-from .parser import Lexer, LexError, ParseError, ProcessingError, Parser
-from .passes import PrinterVisitor, TypeCheckVisitor, ChunkifyVisitor, BlockifyVisitor
+from .parser import Lexer, LexError, ParseError, Parser, ProcessingError
+from .passes import BlockifyVisitor, ChunkifyVisitor, PrinterVisitor, TypeCheckVisitor
 
 
 def main():

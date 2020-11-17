@@ -2,7 +2,6 @@ from typing import List, Optional, Union
 
 from . import token
 from .error import ParseError
-from .token import Token, TokenType
 from .node import (
     AssignmentNode,
     BlockNode,
@@ -12,13 +11,14 @@ from .node import (
     Expression,
     FunctionNode,
     Node,
-    SpecNode,
     SpecialDeclarationNode,
+    SpecNode,
     Statement,
     TypeNode,
     ValueNode,
     VariableNode,
 )
+from .token import Token, TokenType
 
 
 class NodeFactory:

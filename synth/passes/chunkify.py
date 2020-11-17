@@ -1,16 +1,15 @@
 from typing import List, Tuple
 
+from ..chunk import Chunk, ChunkConstraint, Variable
 from ..parser import (
     ChunkNode,
     DeclarationNode,
     ProcessingError,
-    SpecNode,
     SpecialDeclarationNode,
+    SpecNode,
     TypeNode,
     Visitor,
 )
-
-from ..chunk import Chunk, ChunkConstraint, Variable
 
 
 class ChunkifyVisitor(Visitor):

@@ -4,6 +4,12 @@ set -e
 
 exec 1>&2
 
-pylint synth
-mypy synth
+# formatting
+isort --multi-line=3 --trailing-comma --force-grid-wrap=0 --use-parentheses --line-width=88 --check synth
 black --check synth
+
+# type checking
+mypy synth
+
+# linting
+pylint synth
