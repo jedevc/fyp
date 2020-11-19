@@ -29,16 +29,16 @@ def main():
         return
     print(spec)
 
+    visitor = PrinterVisitor()
+    spec.accept(visitor)
+    print(spec.blocks[0].token_start)
+
     try:
         visitor = TypeCheckVisitor()
         spec.accept(visitor)
     except ProcessingError as err:
         print(err.format(stream))
         return
-
-    visitor = PrinterVisitor()
-    spec.accept(visitor)
-    print(spec.blocks[0].token_start)
 
     try:
         visitor = ChunkifyVisitor()

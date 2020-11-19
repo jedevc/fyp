@@ -1,4 +1,5 @@
 import sys
+from typing import List, Union
 
 from ..parser import (
     AssignmentNode,
@@ -43,24 +44,21 @@ class PrinterVisitor(Visitor):
             block.accept(self)
 
     def visit_chunk(self, node: ChunkNode):
-        self._print("chunk ")
-        self.indent += 6
-        for i, var in enumerate(node.variables):
-            var.accept(self)
-            if i != len(node.variables) - 1:
-                self._println(",")
-        self.indent -= 6
-        self._println()
+        self._visit_vars("chunk", node.variables)
 
     def visit_global(self, node: GlobalChunkNode):
-        # FIXME: abstract with similar code in visit_chunk
-        self._print("global ")
-        self.indent += 6
-        for i, var in enumerate(node.variables):
+        self._visit_vars("global", node.variables)
+
+    def _visit_vars(
+        self, name: str, variables: List[Union[DeclarationNode, SpecialDeclarationNode]]
+    ):
+        self._print(name + " ")
+        self.indent += len(name) + 1
+        for i, var in enumerate(variables):
             var.accept(self)
-            if i != len(node.variables) - 1:
+            if i != len(variables) - 1:
                 self._println(",")
-        self.indent -= 6
+        self.indent -= len(name) + 1
         self._println()
 
     def visit_declaration(self, node: DeclarationNode):

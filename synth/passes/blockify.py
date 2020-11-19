@@ -23,8 +23,8 @@ class BlockifyVisitor(Visitor):
     def _lookup_var(self, name: str) -> Chunk:
         chunk = self.chunks.find(name)
         if chunk is None:
-            # FIXME: lovely way of panicking :)
-            raise RuntimeError()
+            # internal error, we should have applied a type check pass before this
+            raise RuntimeError("variable was not found")
         return chunk
 
     def visit_spec(self, node: SpecNode) -> List[Block]:
