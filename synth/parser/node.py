@@ -65,10 +65,10 @@ class GlobalChunkNode(ChunkNode):
 
 class FunctionNode(Node):
     def __init__(
-        self, start: Token, end: Token, name: str, arguments: List[Expression]
+        self, start: Token, end: Token, target: str, arguments: List[Expression]
     ):
         super().__init__(start, end)
-        self.name = name
+        self.target = target
         self.arguments = arguments
 
     def accept(self, visitor: "Visitor") -> Any:
@@ -85,9 +85,9 @@ class CallNode(Node):
 
 
 class VariableNode(Node):
-    def __init__(self, start: Token, end: Token, target: str, address: bool = False):
+    def __init__(self, start: Token, end: Token, name: str, address: bool = False):
         super().__init__(start, end)
-        self.target = target
+        self.name = name
         self.address = address
 
     def accept(self, visitor: "Visitor") -> Any:
@@ -110,9 +110,9 @@ class ValueNode(Node):
 
 
 class AssignmentNode(Node):
-    def __init__(self, start: Token, end: Token, name: str, expression: Expression):
+    def __init__(self, start: Token, end: Token, target: str, expression: Expression):
         super().__init__(start, end)
-        self.name = name
+        self.target = target
         self.expression = expression
 
     def accept(self, visitor: "Visitor") -> Any:
@@ -121,10 +121,10 @@ class AssignmentNode(Node):
 
 class BlockNode(Node):
     def __init__(
-        self, start: Token, end: Token, label: str, statements: List[Statement]
+        self, start: Token, end: Token, name: str, statements: List[Statement]
     ):
         super().__init__(start, end)
-        self.label = label
+        self.name = name
         self.statements = statements
 
     def accept(self, visitor: "Visitor") -> Any:

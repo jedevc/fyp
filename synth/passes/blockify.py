@@ -28,7 +28,7 @@ class BlockifyVisitor(Visitor):
         return chunk
 
     def visit_spec(self, node: SpecNode) -> List[Block]:
-        self.blocks = {block.label: Block() for block in node.blocks}
+        self.blocks = {block.name: Block() for block in node.blocks}
         for block in node.blocks:
             block.accept(self)
         return list(self.blocks.values())
@@ -36,21 +36,21 @@ class BlockifyVisitor(Visitor):
     def visit_block(self, node: BlockNode):
         for statement in node.statements:
             stmt = statement.accept(self)
-            self.blocks[node.label].add_statement(stmt)
+            self.blocks[node.name].add_statement(stmt)
 
     def visit_assignment(self, node: AssignmentNode) -> Assignment:
         return Assignment(
-            self._lookup_var(node.name), node.name, node.expression.accept(self)
+            self._lookup_var(node.target), node.target, node.expression.accept(self)
         )
 
     def visit_function(self, node: FunctionNode) -> Function:
-        return Function(node.name, [expr.accept(self) for expr in node.arguments])
+        return Function(node.target, [expr.accept(self) for expr in node.arguments])
 
     def visit_value(self, node: ValueNode):
         return Value(node.value)
 
     def visit_variable(self, node: VariableNode) -> Variable:
-        return Variable(self._lookup_var(node.target), node.target, node.address)
+        return Variable(self._lookup_var(node.name), node.name, node.address)
 
     def visit_call(self, node: CallNode) -> Call:
         return Call(self.blocks[node.target])

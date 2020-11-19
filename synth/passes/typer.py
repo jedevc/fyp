@@ -48,11 +48,11 @@ class TypeCheckVisitor(Visitor):
             statement.accept(self)
 
     def visit_assignment(self, node: AssignmentNode):
-        if node.name not in self.vars:
-            raise ProcessingError(node, f"variable {node.name} has not been declared")
+        if node.target not in self.vars:
+            raise ProcessingError(node, f"variable {node.target} has not been declared")
 
         node.expression.accept(self)
 
     def visit_variable(self, node: VariableNode):
-        if node.target not in self.vars:
-            raise ProcessingError(node, f"variable {node.target} has not been declared")
+        if node.name not in self.vars:
+            raise ProcessingError(node, f"variable {node.name} has not been declared")

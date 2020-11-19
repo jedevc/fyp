@@ -66,7 +66,7 @@ class PrinterVisitor(Visitor):
 
     def visit_block(self, node: BlockNode):
         self._print("block ")
-        self._print(node.label)
+        self._print(node.name)
         self.indent += 4
         self._println(" {")
         for i, statement in enumerate(node.statements):
@@ -78,7 +78,7 @@ class PrinterVisitor(Visitor):
         self._println("}")
 
     def visit_assignment(self, node: AssignmentNode):
-        self._print(node.name)
+        self._print(node.target)
         self._print(" = ")
         node.expression.accept(self)
 
@@ -89,10 +89,10 @@ class PrinterVisitor(Visitor):
     def visit_variable(self, node: VariableNode):
         if node.address:
             self._print("&")
-        self._print(node.target)
+        self._print(node.name)
 
     def visit_function(self, node: FunctionNode):
-        self._print(node.name)
+        self._print(node.target)
         self._print("(")
         for i, arg in enumerate(node.arguments):
             arg.accept(self)
