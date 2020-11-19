@@ -5,6 +5,10 @@ from .token import Token
 
 
 class LexError(BaseException):
+    """
+    Indicates an error during tokenisation.
+    """
+
     def __init__(self, start: int, end: int, msg: str):
         super().__init__()
         self.location = ErrorLocation(start, end)
@@ -21,6 +25,10 @@ class LexError(BaseException):
 
 
 class ParseError(BaseException):
+    """
+    Indicates an error during parsing.
+    """
+
     def __init__(self, token: Token, msg: str):
         super().__init__()
         self.location = ErrorLocation(token.position - token.length, token.position - 1)
@@ -37,6 +45,10 @@ class ParseError(BaseException):
 
 
 class ProcessingError(BaseException):
+    """
+    Indicates an error during later processing phases.
+    """
+
     def __init__(self, node: Node, msg: str):
         super().__init__()
         start = node.token_start.position - node.token_start.length
@@ -55,12 +67,24 @@ class ProcessingError(BaseException):
 
 
 class ErrorLocation:
+    """
+    Utility class to represent the location of an error.
+
+    Additionally, it provides a sophisticated formatting method for neatly
+    formatting errors.
+    """
+
     def __init__(self, start: int, end: int):
         assert start <= end
         self.start = start
         self.end = end
 
     def format(self, stream):
+        """
+        Format a nice printout for the error location given the original
+        stream used to parse everything.
+        """
+
         # FIXME: we only *need* one iteration here
         start_line = 1
         start_column = 1

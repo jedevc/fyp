@@ -60,6 +60,10 @@ PRINTABLE_NAMES = {
 
 
 class Token:
+    """
+    The atomic building-block of the underlying code.
+    """
+
     def __init__(self, position: int, length: int, ttype: TokenType, lexeme: str = ""):
         self.position = position
         self.length = length

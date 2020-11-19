@@ -40,6 +40,11 @@ class NodeFactory:
 
 
 class Parser:
+    """
+    Producer for an Abstract Syntax Tree given a valid well-structured series
+    of tokens.
+    """
+
     def __init__(self, tokens: List[Token]):
         assert len(tokens) >= 0
 
@@ -52,11 +57,22 @@ class Parser:
         self.factory = NodeFactory(self)
 
     def parse(self) -> Node:
+        """
+        Perform the main parse operation.
+
+        This is the only method that should be externally invoked by the
+        caller on this object.
+        """
+
         self.advance()
 
         return self.spec()
 
     def spec(self) -> SpecNode:
+        """
+        Parse the entire specification.
+        """
+
         self.factory.node_enter()
 
         chunks = []
@@ -69,7 +85,7 @@ class Parser:
 
             assert self.current is not None
             if self.current.ttype != TokenType.Reserved:
-                raise ParseError(self.current, "expected opening")
+                raise ParseError(self.current, "expected opening statement")
 
             if self.current.lexeme == "chunk":
                 chunks.append(self.chunk())
@@ -83,6 +99,10 @@ class Parser:
         return self.factory.node_exit(SpecNode, chunks, blocks)
 
     def chunk(self) -> ChunkNode:
+        """
+        Parse a chunk of variables.
+        """
+
         self.factory.node_enter()
 
         self.expect(TokenType.Reserved, "chunk")
@@ -95,6 +115,10 @@ class Parser:
         return self.factory.node_exit(ChunkNode, variables)
 
     def global_chunk(self) -> GlobalChunkNode:
+        """
+        Parse a chunk of global variables.
+        """
+
         self.factory.node_enter()
 
         self.expect(TokenType.Reserved, "global")
@@ -107,6 +131,10 @@ class Parser:
         return self.factory.node_exit(GlobalChunkNode, variables)
 
     def block(self) -> BlockNode:
+        """
+        Parse a block of statements.
+        """
+
         self.factory.node_enter()
 
         self.expect(TokenType.Reserved, "block")
@@ -142,6 +170,10 @@ class Parser:
         return self.factory.node_exit(BlockNode, block_name, statements)
 
     def expression(self) -> Expression:
+        """
+        Parse an expression.
+        """
+
         self.factory.node_enter()
 
         if self.accept(TokenType.String):
@@ -160,6 +192,10 @@ class Parser:
             return self.variable()
 
     def function(self) -> FunctionNode:
+        """
+        Parse a function call.
+        """
+
         self.factory.node_enter()
 
         name = self.expect(TokenType.Name)
@@ -177,6 +213,10 @@ class Parser:
         return self.factory.node_exit(FunctionNode, name.lexeme, args)
 
     def variable(self) -> VariableNode:
+        """
+        Parse a variable reference.
+        """
+
         self.factory.node_enter()
 
         addressed = self.accept(TokenType.AddressOf) is not None
@@ -184,6 +224,10 @@ class Parser:
         return self.factory.node_exit(VariableNode, name.lexeme, addressed)
 
     def declaration(self) -> Union[DeclarationNode, SpecialDeclarationNode]:
+        """
+        Parse a variable declaration.
+        """
+
         self.factory.node_enter()
 
         var = self.expect(TokenType.Name)
@@ -196,6 +240,10 @@ class Parser:
         return self.factory.node_exit(DeclarationNode, var.lexeme, var_type)
 
     def declaration_type(self) -> TypeNode:
+        """
+        Parse the type portion of a variable declaration.
+        """
+
         self.factory.node_enter()
 
         base = self.expect(TokenType.Name)
@@ -208,6 +256,14 @@ class Parser:
         return self.factory.node_exit(TypeNode, base.lexeme)
 
     def end_of_line(self, after: Optional[str] = None):
+        """
+        Assert (and consume) the end of a line.
+
+        This is a separate function, because:
+        1. EOL can be signified by a Newline token or an EOF token
+        2. Error handling is very generic
+        """
+
         if self.accept(TokenType.Newline):
             return
         elif self.accept(TokenType.EOF):
@@ -229,6 +285,14 @@ class Parser:
         lexeme: Optional[str] = None,
         fail_msg: Optional[str] = None,
     ) -> Token:
+        """
+        Attempt to consume a token of the provided type (and optional lexeme).
+
+        This function *always* succeeds, or raises an exception. This
+        exception should not be caught, for a non-raising equivalent of this
+        function see accept().
+        """
+
         assert self.current is not None
 
         result = self.accept(ttype, lexeme)
@@ -245,6 +309,10 @@ class Parser:
         return result
 
     def accept(self, ttype: TokenType, lexeme: Optional[str] = None) -> Optional[Token]:
+        """
+        Attempt to consume a token of the provided type (and optional lexeme).
+        """
+
         assert self.current is not None
 
         if self.current.ttype == ttype:
@@ -255,14 +323,23 @@ class Parser:
         return None
 
     def peek(self) -> Optional[Token]:
-        return self.peekn(1)
+        """
+        Lookahead to the next available token.
 
-    def peekn(self, n) -> Optional[Token]:
-        if self.pos + n < len(self.tokens):
-            return self.tokens[self.pos + n]
-        return None
+        This is used to prevent requiring backtracking, since the grammar is
+        LL(1) we can just use lookahead.
+        """
+
+        if self.pos + 1 < len(self.tokens):
+            return self.tokens[self.pos + 1]
+        else:
+            return None
 
     def advance(self):
+        """
+        Move to the next token.
+        """
+
         self.pos += 1
         self.last = self.current
         if self.pos < len(self.tokens):

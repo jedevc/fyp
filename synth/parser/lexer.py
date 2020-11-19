@@ -26,6 +26,10 @@ RESERVED_WORDS = {"block", "chunk", "global", "call"}
 
 
 class Lexer:
+    """
+    Producer for tokens, given a valid and lexable program.
+    """
+
     def __init__(self, stream: str):
         self.stream = stream
 
@@ -35,6 +39,11 @@ class Lexer:
         self._advance()
 
     def tokens(self) -> Iterable[Token]:
+        """
+        Utility method for extracting tokens performing a number of helpful
+        transformations from the raw token() method.
+        """
+
         last = None
         while True:
             token = self.token()
@@ -55,9 +64,23 @@ class Lexer:
                 break
 
     def tokens_list(self) -> List[Token]:
+        """
+        Utility method for extracting tokens to a list.
+        """
+
         return list(self.tokens())
 
     def token(self) -> Optional[Token]:
+        """
+        Read a single token, consuming the input.
+
+        If None is returned, this indicates a token was not created, however,
+        some of the input stream should have been consumed. In this case, the
+        consumer should simply skip to the next token. Generally, this is
+        performed as an optimization to prevent extraneous loops or recursion
+        within this function.
+        """
+
         if self.ch is None:
             return Token(self.n, 1, TokenType.EOF)
         elif self.ch == "\n":
@@ -76,10 +99,12 @@ class Lexer:
         elif self.ch == "/":
             self._advance()
             if self.ch == "/":
+                # single line comment
                 while self.ch is not None and self.ch != "\n":
                     self._advance()
                 return self.token()
             elif self.ch == "*":
+                # multi-line comment
                 start = self.n
                 while True:
                     self._advance()
@@ -93,6 +118,7 @@ class Lexer:
 
                 return None
             else:
+                # just a division operator
                 return Token(self.n, 1, TokenType.Divide)
         elif self.ch == "'" or self.ch == '"':
             s = self._read_str()

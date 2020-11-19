@@ -18,6 +18,17 @@ from ..parser import (
 
 
 class PrinterVisitor(Visitor):
+    """
+    A pretty-printer for the AST, used to generate an equivalent
+    representation of the source code.
+
+    This visitor should preserve the property:
+        parse(print(parse(x))) = parse(x)
+
+    This is mostly used for debugging, and to gain insight into how the lexer
+    and parser are interpreting the provided code.
+    """
+
     def __init__(self, output=sys.stdout):
         super().__init__()
         self.output = output
