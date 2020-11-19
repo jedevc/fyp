@@ -147,6 +147,9 @@ class Visitor:
     def __init__(self):
         pass
 
+    def visit_spec(self, node: SpecNode) -> Any:
+        pass
+
     def visit_chunk(self, node: ChunkNode) -> Any:
         pass
 
@@ -154,6 +157,15 @@ class Visitor:
         pass
 
     def visit_block(self, node: BlockNode) -> Any:
+        pass
+
+    def visit_declaration(self, node: DeclarationNode) -> Any:
+        pass
+
+    def visit_special_declaration(self, node: SpecialDeclarationNode) -> Any:
+        pass
+
+    def visit_type(self, node: TypeNode) -> Any:
         pass
 
     def visit_assignment(self, node: AssignmentNode) -> Any:
@@ -171,14 +183,54 @@ class Visitor:
     def visit_call(self, node: CallNode) -> Any:
         pass
 
-    def visit_type(self, node: TypeNode) -> Any:
-        pass
+
+class TraversalVisitor(Visitor):
+    """
+    A basic visitor to traverse all the nodes in the AST.
+
+    This is indended to be easily overridden, so as to more easily reach the
+    nodes of interest.
+    """
+
+    def visit_spec(self, node: SpecNode) -> Any:
+        for chunk in node.chunks:
+            chunk.accept(self)
+        for block in node.blocks:
+            block.accept(self)
+
+    def visit_chunk(self, node: ChunkNode) -> Any:
+        for var in node.variables:
+            var.accept(self)
+
+    def visit_global(self, node: GlobalChunkNode) -> Any:
+        for var in node.variables:
+            var.accept(self)
+
+    def visit_block(self, node: BlockNode) -> Any:
+        for stmt in node.statements:
+            stmt.accept(self)
 
     def visit_declaration(self, node: DeclarationNode) -> Any:
-        pass
+        node.vartype.accept(self)
 
     def visit_special_declaration(self, node: SpecialDeclarationNode) -> Any:
         pass
 
-    def visit_spec(self, node: SpecNode) -> Any:
+    def visit_type(self, node: TypeNode) -> Any:
+        pass
+
+    def visit_assignment(self, node: AssignmentNode) -> Any:
+        node.expression.accept(self)
+
+    def visit_variable(self, node: VariableNode) -> Any:
+        pass
+
+    def visit_function(self, node: FunctionNode) -> Any:
+        for arg in node.arguments:
+            arg.accept(self)
+
+    def visit_value(self, node: ValueNode) -> Any:
+        pass
+
+    def visit_call(self, node: CallNode) -> Any:
         pass

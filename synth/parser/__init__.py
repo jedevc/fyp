@@ -13,6 +13,7 @@ from .node import (
     SpecialDeclarationNode,
     SpecNode,
     Statement,
+    TraversalVisitor,
     TypeNode,
     ValueNode,
     VariableNode,
