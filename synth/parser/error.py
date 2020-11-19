@@ -1,5 +1,3 @@
-import itertools
-
 from .node import Node
 from .token import Token
 
@@ -85,37 +83,60 @@ class ErrorLocation:
         stream used to parse everything.
         """
 
-        # FIXME: we only *need* one iteration here
+        # track line-column positions of the token
         start_line = 1
         start_column = 1
-        for i in range(self.start):
-            if stream[i] == "\n":
-                start_column = 1
-                start_line += 1
-            else:
-                start_column += 1
         end_line = 1
         end_column = 1
-        for i in range(self.end):
-            if stream[i] == "\n":
-                end_column = 1
-                end_line += 1
+
+        # track lines
+        count = 1
+        pos = 0
+
+        lines = []
+        i = 0
+        for i, ch in enumerate(stream):
+            if ch == "\n":
+                lines.append((count, stream[pos:i]))
+                pos = i + 1
+                count += 1
+
+                if i < self.end:
+                    end_column = 1
+                    end_line += 1
+                if i < self.start:
+                    start_column = 1
+                    start_line += 1
             else:
-                end_column += 1
-
-        lines = list(zip(itertools.count(), stream.split("\n")))
-
-        CONTEXT = 3
+                if i < self.end:
+                    end_column += 1
+                if i < self.start:
+                    start_column += 1
+        if pos != 0:
+            # left-over data
+            lines.append((count, stream[pos:i]))
 
         parts = []
-        for i, line in lines[max(0, end_line - CONTEXT) : end_line]:
+        CONTEXT = 2
+
+        # before context
+        before_ctx = max(0, end_line - CONTEXT - 1)
+        for i, line in lines[before_ctx:end_line]:
             prefix = f"  {str(i).rjust(6)}  |  "
             parts.append(f"{prefix}{line}")
 
+        # indicator
         if start_line == end_line:
             parts.append(
                 f"{len(prefix) * ' '}{(start_column - 1) * ' '}{(end_column - start_column) * '-'}^"
             )
         else:
             parts.append(f"{len(prefix) * ' '}{(end_column - 1) * '-'}^")
+
+        # after context
+        after_ctx = end_line + CONTEXT
+        for i, line in lines[end_line:after_ctx]:
+            prefix = f"  {str(i).rjust(6)}  |  "
+            parts.append(f"{prefix}{line}")
+
         return "\n".join(parts)
