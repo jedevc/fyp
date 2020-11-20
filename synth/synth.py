@@ -1,64 +1,57 @@
 import argparse
+import sys
+from typing import Optional
 
 from .interpret import Interpreter
 from .parser import Lexer, LexError, ParseError, Parser, ProcessingError
 from .passes import BlockifyVisitor, ChunkifyVisitor, PrinterVisitor, TypeCheckVisitor
 
 
-def main():
-    parser = argparse.ArgumentParser()
-    parser.add_argument("infile", type=argparse.FileType("r"))
-    args = parser.parse_args()
+def main() -> Optional[int]:
+    arg_parser = argparse.ArgumentParser()
+    arg_parser.add_argument("infile", type=argparse.FileType("r"))
+    arg_parser.add_argument("outfile", type=argparse.FileType("w"))
+    arg_parser.add_argument(
+        "--debug", choices=["print"], help="Perform debugging actions"
+    )
+    args = arg_parser.parse_args()
 
     stream = args.infile.read()
 
-    lex = Lexer(stream)
     try:
+        lex = Lexer(stream)
         tokens = lex.tokens_list()
-    except LexError as err:
-        print(err.format(stream))
-        return
 
-    parser = Parser(tokens)
-    try:
+        parser = Parser(tokens)
         spec = parser.parse()
-    except ParseError as err:
-        print(err.format(stream))
-        return
+    except (LexError, ParseError) as err:
+        print(err.format(stream), file=sys.stderr)
+        return 1
 
-    visitor = PrinterVisitor()
-    spec.accept(visitor)
-    print("-" * 50)
-
-    try:
-        visitor = TypeCheckVisitor()
+    if args.debug == "print":
+        visitor = PrinterVisitor(sys.stderr)
         spec.accept(visitor)
-    except ProcessingError as err:
-        print(err.format(stream))
-        return
 
     try:
-        visitor = ChunkifyVisitor()
-        spec.accept(visitor)
-        chunks = visitor.result()
+        type_visitor = TypeCheckVisitor()
+        spec.accept(type_visitor)
     except ProcessingError as err:
-        print(err.format(stream))
-        return
+        print(err.format(stream), file=sys.stderr)
+        return 1
 
     try:
-        visitor = BlockifyVisitor(chunks)
-        blocks = spec.accept(visitor)
+        chunk_visitor = ChunkifyVisitor()
+        spec.accept(chunk_visitor)
+        chunks = chunk_visitor.result()
+
+        block_visitor = BlockifyVisitor(chunks)
+        blocks = spec.accept(block_visitor)
     except ProcessingError as err:
-        print(err.format(stream))
-        return
+        print(err.format(stream), file=sys.stderr)
+        return 1
 
     inter = Interpreter(blocks, chunks)
     prog = inter.program()
-    print(prog.code)
+    print(prog.code, file=args.outfile)
 
-    # print(chunk)
-    # chunk[-1].add(Variable("test", "int", 1))
-    # print(str(chunk[-1].constraint))
-
-    # for var in chunk[-1].variables:
-    #     print(var.name)
+    return 0
