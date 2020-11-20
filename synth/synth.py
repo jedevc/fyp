@@ -1,6 +1,6 @@
 import argparse
 import sys
-from typing import Optional
+from typing import Optional, TextIO
 
 from .interpret import Interpreter
 from .parser import Lexer, LexError, ParseError, Parser, ProcessingError
@@ -19,39 +19,35 @@ def main() -> Optional[int]:
     stream = args.infile.read()
 
     try:
-        lex = Lexer(stream)
-        tokens = lex.tokens_list()
-
-        parser = Parser(tokens)
-        spec = parser.parse()
-    except (LexError, ParseError) as err:
+        synthesize(stream, args.outfile, args.debug)
+    except (LexError, ParseError, ProcessingError) as err:
         print(err.format(stream), file=sys.stderr)
         return 1
 
-    if args.debug == "print":
+    return 0
+
+
+def synthesize(stream: str, output: TextIO, debug: str = ""):
+    lex = Lexer(stream)
+    tokens = lex.tokens_list()
+
+    parser = Parser(tokens)
+    spec = parser.parse()
+
+    if debug == "print":
         visitor = PrinterVisitor(sys.stderr)
         spec.accept(visitor)
 
-    try:
-        type_visitor = TypeCheckVisitor()
-        spec.accept(type_visitor)
-    except ProcessingError as err:
-        print(err.format(stream), file=sys.stderr)
-        return 1
+    type_visitor = TypeCheckVisitor()
+    spec.accept(type_visitor)
 
-    try:
-        chunk_visitor = ChunkifyVisitor()
-        spec.accept(chunk_visitor)
-        chunks = chunk_visitor.result()
+    chunk_visitor = ChunkifyVisitor()
+    spec.accept(chunk_visitor)
+    chunks = chunk_visitor.result()
 
-        block_visitor = BlockifyVisitor(chunks)
-        blocks = spec.accept(block_visitor)
-    except ProcessingError as err:
-        print(err.format(stream), file=sys.stderr)
-        return 1
+    block_visitor = BlockifyVisitor(chunks)
+    blocks = spec.accept(block_visitor)
 
     inter = Interpreter(blocks, chunks)
     prog = inter.program()
-    print(prog.code, file=args.outfile)
-
-    return 0
+    print(prog.code, file=output)
