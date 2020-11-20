@@ -7,9 +7,10 @@ Statement = Union["Assignment", "Call", Expression]
 
 
 class Block:
-    def __init__(self):
-        self.statements = []
-        self.functions = []
+    def __init__(self, name: str):
+        self.name = name
+        self.statements: List[Statement] = []
+        self.functions: List[FunctionDefinition] = []
 
     def add_statement(self, statement: Statement):
         self.statements.append(statement)
@@ -19,10 +20,9 @@ class Block:
 
     @property
     def code(self) -> str:
-        parts = []
-        parts += [func.code for func in self.functions]
-        # TODO: we shouldn't allow statements encoded here to be translated to code
-        parts += [stmt.code + ";" for stmt in self.statements]
+        assert len(self.statements) == 0
+
+        parts = [func.code for func in self.functions]
         return "\n".join(parts)
 
 
@@ -37,7 +37,7 @@ class FunctionDefinition:
 
     @property
     def code(self) -> str:
-        lines = [f"\t{stmt};" for stmt in self.statements]
+        lines = [f"\t{stmt.code};" for stmt in self.statements]
         block = "{\n" + "\n".join(lines) + "\n}"
         return f"void {self.func}() {block}"
 

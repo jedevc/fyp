@@ -28,7 +28,7 @@ class BlockifyVisitor(Visitor):
         return chunk
 
     def visit_spec(self, node: SpecNode) -> List[Block]:
-        self.blocks = {block.name: Block() for block in node.blocks}
+        self.blocks = {block.name: Block(block.name) for block in node.blocks}
         for block in node.blocks:
             block.accept(self)
         return list(self.blocks.values())

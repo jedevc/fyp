@@ -1,5 +1,6 @@
 import argparse
 
+from .interpret import Interpreter
 from .parser import Lexer, LexError, ParseError, Parser, ProcessingError
 from .passes import BlockifyVisitor, ChunkifyVisitor, PrinterVisitor, TypeCheckVisitor
 
@@ -18,20 +19,16 @@ def main():
         print(err.format(stream))
         return
 
-    for token in tokens:
-        print(str(token))
-
     parser = Parser(tokens)
     try:
         spec = parser.parse()
     except ParseError as err:
         print(err.format(stream))
         return
-    print(spec)
 
     visitor = PrinterVisitor()
     spec.accept(visitor)
-    print(spec.blocks[0].token_start)
+    print("-" * 50)
 
     try:
         visitor = TypeCheckVisitor()
@@ -51,10 +48,14 @@ def main():
     try:
         visitor = BlockifyVisitor(chunks)
         blocks = spec.accept(visitor)
-        print(blocks)
     except ProcessingError as err:
         print(err.format(stream))
         return
+
+    inter = Interpreter(blocks, chunks)
+    block = inter.block()
+    print(chunks.code)
+    print(block.code)
 
     # print(chunk)
     # chunk[-1].add(Variable("test", "int", 1))

@@ -7,6 +7,13 @@ class Variable:
         self.vtype = vtype
         self.size = size
 
+    @property
+    def code(self) -> str:
+        if self.size > 1:
+            return f"{self.vtype} {self.name}"
+        else:
+            return f"{self.vtype} {self.name}[{self.size}]"
+
 
 class ChunkConstraint:
     def __init__(self, eof=False):
@@ -46,6 +53,10 @@ class Chunk:
             return None
         else:
             return self._vars[i]
+
+    @property
+    def code(self) -> str:
+        return "\n".join(f"{var.code};" for var in self._vars)
 
     # def add(self, variable: Variable):
     #     for i, var in enumerate(self._vars):
@@ -90,3 +101,7 @@ class ChunkSet(Chunk):
                 return chunk
 
         return None
+
+    @property
+    def code(self) -> str:
+        return "\n".join(chunk.code for chunk in self.chunks)
