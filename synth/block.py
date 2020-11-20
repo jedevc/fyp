@@ -10,20 +10,9 @@ class Block:
     def __init__(self, name: str):
         self.name = name
         self.statements: List[Statement] = []
-        self.functions: List[FunctionDefinition] = []
 
     def add_statement(self, statement: Statement):
         self.statements.append(statement)
-
-    def add_function(self, function: "FunctionDefinition"):
-        self.functions.append(function)
-
-    @property
-    def code(self) -> str:
-        assert len(self.statements) == 0
-
-        parts = [func.code for func in self.functions]
-        return "\n".join(parts)
 
 
 class FunctionDefinition:
@@ -54,7 +43,7 @@ class Assignment:
 
     @property
     def code(self) -> str:
-        return f"{self.variable} = {self.value.code}"
+        return f"{self.variable.name} = {self.value.code}"
 
 
 class Call:

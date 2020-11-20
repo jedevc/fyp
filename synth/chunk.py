@@ -10,9 +10,9 @@ class Variable:
     @property
     def code(self) -> str:
         if self.size > 1:
-            return f"{self.vtype} {self.name}"
-        else:
             return f"{self.vtype} {self.name}[{self.size}]"
+        else:
+            return f"{self.vtype} {self.name}"
 
 
 class ChunkConstraint:
@@ -54,10 +54,6 @@ class Chunk:
         else:
             return self._vars[i]
 
-    @property
-    def code(self) -> str:
-        return "\n".join(f"{var.code};" for var in self._vars)
-
     # def add(self, variable: Variable):
     #     for i, var in enumerate(self._vars):
     #         if not var.name.startswith("_"):
@@ -87,7 +83,7 @@ class ChunkSet(Chunk):
 
     @property
     def variables(self) -> List[Variable]:
-        result = list(super().variables)
+        result = []
         for chunk in self.chunks:
             result.extend(chunk.variables)
         return result
@@ -101,7 +97,3 @@ class ChunkSet(Chunk):
                 return chunk
 
         return None
-
-    @property
-    def code(self) -> str:
-        return "\n".join(chunk.code for chunk in self.chunks)

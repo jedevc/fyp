@@ -53,9 +53,8 @@ def main():
         return
 
     inter = Interpreter(blocks, chunks)
-    block = inter.block()
-    print(chunks.code)
-    print(block.code)
+    prog = inter.program()
+    print(prog.code)
 
     # print(chunk)
     # chunk[-1].add(Variable("test", "int", 1))
