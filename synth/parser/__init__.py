@@ -1,4 +1,4 @@
-from .error import LexError, ParseError, ProcessingError
+from .error import LexError, ParseError, ProcessingError, SynthError
 from .lexer import Lexer
 from .node import (
     AssignmentNode,

@@ -3,7 +3,7 @@ import sys
 from typing import Optional, TextIO
 
 from .interpret import Interpreter
-from .parser import Lexer, LexError, ParseError, Parser, ProcessingError
+from .parser import Lexer, Parser, SynthError
 from .passes import BlockifyVisitor, ChunkifyVisitor, PrinterVisitor, TypeCheckVisitor
 
 
@@ -20,7 +20,7 @@ def main() -> Optional[int]:
 
     try:
         synthesize(stream, args.outfile, args.debug)
-    except (LexError, ParseError, ProcessingError) as err:
+    except SynthError as err:
         print(err.format(stream), file=sys.stderr)
         return 1
 

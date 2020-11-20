@@ -2,7 +2,12 @@ from .node import Node
 from .token import Token
 
 
-class LexError(BaseException):
+class SynthError(BaseException):
+    def format(self, stream: str):
+        raise NotImplementedError()
+
+
+class LexError(SynthError):
     """
     Indicates an error during tokenisation.
     """
@@ -12,7 +17,7 @@ class LexError(BaseException):
         self.location = ErrorLocation(start, end)
         self.msg = msg
 
-    def format(self, stream):
+    def format(self, stream: str):
         return "\n".join(
             [
                 f"Token error: {self.msg}",
@@ -22,7 +27,7 @@ class LexError(BaseException):
         )
 
 
-class ParseError(BaseException):
+class ParseError(SynthError):
     """
     Indicates an error during parsing.
     """
@@ -32,7 +37,7 @@ class ParseError(BaseException):
         self.location = ErrorLocation(token.position - token.length, token.position - 1)
         self.msg = msg
 
-    def format(self, stream):
+    def format(self, stream: str):
         return "\n".join(
             [
                 f"Parse error: {self.msg}",
@@ -42,7 +47,7 @@ class ParseError(BaseException):
         )
 
 
-class ProcessingError(BaseException):
+class ProcessingError(SynthError):
     """
     Indicates an error during later processing phases.
     """
@@ -54,7 +59,7 @@ class ProcessingError(BaseException):
         self.location = ErrorLocation(start, end)
         self.msg = msg
 
-    def format(self, stream):
+    def format(self, stream: str):
         return "\n".join(
             [
                 f"Processing error: {self.msg}",
@@ -77,7 +82,7 @@ class ErrorLocation:
         self.start = start
         self.end = end
 
-    def format(self, stream):
+    def format(self, stream: str):
         """
         Format a nice printout for the error location given the original
         stream used to parse everything.
