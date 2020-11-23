@@ -7,8 +7,8 @@ from ..parser import (
     CallNode,
     ChunkNode,
     DeclarationNode,
+    ExternChunkNode,
     FunctionNode,
-    GlobalChunkNode,
     SpecialDeclarationNode,
     SpecNode,
     TypeNode,
@@ -46,8 +46,8 @@ class PrinterVisitor(Visitor):
     def visit_chunk(self, node: ChunkNode):
         self._visit_vars("chunk", node.variables)
 
-    def visit_global(self, node: GlobalChunkNode):
-        self._visit_vars("global", node.variables)
+    def visit_extern(self, node: ExternChunkNode):
+        self._visit_vars("extern", node.variables)
 
     def _visit_vars(
         self, name: str, variables: List[Union[DeclarationNode, SpecialDeclarationNode]]

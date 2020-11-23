@@ -2,7 +2,7 @@ from ..chunk import Chunk, ChunkConstraint, ChunkSet, Variable
 from ..parser import (
     ChunkNode,
     DeclarationNode,
-    GlobalChunkNode,
+    ExternChunkNode,
     ProcessingError,
     SpecialDeclarationNode,
     SpecNode,
@@ -15,10 +15,10 @@ class ChunkifyVisitor(Visitor):
         super().__init__()
 
         self.chunks = []
-        self.globals = []
+        self.externs = []
 
     def result(self) -> ChunkSet:
-        return ChunkSet(self.globals, self.chunks)
+        return ChunkSet(self.externs, self.chunks)
 
     def visit_spec(self, node: SpecNode):
         for chunk in node.chunks:
@@ -39,18 +39,18 @@ class ChunkifyVisitor(Visitor):
         chunk = Chunk(variables, constraint)
         self.chunks.append(chunk)
 
-    def visit_global(self, node: GlobalChunkNode):
+    def visit_extern(self, node: ExternChunkNode):
         variables = []
         for var in node.variables:
             res = var.accept(self)
             if isinstance(res, Variable):
                 variables.append(res)
             elif isinstance(res, ChunkConstraint):
-                raise ProcessingError(var, "cannot process global chunk constraints")
+                raise ProcessingError(var, "cannot process extern chunk constraints")
             else:
                 raise RuntimeError()
 
-        self.globals.extend(variables)
+        self.externs.extend(variables)
 
     def visit_declaration(self, node: DeclarationNode) -> Variable:
         return Variable(node.name, node.vartype.base, node.vartype.size)

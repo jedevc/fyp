@@ -9,8 +9,8 @@ from .node import (
     ChunkNode,
     DeclarationNode,
     Expression,
+    ExternChunkNode,
     FunctionNode,
-    GlobalChunkNode,
     Node,
     SpecialDeclarationNode,
     SpecNode,
@@ -89,8 +89,8 @@ class Parser:
 
             if self.current.lexeme == "chunk":
                 chunks.append(self.chunk())
-            elif self.current.lexeme == "global":
-                chunks.append(self.global_chunk())
+            elif self.current.lexeme == "extern":
+                chunks.append(self.extern_chunk())
             elif self.current.lexeme == "block":
                 blocks.append(self.block())
             else:
@@ -114,21 +114,21 @@ class Parser:
 
         return self.factory.node_exit(ChunkNode, variables)
 
-    def global_chunk(self) -> GlobalChunkNode:
+    def extern_chunk(self) -> ExternChunkNode:
         """
-        Parse a chunk of global variables.
+        Parse a chunk of extern variables.
         """
 
         self.factory.node_enter()
 
-        self.expect(TokenType.Reserved, "global")
+        self.expect(TokenType.Reserved, "extern")
         variables = [self.declaration()]
         while self.accept(TokenType.Comma):
             self.accept(TokenType.Newline)
             variables.append(self.declaration())
-        self.end_of_line(after="global")
+        self.end_of_line(after="extern")
 
-        return self.factory.node_exit(GlobalChunkNode, variables)
+        return self.factory.node_exit(ExternChunkNode, variables)
 
     def block(self) -> BlockNode:
         """

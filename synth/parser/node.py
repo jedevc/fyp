@@ -58,9 +58,9 @@ class ChunkNode(Node):
         return visitor.visit_chunk(self)
 
 
-class GlobalChunkNode(ChunkNode):
+class ExternChunkNode(ChunkNode):
     def accept(self, visitor: "Visitor") -> Any:
-        return visitor.visit_global(self)
+        return visitor.visit_extern(self)
 
 
 class FunctionNode(Node):
@@ -153,7 +153,7 @@ class Visitor:
     def visit_chunk(self, node: ChunkNode) -> Any:
         pass
 
-    def visit_global(self, node: GlobalChunkNode) -> Any:
+    def visit_extern(self, node: ExternChunkNode) -> Any:
         pass
 
     def visit_block(self, node: BlockNode) -> Any:
@@ -202,7 +202,7 @@ class TraversalVisitor(Visitor):
         for var in node.variables:
             var.accept(self)
 
-    def visit_global(self, node: GlobalChunkNode) -> Any:
+    def visit_extern(self, node: ExternChunkNode) -> Any:
         for var in node.variables:
             var.accept(self)
 

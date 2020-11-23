@@ -73,12 +73,12 @@ class Chunk:
 
 
 class ChunkSet(Chunk):
-    def __init__(self, globs: List[Variable], chunks: List[Chunk]):
-        super().__init__(globs)
+    def __init__(self, externs: List[Variable], chunks: List[Chunk]):
+        super().__init__(externs)
         self.chunks = chunks
 
     @property
-    def globals(self) -> List[Variable]:
+    def externs(self) -> List[Variable]:
         return super().variables
 
     @property
