@@ -22,6 +22,10 @@ class TypeCheckVisitor(TraversalVisitor):
         super().visit_spec(node)
 
         # resolve block references after traversal
+
+        if "main" not in self.blocks:
+            raise ProcessingError(node, "no main block is defined")
+
         for block_name in self.block_refs:
             if block_name not in self.blocks:
                 raise ProcessingError(
