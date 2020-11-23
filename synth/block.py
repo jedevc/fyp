@@ -27,8 +27,15 @@ class FunctionDefinition:
     @property
     def code(self) -> str:
         lines = [f"\t{stmt.code};" for stmt in self.statements]
-        block = "{\n" + "\n".join(lines) + "\n}"
-        return f"void {self.func}() {block}"
+
+        if self.func == "main":
+            # NOTE: once we have function types, this will be much neater
+            lines.append("\treturn 0;")
+            block = "{\n" + "\n".join(lines) + "\n}"
+            return f"int main() {block}"
+        else:
+            block = "{\n" + "\n".join(lines) + "\n}"
+            return f"void {self.func}() {block}"
 
 
 class Assignment:
