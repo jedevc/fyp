@@ -1,5 +1,3 @@
-from typing import Tuple
-
 from ..chunk import Chunk, ChunkConstraint, ChunkSet, Variable
 from ..parser import (
     ChunkNode,
@@ -8,7 +6,6 @@ from ..parser import (
     ProcessingError,
     SpecialDeclarationNode,
     SpecNode,
-    TypeNode,
     Visitor,
 )
 
@@ -56,7 +53,7 @@ class ChunkifyVisitor(Visitor):
         self.globals.extend(variables)
 
     def visit_declaration(self, node: DeclarationNode) -> Variable:
-        return Variable(node.name, *node.vartype.accept(self))
+        return Variable(node.name, node.vartype.base, node.vartype.size)
 
     def visit_special_declaration(
         self, node: SpecialDeclarationNode
@@ -65,6 +62,3 @@ class ChunkifyVisitor(Visitor):
             return ChunkConstraint(eof=True)
         else:
             raise ProcessingError(node, f"invalid special variable {node.name}")
-
-    def visit_type(self, node: TypeNode) -> Tuple[str, int]:
-        return node.base, node.size
