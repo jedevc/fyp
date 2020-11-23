@@ -20,18 +20,13 @@ class BlockifyVisitor(Visitor):
         self.chunks = chunks
         self.blocks: Dict[str, Block] = {}
 
-    def _lookup_var(self, name: str) -> Chunk:
-        chunk = self.chunks.find(name)
-        if chunk is None:
-            # internal error, we should have applied a type check pass before this
-            raise RuntimeError("variable was not found")
-        return chunk
+    def result(self) -> List[Block]:
+        return list(self.blocks.values())
 
-    def visit_spec(self, node: SpecNode) -> List[Block]:
+    def visit_spec(self, node: SpecNode):
         self.blocks = {block.name: Block(block.name) for block in node.blocks}
         for block in node.blocks:
             block.accept(self)
-        return list(self.blocks.values())
 
     def visit_block(self, node: BlockNode):
         for statement in node.statements:
@@ -54,3 +49,10 @@ class BlockifyVisitor(Visitor):
 
     def visit_call(self, node: CallNode) -> Call:
         return Call(self.blocks[node.target])
+
+    def _lookup_var(self, name: str) -> Chunk:
+        chunk = self.chunks.find(name)
+        if chunk is None:
+            # internal error, we should have applied a type check pass before this
+            raise RuntimeError("variable was not found")
+        return chunk

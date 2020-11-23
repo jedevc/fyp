@@ -46,7 +46,8 @@ def synthesize(stream: str, output: TextIO, debug: str = ""):
     chunks = chunk_visitor.result()
 
     block_visitor = BlockifyVisitor(chunks)
-    blocks = spec.accept(block_visitor)
+    spec.accept(block_visitor)
+    blocks = block_visitor.result()
 
     inter = Interpreter(blocks, chunks)
     prog = inter.program()
