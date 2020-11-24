@@ -2,6 +2,7 @@ import sys
 from typing import List, Union
 
 from ..parser import (
+    ArrayTypeNode,
     AssignmentNode,
     BlockNode,
     CallNode,
@@ -9,9 +10,11 @@ from ..parser import (
     DeclarationNode,
     ExternChunkNode,
     FunctionNode,
+    FuncTypeNode,
+    PointerTypeNode,
+    SimpleTypeNode,
     SpecialDeclarationNode,
     SpecNode,
-    TypeNode,
     ValueNode,
     VariableNode,
     Visitor,
@@ -68,10 +71,25 @@ class PrinterVisitor(Visitor):
     def visit_special_declaration(self, node: SpecialDeclarationNode):
         self._print(f"${node.name}")
 
-    def visit_type(self, node: TypeNode):
-        self._print(node.base)
-        if node.size > 1:
-            self._print(f"[{node.size}]")
+    def visit_type_simple(self, node: SimpleTypeNode):
+        self._print(node.core)
+
+    def visit_type_pointer(self, node: PointerTypeNode):
+        self._print("*")
+        node.base.accept(self)
+
+    def visit_type_array(self, node: ArrayTypeNode):
+        self._print(f"[{node.size}]")
+        node.base.accept(self)
+
+    def visit_type_func(self, node: FuncTypeNode):
+        self._print("fn (")
+        for i, arg in enumerate(node.args):
+            arg.accept(self)
+            if i != len(node.args) - 1:
+                self._print(", ")
+        self._print(") ")
+        node.ret.accept(self)
 
     def visit_block(self, node: BlockNode):
         self._print("block ")

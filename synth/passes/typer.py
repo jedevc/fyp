@@ -51,7 +51,7 @@ class TypeCheckVisitor(TraversalVisitor):
                 node, f"variable {node.name} cannot be declared twice"
             )
 
-        self.vars[node.name] = node.vartype.base
+        self.vars[node.name] = node.vartype
 
         super().visit_declaration(node)
 

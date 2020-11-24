@@ -1,18 +1,50 @@
 from typing import List, Optional, Union
 
+from .parser.node import (
+    ArrayTypeNode,
+    FuncTypeNode,
+    PointerTypeNode,
+    SimpleTypeNode,
+    Type,
+)
+
 
 class Variable:
-    def __init__(self, name: str, vtype: str, size: int):
+    def __init__(self, name: str, vtype: Type):
         self.name = name
         self.vtype = vtype
-        self.size = size
+
+    def _typestr(self, tp: Type):
+        if isinstance(tp, SimpleTypeNode):
+            return tp.core
+        elif isinstance(tp, PointerTypeNode):
+            return f"*{self._typestr(tp.base)}"
+        elif isinstance(tp, ArrayTypeNode):
+            return f"{self._typestr(tp.base)}[{tp.size}]"
+        elif isinstance(tp, FuncTypeNode):
+            args = ", ".join(self._typestr(arg) for arg in tp.args)
+            ret = self._typestr(tp.ret)
+            return f"{ret} (*)({args})"
+        else:
+            raise RuntimeError("invalid variable type")
+
+    def _typenamestr(self, name: str, tp: Type):
+        if isinstance(tp, SimpleTypeNode):
+            return f"{tp.core} {name}"
+        elif isinstance(tp, PointerTypeNode):
+            return self._typenamestr(f"*{name}", tp.base)
+        elif isinstance(tp, ArrayTypeNode):
+            return self._typenamestr(f"{name}[{tp.size}]", tp.base)
+        elif isinstance(tp, FuncTypeNode):
+            args = ", ".join(self._typestr(arg) for arg in tp.args)
+            ret = self._typestr(tp.ret)
+            return f"{ret} (*{name})({args})"
+        else:
+            raise RuntimeError("invalid variable type")
 
     @property
     def code(self) -> str:
-        if self.size > 1:
-            return f"{self.vtype} {self.name}[{self.size}]"
-        else:
-            return f"{self.vtype} {self.name}"
+        return self._typenamestr(self.name, self.vtype)
 
 
 class ChunkConstraint:

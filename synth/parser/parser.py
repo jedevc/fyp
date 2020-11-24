@@ -3,6 +3,7 @@ from typing import List, Optional, Union
 from . import token
 from .error import ParseError
 from .node import (
+    ArrayTypeNode,
     AssignmentNode,
     BlockNode,
     CallNode,
@@ -11,11 +12,14 @@ from .node import (
     Expression,
     ExternChunkNode,
     FunctionNode,
+    FuncTypeNode,
     Node,
+    PointerTypeNode,
+    SimpleTypeNode,
     SpecialDeclarationNode,
     SpecNode,
     Statement,
-    TypeNode,
+    Type,
     ValueNode,
     VariableNode,
 )
@@ -239,21 +243,36 @@ class Parser:
 
         return self.factory.node_exit(DeclarationNode, var.lexeme, var_type)
 
-    def declaration_type(self) -> TypeNode:
+    def declaration_type(self) -> Type:
         """
         Parse the type portion of a variable declaration.
         """
 
         self.factory.node_enter()
 
-        base = self.expect(TokenType.Name)
-        if self.accept(TokenType.BracketOpen):
+        if self.accept(TokenType.Times):
+            base = self.declaration_type()
+            return self.factory.node_exit(PointerTypeNode, base)
+        elif self.accept(TokenType.BracketOpen):
             size = self.expect(TokenType.Integer)
             self.expect(TokenType.BracketClose)
+            base = self.declaration_type()
+            return self.factory.node_exit(ArrayTypeNode, base, int(size.lexeme))
+        elif self.accept(TokenType.Reserved, "fn"):
+            args = []
+            self.expect(TokenType.ParenOpen)
+            if not self.accept(TokenType.ParenClose):
+                args.append(self.declaration_type())
+                while self.accept(TokenType.Comma):
+                    args.append(self.declaration_type())
+                self.expect(TokenType.ParenClose)
 
-            return self.factory.node_exit(TypeNode, base.lexeme, int(size.lexeme))
+            ret = self.declaration_type()
 
-        return self.factory.node_exit(TypeNode, base.lexeme)
+            return self.factory.node_exit(FuncTypeNode, ret, args)
+        else:
+            core = self.expect(TokenType.Name)
+            return self.factory.node_exit(SimpleTypeNode, core.lexeme)
 
     def end_of_line(self, after: Optional[str] = None):
         """

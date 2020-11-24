@@ -5,6 +5,8 @@ from .token import Token
 Expression = Union["FunctionNode", "VariableNode", "ValueNode"]
 Statement = Union["AssignmentNode", "CallNode", Expression]
 
+Type = Union["SimpleTypeNode", "PointerTypeNode", "ArrayTypeNode", "FuncTypeNode"]
+
 
 class Node:
     def __init__(self, start: Token, end: Token):
@@ -15,18 +17,46 @@ class Node:
         raise NotImplementedError()
 
 
-class TypeNode(Node):
-    def __init__(self, start: Token, end: Token, base: str, size: int = 1):
+class SimpleTypeNode(Node):
+    def __init__(self, start: Token, end: Token, core: str):
+        super().__init__(start, end)
+        self.core = core
+
+    def accept(self, visitor: "Visitor") -> Any:
+        return visitor.visit_type_simple(self)
+
+
+class PointerTypeNode(Node):
+    def __init__(self, start: Token, end: Token, base: Type):
+        super().__init__(start, end)
+        self.base = base
+
+    def accept(self, visitor: "Visitor") -> Any:
+        return visitor.visit_type_pointer(self)
+
+
+class ArrayTypeNode(Node):
+    def __init__(self, start: Token, end: Token, base: Type, size: int):
         super().__init__(start, end)
         self.base = base
         self.size = size
 
     def accept(self, visitor: "Visitor") -> Any:
-        return visitor.visit_type(self)
+        return visitor.visit_type_array(self)
+
+
+class FuncTypeNode(Node):
+    def __init__(self, start: Token, end: Token, ret: Type, args: List[Type]):
+        super().__init__(start, end)
+        self.ret = ret
+        self.args = args
+
+    def accept(self, visitor: "Visitor") -> Any:
+        return visitor.visit_type_func(self)
 
 
 class DeclarationNode(Node):
-    def __init__(self, start: Token, end: Token, name: str, vartype: TypeNode):
+    def __init__(self, start: Token, end: Token, name: str, vartype: Type):
         super().__init__(start, end)
         self.name = name
         self.vartype = vartype
@@ -165,7 +195,16 @@ class Visitor:
     def visit_special_declaration(self, node: SpecialDeclarationNode) -> Any:
         pass
 
-    def visit_type(self, node: TypeNode) -> Any:
+    def visit_type_simple(self, node: SimpleTypeNode) -> Any:
+        pass
+
+    def visit_type_pointer(self, node: PointerTypeNode) -> Any:
+        pass
+
+    def visit_type_array(self, node: ArrayTypeNode) -> Any:
+        pass
+
+    def visit_type_func(self, node: FuncTypeNode) -> Any:
         pass
 
     def visit_assignment(self, node: AssignmentNode) -> Any:
@@ -216,7 +255,16 @@ class TraversalVisitor(Visitor):
     def visit_special_declaration(self, node: SpecialDeclarationNode) -> Any:
         pass
 
-    def visit_type(self, node: TypeNode) -> Any:
+    def visit_type_simple(self, node: SimpleTypeNode) -> Any:
+        pass
+
+    def visit_type_pointer(self, node: PointerTypeNode) -> Any:
+        pass
+
+    def visit_type_array(self, node: ArrayTypeNode) -> Any:
+        pass
+
+    def visit_type_func(self, node: FuncTypeNode) -> Any:
         pass
 
     def visit_assignment(self, node: AssignmentNode) -> Any:

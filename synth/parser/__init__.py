@@ -1,6 +1,7 @@
 from .error import LexError, ParseError, ProcessingError, SynthError
 from .lexer import Lexer
 from .node import (
+    ArrayTypeNode,
     AssignmentNode,
     BlockNode,
     CallNode,
@@ -9,12 +10,14 @@ from .node import (
     Expression,
     ExternChunkNode,
     FunctionNode,
+    FuncTypeNode,
     Node,
+    PointerTypeNode,
+    SimpleTypeNode,
     SpecialDeclarationNode,
     SpecNode,
     Statement,
     TraversalVisitor,
-    TypeNode,
     ValueNode,
     VariableNode,
     Visitor,

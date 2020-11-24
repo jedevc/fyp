@@ -53,7 +53,7 @@ class ChunkifyVisitor(Visitor):
         self.externs.extend(variables)
 
     def visit_declaration(self, node: DeclarationNode) -> Variable:
-        return Variable(node.name, node.vartype.base, node.vartype.size)
+        return Variable(node.name, node.vartype)
 
     def visit_special_declaration(
         self, node: SpecialDeclarationNode
