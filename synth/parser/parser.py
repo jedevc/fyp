@@ -1,6 +1,5 @@
-from typing import List, Optional, Union
+from typing import Any, List, Optional, Union
 
-from . import token
 from .error import ParseError
 from .node import (
     ArrayTypeNode,
@@ -23,7 +22,7 @@ from .node import (
     ValueNode,
     VariableNode,
 )
-from .token import Token, TokenType
+from .token import PRINTABLE_NAMES, ReservedWord, Token, TokenType
 
 
 class NodeFactory:
@@ -91,11 +90,11 @@ class Parser:
             if self.current.ttype != TokenType.Reserved:
                 raise ParseError(self.current, "expected opening statement")
 
-            if self.current.lexeme == "chunk":
+            if self.current.lexeme == ReservedWord.Chunk:
                 chunks.append(self.chunk())
-            elif self.current.lexeme == "extern":
+            elif self.current.lexeme == ReservedWord.Extern:
                 chunks.append(self.extern_chunk())
-            elif self.current.lexeme == "block":
+            elif self.current.lexeme == ReservedWord.Block:
                 blocks.append(self.block())
             else:
                 raise ParseError(self.current, "unknown statement type")
@@ -109,7 +108,7 @@ class Parser:
 
         self.factory.node_enter()
 
-        self.expect(TokenType.Reserved, "chunk")
+        self.expect(TokenType.Reserved, ReservedWord.Chunk)
         variables = [self.declaration()]
         while self.accept(TokenType.Comma):
             self.accept(TokenType.Newline)
@@ -125,7 +124,7 @@ class Parser:
 
         self.factory.node_enter()
 
-        self.expect(TokenType.Reserved, "extern")
+        self.expect(TokenType.Reserved, ReservedWord.Extern)
         variables = [self.declaration()]
         while self.accept(TokenType.Comma):
             self.accept(TokenType.Newline)
@@ -141,7 +140,7 @@ class Parser:
 
         self.factory.node_enter()
 
-        self.expect(TokenType.Reserved, "block")
+        self.expect(TokenType.Reserved, ReservedWord.Block)
 
         block_name = self.expect(TokenType.Name).lexeme
         self.expect(TokenType.BraceOpen)
@@ -154,7 +153,7 @@ class Parser:
 
             self.factory.node_enter()
             stmt: Statement
-            if self.accept(TokenType.Reserved, "call"):
+            if self.accept(TokenType.Reserved, ReservedWord.Call):
                 target = self.expect(TokenType.Name)
                 stmt = self.factory.node_exit(CallNode, target.lexeme)
             elif (
@@ -258,7 +257,7 @@ class Parser:
             self.expect(TokenType.BracketClose)
             base = self.declaration_type()
             return self.factory.node_exit(ArrayTypeNode, base, int(size.lexeme))
-        elif self.accept(TokenType.Reserved, "fn"):
+        elif self.accept(TokenType.Reserved, ReservedWord.Function):
             args = []
             self.expect(TokenType.ParenOpen)
             if not self.accept(TokenType.ParenClose):
@@ -301,7 +300,7 @@ class Parser:
     def expect(
         self,
         ttype: TokenType,
-        lexeme: Optional[str] = None,
+        lexeme: Optional[Any] = None,
         fail_msg: Optional[str] = None,
     ) -> Token:
         """
@@ -319,15 +318,15 @@ class Parser:
             if fail_msg:
                 raise ParseError(self.current, fail_msg)
             else:
-                ttype_name = token.PRINTABLE_NAMES[ttype]
-                current_name = token.PRINTABLE_NAMES[self.current.ttype]
+                ttype_name = PRINTABLE_NAMES[ttype]
+                current_name = PRINTABLE_NAMES[self.current.ttype]
                 raise ParseError(
                     self.current, f"expected {ttype_name} but got {current_name}"
                 )
 
         return result
 
-    def accept(self, ttype: TokenType, lexeme: Optional[str] = None) -> Optional[Token]:
+    def accept(self, ttype: TokenType, lexeme: Optional[Any] = None) -> Optional[Token]:
         """
         Attempt to consume a token of the provided type (and optional lexeme).
         """

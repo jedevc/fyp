@@ -55,7 +55,27 @@ PRINTABLE_NAMES = {
     TokenType.Plus: "plus",
     TokenType.Minus: "minus",
     TokenType.Times: "times",
-    TokenType.Divide: "divide1",
+    TokenType.Divide: "divide",
+}
+
+
+@unique
+class ReservedWord(Enum):
+    Block = 1
+    Chunk = 2
+    Extern = 3
+
+    Function = 5
+
+    Call = 4
+
+
+RESERVED_WORD_LOOKUP = {
+    "block": ReservedWord.Block,
+    "chunk": ReservedWord.Chunk,
+    "extern": ReservedWord.Extern,
+    "fn": ReservedWord.Function,
+    "call": ReservedWord.Call,
 }
 
 

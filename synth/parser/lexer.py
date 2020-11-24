@@ -1,7 +1,7 @@
 from typing import Iterable, List, Optional
 
 from .error import LexError
-from .token import Token, TokenType
+from .token import RESERVED_WORD_LOOKUP, Token, TokenType
 
 SIMPLE_TOKENS = {
     ".": TokenType.Dot,
@@ -21,8 +21,6 @@ SIMPLE_TOKENS = {
     "*": TokenType.Times,
     # "/": TokenType.Divide,  # this one is more complex...
 }
-
-RESERVED_WORDS = {"block", "chunk", "extern", "call", "fn"}
 
 
 class Lexer:
@@ -125,8 +123,10 @@ class Lexer:
             return Token(self.n, len(s) + 2, TokenType.String, s)
         elif self._isalpha() or self.ch == "$":
             n = self._read_name()
-            if n in RESERVED_WORDS:
-                return Token(self.n, len(n), TokenType.Reserved, n)
+            if n in RESERVED_WORD_LOOKUP:
+                return Token(
+                    self.n, len(n), TokenType.Reserved, RESERVED_WORD_LOOKUP[n]
+                )
             else:
                 return Token(self.n, len(n), TokenType.Name, n)
         elif self._isnum():
