@@ -2,6 +2,7 @@ from typing import Any, List, Optional, TypeVar, Union
 
 from .error import ParseError
 from .node import (
+    ArrayNode,
     ArrayTypeNode,
     AssignmentNode,
     BlockNode,
@@ -210,23 +211,34 @@ class Parser:
         return self.node_exit(FunctionNode(name.lexeme, args))
 
     def lvalue(self) -> Lvalue:
-        # TODO: need docstring
+        """
+        Parse a left-hand side value.
+        """
 
         self.node_enter()
 
-        if self.accept(TokenType.Times):
-            if self.accept(TokenType.ParenOpen):
-                expr = self.expression()
-                self.expect(TokenType.ParenClose)
-                return self.node_exit(DerefNode(expr))
-            else:
-                target = self.lvalue()
-                return self.node_exit(DerefNode(target))
+        if self.accept(TokenType.ParenOpen):
+            self.node_cancel()
+
+            node = self.lvalue()
+            self.expect(TokenType.ParenClose)
+        elif self.accept(TokenType.Times):
+            target = self.lvalue()
+            node = self.node_exit(DerefNode(target))
         else:
             name = self.expect(TokenType.Name)
-            return self.node_exit(VariableNode(name.lexeme))
+            node = self.node_exit(VariableNode(name.lexeme))
 
-        # TODO: need array
+        while self.accept(TokenType.BracketOpen):
+            # try to read optional array indexes at end
+            index = self.expression()
+            self.expect(TokenType.BracketClose)
+            result = ArrayNode(node, index)
+            result.token_start = node.token_start
+            result.token_end = self.last
+            node = result
+
+        return node
 
     def declaration(self) -> Union[DeclarationNode, SpecialDeclarationNode]:
         """

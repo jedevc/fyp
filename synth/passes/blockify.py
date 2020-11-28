@@ -1,8 +1,19 @@
 from typing import Dict, List
 
-from ..block import Assignment, Block, Call, Deref, Function, Ref, Value, Variable
+from ..block import (
+    Array,
+    Assignment,
+    Block,
+    Call,
+    Deref,
+    Function,
+    Ref,
+    Value,
+    Variable,
+)
 from ..chunk import Chunk, ChunkSet
 from ..parser import (
+    ArrayNode,
     AssignmentNode,
     BlockNode,
     CallNode,
@@ -52,6 +63,9 @@ class BlockifyVisitor(Visitor):
 
     def visit_deref(self, node: DerefNode) -> Deref:
         return Deref(node.target.accept(self))
+
+    def visit_array(self, node: ArrayNode) -> Array:
+        return Array(node.target.accept(self), node.index.accept(self))
 
     def visit_call(self, node: CallNode) -> Call:
         return Call(self.blocks[node.target])

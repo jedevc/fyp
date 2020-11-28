@@ -67,6 +67,16 @@ class Ref:
         return f"&{self.target.code}"
 
 
+class Array:
+    def __init__(self, target: Lvalue, index: Expression):
+        self.target = target
+        self.index = index
+
+    @property
+    def code(self) -> str:
+        return f"{self.target.code}[{self.index.code}]"
+
+
 class Call:
     def __init__(self, block: Block):
         self.block = block
