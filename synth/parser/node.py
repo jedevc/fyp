@@ -1,7 +1,5 @@
 from typing import Any, List, Union
 
-from .token import Token
-
 Lvalue = Union["VariableNode", "ArrayNode", "DerefNode"]
 Expression = Union["FunctionNode", "ValueNode", "RefNode", Lvalue]
 Statement = Union["AssignmentNode", "CallNode", Expression]
@@ -10,17 +8,17 @@ Type = Union["SimpleTypeNode", "PointerTypeNode", "ArrayTypeNode", "FuncTypeNode
 
 
 class Node:
-    def __init__(self, start: Token, end: Token):
-        self.token_start = start
-        self.token_end = end
+    def __init__(self):
+        self.token_start = None
+        self.token_end = None
 
     def accept(self, visitor: "Visitor") -> Any:
         raise NotImplementedError()
 
 
 class SimpleTypeNode(Node):
-    def __init__(self, start: Token, end: Token, core: str):
-        super().__init__(start, end)
+    def __init__(self, core: str):
+        super().__init__()
         self.core = core
 
     def accept(self, visitor: "Visitor") -> Any:
@@ -28,8 +26,8 @@ class SimpleTypeNode(Node):
 
 
 class PointerTypeNode(Node):
-    def __init__(self, start: Token, end: Token, base: Type):
-        super().__init__(start, end)
+    def __init__(self, base: Type):
+        super().__init__()
         self.base = base
 
     def accept(self, visitor: "Visitor") -> Any:
@@ -37,8 +35,8 @@ class PointerTypeNode(Node):
 
 
 class ArrayTypeNode(Node):
-    def __init__(self, start: Token, end: Token, base: Type, size: int):
-        super().__init__(start, end)
+    def __init__(self, base: Type, size: int):
+        super().__init__()
         self.base = base
         self.size = size
 
@@ -47,8 +45,8 @@ class ArrayTypeNode(Node):
 
 
 class FuncTypeNode(Node):
-    def __init__(self, start: Token, end: Token, ret: Type, args: List[Type]):
-        super().__init__(start, end)
+    def __init__(self, ret: Type, args: List[Type]):
+        super().__init__()
         self.ret = ret
         self.args = args
 
@@ -57,8 +55,8 @@ class FuncTypeNode(Node):
 
 
 class DeclarationNode(Node):
-    def __init__(self, start: Token, end: Token, name: str, vartype: Type):
-        super().__init__(start, end)
+    def __init__(self, name: str, vartype: Type):
+        super().__init__()
         self.name = name
         self.vartype = vartype
 
@@ -67,8 +65,8 @@ class DeclarationNode(Node):
 
 
 class SpecialDeclarationNode(Node):
-    def __init__(self, start: Token, end: Token, name: str):
-        super().__init__(start, end)
+    def __init__(self, name: str):
+        super().__init__()
         self.name = name
 
     def accept(self, visitor: "Visitor") -> Any:
@@ -76,13 +74,8 @@ class SpecialDeclarationNode(Node):
 
 
 class ChunkNode(Node):
-    def __init__(
-        self,
-        start: Token,
-        end: Token,
-        variables: List[Union[DeclarationNode, SpecialDeclarationNode]],
-    ):
-        super().__init__(start, end)
+    def __init__(self, variables: List[Union[DeclarationNode, SpecialDeclarationNode]]):
+        super().__init__()
         self.variables = variables
 
     def accept(self, visitor: "Visitor") -> Any:
@@ -95,10 +88,8 @@ class ExternChunkNode(ChunkNode):
 
 
 class FunctionNode(Node):
-    def __init__(
-        self, start: Token, end: Token, target: str, arguments: List[Expression]
-    ):
-        super().__init__(start, end)
+    def __init__(self, target: str, arguments: List[Expression]):
+        super().__init__()
         self.target = target
         self.arguments = arguments
 
@@ -107,8 +98,8 @@ class FunctionNode(Node):
 
 
 class CallNode(Node):
-    def __init__(self, start: Token, end: Token, target: str):
-        super().__init__(start, end)
+    def __init__(self, target: str):
+        super().__init__()
         self.target = target
 
     def accept(self, visitor: "Visitor") -> Any:
@@ -116,8 +107,8 @@ class CallNode(Node):
 
 
 class RefNode(Node):
-    def __init__(self, start: Token, end: Token, target: Lvalue):
-        super().__init__(start, end)
+    def __init__(self, target: Lvalue):
+        super().__init__()
         self.target = target
 
     def accept(self, visitor: "Visitor") -> Any:
@@ -125,8 +116,8 @@ class RefNode(Node):
 
 
 class DerefNode(Node):
-    def __init__(self, start: Token, end: Token, target: Expression):
-        super().__init__(start, end)
+    def __init__(self, target: Expression):
+        super().__init__()
         self.target = target
 
     def accept(self, visitor: "Visitor") -> Any:
@@ -134,8 +125,8 @@ class DerefNode(Node):
 
 
 class VariableNode(Node):
-    def __init__(self, start: Token, end: Token, name: str):
-        super().__init__(start, end)
+    def __init__(self, name: str):
+        super().__init__()
         self.name = name
 
     def accept(self, visitor: "Visitor") -> Any:
@@ -143,8 +134,8 @@ class VariableNode(Node):
 
 
 class ArrayNode(Node):
-    def __init__(self, start: Token, end: Token, target: Expression, index: Expression):
-        super().__init__(start, end)
+    def __init__(self, target: Expression, index: Expression):
+        super().__init__()
         self.target = target
         self.index = index
 
@@ -153,8 +144,8 @@ class ArrayNode(Node):
 
 
 class ValueNode(Node):
-    def __init__(self, start: Token, end: Token, value: Union[str, int]):
-        super().__init__(start, end)
+    def __init__(self, value: Union[str, int]):
+        super().__init__()
         self.value = value
 
     def is_str(self) -> bool:
@@ -168,10 +159,8 @@ class ValueNode(Node):
 
 
 class AssignmentNode(Node):
-    def __init__(
-        self, start: Token, end: Token, target: Lvalue, expression: Expression
-    ):
-        super().__init__(start, end)
+    def __init__(self, target: Lvalue, expression: Expression):
+        super().__init__()
         self.target = target
         self.expression = expression
 
@@ -180,10 +169,8 @@ class AssignmentNode(Node):
 
 
 class BlockNode(Node):
-    def __init__(
-        self, start: Token, end: Token, name: str, statements: List[Statement]
-    ):
-        super().__init__(start, end)
+    def __init__(self, name: str, statements: List[Statement]):
+        super().__init__()
         self.name = name
         self.statements = statements
 
@@ -192,10 +179,8 @@ class BlockNode(Node):
 
 
 class SpecNode(Node):
-    def __init__(
-        self, start: Token, end: Token, chunks: List[ChunkNode], blocks: List[BlockNode]
-    ):
-        super().__init__(start, end)
+    def __init__(self, chunks: List[ChunkNode], blocks: List[BlockNode]):
+        super().__init__()
         self.chunks = chunks
         self.blocks = blocks
 

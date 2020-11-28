@@ -1,4 +1,4 @@
-from typing import Any, List, Optional, Union
+from typing import Any, List, Optional, TypeVar, Union
 
 from .error import ParseError
 from .node import (
@@ -27,22 +27,7 @@ from .node import (
 )
 from .token import PRINTABLE_NAMES, ReservedWord, Token, TokenType
 
-
-class NodeFactory:
-    def __init__(self, parser: "Parser"):
-        self.parser = parser
-        self.starts: List[int] = []
-
-    def node_enter(self):
-        self.starts.append(self.parser.pos)
-
-    def node_cancel(self):
-        self.starts.pop()
-
-    def node_exit(self, node, *args):
-        start = self.parser.tokens[self.starts.pop()]
-        end = self.parser.tokens[self.parser.pos - 1]
-        return node(start, end, *args)
+N = TypeVar("N", bound=Node)
 
 
 class Parser:
@@ -60,7 +45,7 @@ class Parser:
         self.current: Optional[Token] = None
         self.last: Optional[Token] = None
 
-        self.factory = NodeFactory(self)
+        self.starts: List[int] = []
 
     def parse(self) -> Node:
         """
@@ -79,7 +64,7 @@ class Parser:
         Parse the entire specification.
         """
 
-        self.factory.node_enter()
+        self.node_enter()
 
         chunks = []
         blocks = []
@@ -102,14 +87,14 @@ class Parser:
             else:
                 raise ParseError(self.current, "unknown statement type")
 
-        return self.factory.node_exit(SpecNode, chunks, blocks)
+        return self.node_exit(SpecNode(chunks, blocks))
 
     def chunk(self) -> ChunkNode:
         """
         Parse a chunk of variables.
         """
 
-        self.factory.node_enter()
+        self.node_enter()
 
         self.expect(TokenType.Reserved, ReservedWord.Chunk)
         variables = [self.declaration()]
@@ -118,14 +103,14 @@ class Parser:
             variables.append(self.declaration())
         self.end_of_line(after="chunk")
 
-        return self.factory.node_exit(ChunkNode, variables)
+        return self.node_exit(ChunkNode(variables))
 
     def extern_chunk(self) -> ExternChunkNode:
         """
         Parse a chunk of extern variables.
         """
 
-        self.factory.node_enter()
+        self.node_enter()
 
         self.expect(TokenType.Reserved, ReservedWord.Extern)
         variables = [self.declaration()]
@@ -134,14 +119,14 @@ class Parser:
             variables.append(self.declaration())
         self.end_of_line(after="extern")
 
-        return self.factory.node_exit(ExternChunkNode, variables)
+        return self.node_exit(ExternChunkNode(variables))
 
     def block(self) -> BlockNode:
         """
         Parse a block of statements.
         """
 
-        self.factory.node_enter()
+        self.node_enter()
 
         self.expect(TokenType.Reserved, ReservedWord.Block)
 
@@ -154,11 +139,11 @@ class Parser:
             if self.accept(TokenType.BraceClose):
                 break
 
-            self.factory.node_enter()
+            self.node_enter()
             stmt: Statement
             if self.accept(TokenType.Reserved, ReservedWord.Call):
                 target = self.expect(TokenType.Name)
-                stmt = self.factory.node_exit(CallNode, target.lexeme)
+                stmt = self.node_exit(CallNode(target.lexeme))
             else:
                 # FIXME: backtracking is sad :(
                 state = (self.pos, self.current, self.last)
@@ -166,38 +151,41 @@ class Parser:
                     lvalue = self.lvalue()
                     self.expect(TokenType.Equals)
                     exp = self.expression()
-                    stmt = self.factory.node_exit(AssignmentNode, lvalue, exp)
+                    stmt = self.node_exit(AssignmentNode(lvalue, exp))
                 except ParseError:
                     self.pos, self.current, self.last = state
 
-                    self.factory.node_cancel()
+                    self.node_cancel()
                     stmt = self.expression()
 
             statements.append(stmt)
             self.end_of_line(after="statement")
 
-        return self.factory.node_exit(BlockNode, block_name, statements)
+        return self.node_exit(BlockNode(block_name, statements))
 
     def expression(self) -> Expression:
         """
         Parse an expression.
         """
 
-        self.factory.node_enter()
+        self.node_enter()
 
-        if self.accept(TokenType.String):
+        if self.accept(TokenType.AddressOf):
+            target = self.lvalue()
+            return self.node_exit(RefNode(target))
+        elif self.accept(TokenType.String):
             assert self.last is not None
-            return self.factory.node_exit(ValueNode, self.last.lexeme)
-        if self.accept(TokenType.Integer):
+            return self.node_exit(ValueNode(self.last.lexeme))
+        elif self.accept(TokenType.Integer):
             assert self.last is not None
-            return self.factory.node_exit(ValueNode, int(self.last.lexeme))
+            return self.node_exit(ValueNode(int(self.last.lexeme)))
         elif (
             peek := self.peek()
         ) and peek.ttype == TokenType.ParenOpen:  # pylint: disable=used-before-assignment
-            self.factory.node_cancel()
+            self.node_cancel()
             return self.function()
         else:
-            self.factory.node_cancel()
+            self.node_cancel()
             return self.lvalue()
 
     def function(self) -> FunctionNode:
@@ -205,13 +193,13 @@ class Parser:
         Parse a function call.
         """
 
-        self.factory.node_enter()
+        self.node_enter()
 
         name = self.expect(TokenType.Name)
 
         self.expect(TokenType.ParenOpen)
         if self.accept(TokenType.ParenClose):
-            return self.factory.node_exit(FunctionNode, name.lexeme, [])
+            return self.node_exit(FunctionNode(name.lexeme, []))
 
         args = [self.expression()]
         while self.accept(TokenType.Comma):
@@ -219,29 +207,24 @@ class Parser:
             args.append(arg)
         self.expect(TokenType.ParenClose)
 
-        return self.factory.node_exit(FunctionNode, name.lexeme, args)
+        return self.node_exit(FunctionNode(name.lexeme, args))
 
     def lvalue(self) -> Lvalue:
         # TODO: need docstring
 
-        # ha this shouldn't be returning a RefNode - it's not an lvalue
+        self.node_enter()
 
-        self.factory.node_enter()
-
-        if self.accept(TokenType.AddressOf):
-            target = self.lvalue()
-            return self.factory.node_exit(RefNode, target)
-        elif self.accept(TokenType.Times):
+        if self.accept(TokenType.Times):
             if self.accept(TokenType.ParenOpen):
                 expr = self.expression()
                 self.expect(TokenType.ParenClose)
-                return self.factory.node_exit(DerefNode, expr)
+                return self.node_exit(DerefNode(expr))
             else:
                 target = self.lvalue()
-                return self.factory.node_exit(DerefNode, target)
+                return self.node_exit(DerefNode(target))
         else:
             name = self.expect(TokenType.Name)
-            return self.factory.node_exit(VariableNode, name.lexeme)
+            return self.node_exit(VariableNode(name.lexeme))
 
         # TODO: need array
 
@@ -250,32 +233,32 @@ class Parser:
         Parse a variable declaration.
         """
 
-        self.factory.node_enter()
+        self.node_enter()
 
         var = self.expect(TokenType.Name)
         if var.lexeme[0] == "$":
-            return self.factory.node_exit(SpecialDeclarationNode, var.lexeme[1:])
+            return self.node_exit(SpecialDeclarationNode(var.lexeme[1:]))
 
         self.expect(TokenType.Colon, fail_msg="expected type specifier after name")
         var_type = self.declaration_type()
 
-        return self.factory.node_exit(DeclarationNode, var.lexeme, var_type)
+        return self.node_exit(DeclarationNode(var.lexeme, var_type))
 
     def declaration_type(self) -> Type:
         """
         Parse the type portion of a variable declaration.
         """
 
-        self.factory.node_enter()
+        self.node_enter()
 
         if self.accept(TokenType.Times):
             base = self.declaration_type()
-            return self.factory.node_exit(PointerTypeNode, base)
+            return self.node_exit(PointerTypeNode(base))
         elif self.accept(TokenType.BracketOpen):
             size = self.expect(TokenType.Integer)
             self.expect(TokenType.BracketClose)
             base = self.declaration_type()
-            return self.factory.node_exit(ArrayTypeNode, base, int(size.lexeme))
+            return self.node_exit(ArrayTypeNode(base, int(size.lexeme)))
         elif self.accept(TokenType.Reserved, ReservedWord.Function):
             args = []
             self.expect(TokenType.ParenOpen)
@@ -287,10 +270,10 @@ class Parser:
 
             ret = self.declaration_type()
 
-            return self.factory.node_exit(FuncTypeNode, ret, args)
+            return self.node_exit(FuncTypeNode(ret, args))
         else:
             core = self.expect(TokenType.Name)
-            return self.factory.node_exit(SimpleTypeNode, core.lexeme)
+            return self.node_exit(SimpleTypeNode(core.lexeme))
 
     def end_of_line(self, after: Optional[str] = None):
         """
@@ -383,3 +366,14 @@ class Parser:
             self.current = self.tokens[self.pos]
         else:
             self.current = None
+
+    def node_enter(self):
+        self.starts.append(self.pos)
+
+    def node_cancel(self):
+        self.starts.pop()
+
+    def node_exit(self, node: N) -> N:
+        node.token_start = self.tokens[self.starts.pop()]
+        node.token_end = self.tokens[self.pos - 1]
+        return node
