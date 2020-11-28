@@ -2,7 +2,8 @@ from typing import List, Union
 
 from .chunk import Chunk
 
-Expression = Union["Function", "Variable"]
+Lvalue = Union["Variable", "Deref"]
+Expression = Union["Function", "Value", "Ref", Lvalue]
 Statement = Union["Assignment", "Call", Expression]
 
 
@@ -39,18 +40,31 @@ class FunctionDefinition:
 
 
 class Assignment:
-    def __init__(self, chunk: Chunk, variable: str, value: Expression):
-        self.chunk = chunk
-        if (var := chunk.lookup(variable)) :
-            self.variable = var
-        else:
-            raise KeyError()
-
+    def __init__(self, target: Lvalue, value: Expression):
+        self.target = target
         self.value = value
 
     @property
     def code(self) -> str:
-        return f"{self.variable.name} = {self.value.code}"
+        return f"{self.target.code} = {self.value.code}"
+
+
+class Deref:
+    def __init__(self, target: Lvalue):
+        self.target = target
+
+    @property
+    def code(self) -> str:
+        return f"*{self.target.code}"
+
+
+class Ref:
+    def __init__(self, target: Lvalue):
+        self.target = target
+
+    @property
+    def code(self) -> str:
+        return f"&{self.target.code}"
 
 
 class Call:
@@ -73,17 +87,13 @@ class Function:
 
 
 class Variable:
-    def __init__(self, chunk: Chunk, variable: str, address: bool):
+    def __init__(self, chunk: Chunk, variable: str):
         self.chunk = chunk
         self.variable = variable
-        self.address = address
 
     @property
     def code(self) -> str:
-        if self.address:
-            return "&" + self.variable
-        else:
-            return self.variable
+        return self.variable
 
 
 class Value:

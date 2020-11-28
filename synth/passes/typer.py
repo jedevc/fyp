@@ -1,5 +1,4 @@
 from ..parser import (
-    AssignmentNode,
     BlockNode,
     CallNode,
     DeclarationNode,
@@ -19,9 +18,8 @@ class TypeCheckVisitor(TraversalVisitor):
         self.block_refs = {}
 
     def visit_spec(self, node: SpecNode):
-        super().visit_spec(node)
-
         # resolve block references after traversal
+        super().visit_spec(node)
 
         if "main" not in self.blocks:
             raise ProcessingError(node, "no main block is defined")
@@ -54,12 +52,6 @@ class TypeCheckVisitor(TraversalVisitor):
         self.vars[node.name] = node.vartype
 
         super().visit_declaration(node)
-
-    def visit_assignment(self, node: AssignmentNode):
-        if node.target not in self.vars:
-            raise ProcessingError(node, f"variable {node.target} has not been declared")
-
-        super().visit_assignment(node)
 
     def visit_variable(self, node: VariableNode):
         if node.name not in self.vars:

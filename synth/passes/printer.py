@@ -2,16 +2,19 @@ import sys
 from typing import List, Union
 
 from ..parser import (
+    ArrayNode,
     ArrayTypeNode,
     AssignmentNode,
     BlockNode,
     CallNode,
     ChunkNode,
     DeclarationNode,
+    DerefNode,
     ExternChunkNode,
     FunctionNode,
     FuncTypeNode,
     PointerTypeNode,
+    RefNode,
     SimpleTypeNode,
     SpecialDeclarationNode,
     SpecNode,
@@ -105,7 +108,7 @@ class PrinterVisitor(Visitor):
         self._println("}")
 
     def visit_assignment(self, node: AssignmentNode):
-        self._print(node.target)
+        node.target.accept(self)
         self._print(" = ")
         node.expression.accept(self)
 
@@ -114,9 +117,22 @@ class PrinterVisitor(Visitor):
         self._print(node.target)
 
     def visit_variable(self, node: VariableNode):
-        if node.address:
-            self._print("&")
         self._print(node.name)
+
+    def visit_ref(self, node: RefNode):
+        self._print("&")
+        node.target.accept(self)
+
+    def visit_deref(self, node: DerefNode):
+        self._print("*(")
+        node.target.accept(self)
+        self._print(")")
+
+    def visit_array(self, node: ArrayNode):
+        node.target.accept(self)
+        self._print("[")
+        node.index.accept(self)
+        self._print("]")
 
     def visit_function(self, node: FunctionNode):
         self._print(node.target)

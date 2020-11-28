@@ -8,12 +8,15 @@ from .node import (
     CallNode,
     ChunkNode,
     DeclarationNode,
+    DerefNode,
     Expression,
     ExternChunkNode,
     FunctionNode,
     FuncTypeNode,
+    Lvalue,
     Node,
     PointerTypeNode,
+    RefNode,
     SimpleTypeNode,
     SpecialDeclarationNode,
     SpecNode,
@@ -156,16 +159,19 @@ class Parser:
             if self.accept(TokenType.Reserved, ReservedWord.Call):
                 target = self.expect(TokenType.Name)
                 stmt = self.factory.node_exit(CallNode, target.lexeme)
-            elif (
-                peek := self.peek()
-            ) and peek.ttype == TokenType.Equals:  # pylint: disable=used-before-assignment
-                target = self.expect(TokenType.Name)
-                self.expect(TokenType.Equals)
-                exp = self.expression()
-                stmt = self.factory.node_exit(AssignmentNode, target.lexeme, exp)
             else:
-                self.factory.node_cancel()
-                stmt = self.expression()
+                # FIXME: backtracking is sad :(
+                state = (self.pos, self.current, self.last)
+                try:
+                    lvalue = self.lvalue()
+                    self.expect(TokenType.Equals)
+                    exp = self.expression()
+                    stmt = self.factory.node_exit(AssignmentNode, lvalue, exp)
+                except ParseError:
+                    self.pos, self.current, self.last = state
+
+                    self.factory.node_cancel()
+                    stmt = self.expression()
 
             statements.append(stmt)
             self.end_of_line(after="statement")
@@ -192,7 +198,7 @@ class Parser:
             return self.function()
         else:
             self.factory.node_cancel()
-            return self.variable()
+            return self.lvalue()
 
     def function(self) -> FunctionNode:
         """
@@ -215,16 +221,29 @@ class Parser:
 
         return self.factory.node_exit(FunctionNode, name.lexeme, args)
 
-    def variable(self) -> VariableNode:
-        """
-        Parse a variable reference.
-        """
+    def lvalue(self) -> Lvalue:
+        # TODO: need docstring
+
+        # ha this shouldn't be returning a RefNode - it's not an lvalue
 
         self.factory.node_enter()
 
-        addressed = self.accept(TokenType.AddressOf) is not None
-        name = self.expect(TokenType.Name)
-        return self.factory.node_exit(VariableNode, name.lexeme, addressed)
+        if self.accept(TokenType.AddressOf):
+            target = self.lvalue()
+            return self.factory.node_exit(RefNode, target)
+        elif self.accept(TokenType.Times):
+            if self.accept(TokenType.ParenOpen):
+                expr = self.expression()
+                self.expect(TokenType.ParenClose)
+                return self.factory.node_exit(DerefNode, expr)
+            else:
+                target = self.lvalue()
+                return self.factory.node_exit(DerefNode, target)
+        else:
+            name = self.expect(TokenType.Name)
+            return self.factory.node_exit(VariableNode, name.lexeme)
+
+        # TODO: need array
 
     def declaration(self) -> Union[DeclarationNode, SpecialDeclarationNode]:
         """

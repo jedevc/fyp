@@ -2,7 +2,8 @@ from typing import Any, List, Union
 
 from .token import Token
 
-Expression = Union["FunctionNode", "VariableNode", "ValueNode"]
+Lvalue = Union["VariableNode", "ArrayNode", "DerefNode"]
+Expression = Union["FunctionNode", "ValueNode", "RefNode", Lvalue]
 Statement = Union["AssignmentNode", "CallNode", Expression]
 
 Type = Union["SimpleTypeNode", "PointerTypeNode", "ArrayTypeNode", "FuncTypeNode"]
@@ -114,14 +115,41 @@ class CallNode(Node):
         return visitor.visit_call(self)
 
 
+class RefNode(Node):
+    def __init__(self, start: Token, end: Token, target: Lvalue):
+        super().__init__(start, end)
+        self.target = target
+
+    def accept(self, visitor: "Visitor") -> Any:
+        return visitor.visit_ref(self)
+
+
+class DerefNode(Node):
+    def __init__(self, start: Token, end: Token, target: Expression):
+        super().__init__(start, end)
+        self.target = target
+
+    def accept(self, visitor: "Visitor") -> Any:
+        return visitor.visit_deref(self)
+
+
 class VariableNode(Node):
-    def __init__(self, start: Token, end: Token, name: str, address: bool = False):
+    def __init__(self, start: Token, end: Token, name: str):
         super().__init__(start, end)
         self.name = name
-        self.address = address
 
     def accept(self, visitor: "Visitor") -> Any:
         return visitor.visit_variable(self)
+
+
+class ArrayNode(Node):
+    def __init__(self, start: Token, end: Token, target: Expression, index: Expression):
+        super().__init__(start, end)
+        self.target = target
+        self.index = index
+
+    def accept(self, visitor: "Visitor") -> Any:
+        return visitor.visit_array(self)
 
 
 class ValueNode(Node):
@@ -140,7 +168,9 @@ class ValueNode(Node):
 
 
 class AssignmentNode(Node):
-    def __init__(self, start: Token, end: Token, target: str, expression: Expression):
+    def __init__(
+        self, start: Token, end: Token, target: Lvalue, expression: Expression
+    ):
         super().__init__(start, end)
         self.target = target
         self.expression = expression
@@ -213,6 +243,15 @@ class Visitor:
     def visit_variable(self, node: VariableNode) -> Any:
         pass
 
+    def visit_ref(self, node: RefNode) -> Any:
+        pass
+
+    def visit_deref(self, node: DerefNode) -> Any:
+        pass
+
+    def visit_array(self, node: ArrayNode) -> Any:
+        pass
+
     def visit_function(self, node: FunctionNode) -> Any:
         pass
 
@@ -268,7 +307,18 @@ class TraversalVisitor(Visitor):
         pass
 
     def visit_assignment(self, node: AssignmentNode) -> Any:
+        node.target.accept(self)
         node.expression.accept(self)
+
+    def visit_ref(self, node: RefNode) -> Any:
+        node.target.accept(self)
+
+    def visit_deref(self, node: DerefNode) -> Any:
+        node.target.accept(self)
+
+    def visit_array(self, node: ArrayNode) -> Any:
+        node.target.accept(self)
+        node.index.accept(self)
 
     def visit_variable(self, node: VariableNode) -> Any:
         pass

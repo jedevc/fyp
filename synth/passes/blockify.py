@@ -1,12 +1,14 @@
 from typing import Dict, List
 
-from ..block import Assignment, Block, Call, Function, Value, Variable
+from ..block import Assignment, Block, Call, Deref, Function, Ref, Value, Variable
 from ..chunk import Chunk, ChunkSet
 from ..parser import (
     AssignmentNode,
     BlockNode,
     CallNode,
+    DerefNode,
     FunctionNode,
+    RefNode,
     SpecNode,
     ValueNode,
     VariableNode,
@@ -34,9 +36,7 @@ class BlockifyVisitor(Visitor):
             self.blocks[node.name].add_statement(stmt)
 
     def visit_assignment(self, node: AssignmentNode) -> Assignment:
-        return Assignment(
-            self._lookup_var(node.target), node.target, node.expression.accept(self)
-        )
+        return Assignment(node.target.accept(self), node.expression.accept(self))
 
     def visit_function(self, node: FunctionNode) -> Function:
         return Function(node.target, [expr.accept(self) for expr in node.arguments])
@@ -45,7 +45,13 @@ class BlockifyVisitor(Visitor):
         return Value(node.value)
 
     def visit_variable(self, node: VariableNode) -> Variable:
-        return Variable(self._lookup_var(node.name), node.name, node.address)
+        return Variable(self._lookup_var(node.name), node.name)
+
+    def visit_ref(self, node: RefNode) -> Ref:
+        return Ref(node.target.accept(self))
+
+    def visit_deref(self, node: DerefNode) -> Deref:
+        return Deref(node.target.accept(self))
 
     def visit_call(self, node: CallNode) -> Call:
         return Call(self.blocks[node.target])
