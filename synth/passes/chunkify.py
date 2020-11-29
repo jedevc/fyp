@@ -1,5 +1,4 @@
 from ..chunk import Chunk, ChunkConstraint, ChunkSet, Variable
-from ..error import ProcessingError
 from ..node import (
     ChunkNode,
     DeclarationNode,
@@ -8,6 +7,7 @@ from ..node import (
     SpecNode,
     Visitor,
 )
+from .error import ProcessingError
 
 
 class ChunkifyVisitor(Visitor):

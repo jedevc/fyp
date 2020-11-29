@@ -1,6 +1,6 @@
 from typing import Iterable, List, Optional
 
-from ..error import LexError
+from .error import LexError
 from .token import RESERVED_WORD_LOOKUP, Token, TokenType
 
 SIMPLE_TOKENS = {

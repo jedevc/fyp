@@ -1,4 +1,3 @@
-from ..error import ProcessingError
 from ..node import (
     BlockNode,
     CallNode,
@@ -7,6 +6,7 @@ from ..node import (
     TraversalVisitor,
     VariableNode,
 )
+from .error import ProcessingError
 
 
 class TypeCheckVisitor(TraversalVisitor):

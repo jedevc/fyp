@@ -1,6 +1,5 @@
 from typing import Any, List, Optional, TypeVar, Union
 
-from ..error import ParseError
 from ..node import (
     ArrayNode,
     ArrayTypeNode,
@@ -28,6 +27,7 @@ from ..node import (
     ValueNode,
     VariableNode,
 )
+from .error import ParseError
 from .token import PRINTABLE_NAMES, ReservedWord, Token, TokenType
 
 N = TypeVar("N", bound=Node)
