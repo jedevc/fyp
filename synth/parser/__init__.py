@@ -1,6 +1,4 @@
-from .error import LexError, ParseError, ProcessingError, SynthError
-from .lexer import Lexer
-from .node import (
+from ..node import (
     ArrayNode,
     ArrayTypeNode,
     AssignmentNode,
@@ -27,5 +25,7 @@ from .node import (
     VariableNode,
     Visitor,
 )
+from .error import LexError, ParseError, ProcessingError, SynthError
+from .lexer import Lexer
 from .parser import Parser
 from .token import Token, TokenType

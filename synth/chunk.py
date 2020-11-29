@@ -1,12 +1,6 @@
 from typing import List, Optional, Union
 
-from .parser.node import (
-    ArrayTypeNode,
-    FuncTypeNode,
-    PointerTypeNode,
-    SimpleTypeNode,
-    Type,
-)
+from .node import ArrayTypeNode, FuncTypeNode, PointerTypeNode, SimpleTypeNode, Type
 
 
 class Variable:
