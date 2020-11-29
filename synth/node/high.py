@@ -1,6 +1,6 @@
 from typing import Any, List, Union
 
-from . import Node
+from .base import Node
 from .stmt import Statement
 from .types import Type
 

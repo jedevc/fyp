@@ -1,6 +1,6 @@
 from typing import Any, List, Union
 
-from . import Node
+from .base import Node
 from .expr import Expression, Lvalue
 
 Statement = Union["AssignmentNode", "CallNode", "IfNode", "ExpressionStatementNode"]

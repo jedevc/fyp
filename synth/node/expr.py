@@ -1,6 +1,6 @@
 from typing import Any, List, Union
 
-from . import Node
+from .base import Node
 
 Lvalue = Union["VariableNode", "ArrayNode", "DerefNode"]
 Expression = Union["FunctionNode", "ValueNode", "RefNode", Lvalue]

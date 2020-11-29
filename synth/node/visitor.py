@@ -1,73 +1,78 @@
-from typing import Any
-
-from .expr import *  # pylint: disable=wildcard-import,unused-wildcard-import
-from .high import *  # pylint: disable=wildcard-import,unused-wildcard-import
-from .stmt import *  # pylint: disable=wildcard-import,unused-wildcard-import
-from .types import *  # pylint: disable=wildcard-import,unused-wildcard-import
+from .expr import ArrayNode, DerefNode, FunctionNode, RefNode, ValueNode, VariableNode
+from .high import (
+    BlockNode,
+    ChunkNode,
+    DeclarationNode,
+    ExternChunkNode,
+    SpecialDeclarationNode,
+    SpecNode,
+)
+from .stmt import AssignmentNode, CallNode, ExpressionStatementNode, IfNode
+from .types import ArrayTypeNode, FuncTypeNode, PointerTypeNode, SimpleTypeNode
 
 
 class Visitor:
     def __init__(self):
         pass
 
-    def visit_spec(self, node: SpecNode) -> Any:
+    def visit_spec(self, node: SpecNode):
         pass
 
-    def visit_chunk(self, node: ChunkNode) -> Any:
+    def visit_chunk(self, node: ChunkNode):
         pass
 
-    def visit_extern(self, node: ExternChunkNode) -> Any:
+    def visit_extern(self, node: ExternChunkNode):
         pass
 
-    def visit_block(self, node: BlockNode) -> Any:
+    def visit_block(self, node: BlockNode):
         pass
 
-    def visit_declaration(self, node: DeclarationNode) -> Any:
+    def visit_declaration(self, node: DeclarationNode):
         pass
 
-    def visit_special_declaration(self, node: SpecialDeclarationNode) -> Any:
+    def visit_special_declaration(self, node: SpecialDeclarationNode):
         pass
 
-    def visit_type_simple(self, node: SimpleTypeNode) -> Any:
+    def visit_type_simple(self, node: SimpleTypeNode):
         pass
 
-    def visit_type_pointer(self, node: PointerTypeNode) -> Any:
+    def visit_type_pointer(self, node: PointerTypeNode):
         pass
 
-    def visit_type_array(self, node: ArrayTypeNode) -> Any:
+    def visit_type_array(self, node: ArrayTypeNode):
         pass
 
-    def visit_type_func(self, node: FuncTypeNode) -> Any:
+    def visit_type_func(self, node: FuncTypeNode):
         pass
 
-    def visit_assignment(self, node: AssignmentNode) -> Any:
+    def visit_assignment(self, node: AssignmentNode):
         pass
 
-    def visit_variable(self, node: VariableNode) -> Any:
+    def visit_variable(self, node: VariableNode):
         pass
 
-    def visit_ref(self, node: RefNode) -> Any:
+    def visit_ref(self, node: RefNode):
         pass
 
-    def visit_deref(self, node: DerefNode) -> Any:
+    def visit_deref(self, node: DerefNode):
         pass
 
-    def visit_array(self, node: ArrayNode) -> Any:
+    def visit_array(self, node: ArrayNode):
         pass
 
-    def visit_function(self, node: FunctionNode) -> Any:
+    def visit_function(self, node: FunctionNode):
         pass
 
-    def visit_value(self, node: ValueNode) -> Any:
+    def visit_value(self, node: ValueNode):
         pass
 
-    def visit_call(self, node: CallNode) -> Any:
+    def visit_call(self, node: CallNode):
         pass
 
-    def visit_if(self, node: IfNode) -> Any:
+    def visit_if(self, node: IfNode):
         pass
 
-    def visit_exprstmt(self, node: ExpressionStatementNode) -> Any:
+    def visit_exprstmt(self, node: ExpressionStatementNode):
         pass
 
 
@@ -79,73 +84,73 @@ class TraversalVisitor(Visitor):
     nodes of interest.
     """
 
-    def visit_spec(self, node: SpecNode) -> Any:
+    def visit_spec(self, node: SpecNode):
         for chunk in node.chunks:
             chunk.accept(self)
         for block in node.blocks:
             block.accept(self)
 
-    def visit_chunk(self, node: ChunkNode) -> Any:
+    def visit_chunk(self, node: ChunkNode):
         for var in node.variables:
             var.accept(self)
 
-    def visit_extern(self, node: ExternChunkNode) -> Any:
+    def visit_extern(self, node: ExternChunkNode):
         for var in node.variables:
             var.accept(self)
 
-    def visit_block(self, node: BlockNode) -> Any:
+    def visit_block(self, node: BlockNode):
         for stmt in node.statements:
             stmt.accept(self)
 
-    def visit_declaration(self, node: DeclarationNode) -> Any:
+    def visit_declaration(self, node: DeclarationNode):
         node.vartype.accept(self)
 
-    def visit_special_declaration(self, node: SpecialDeclarationNode) -> Any:
+    def visit_special_declaration(self, node: SpecialDeclarationNode):
         pass
 
-    def visit_type_simple(self, node: SimpleTypeNode) -> Any:
+    def visit_type_simple(self, node: SimpleTypeNode):
         pass
 
-    def visit_type_pointer(self, node: PointerTypeNode) -> Any:
+    def visit_type_pointer(self, node: PointerTypeNode):
         pass
 
-    def visit_type_array(self, node: ArrayTypeNode) -> Any:
+    def visit_type_array(self, node: ArrayTypeNode):
         pass
 
-    def visit_type_func(self, node: FuncTypeNode) -> Any:
+    def visit_type_func(self, node: FuncTypeNode):
         pass
 
-    def visit_assignment(self, node: AssignmentNode) -> Any:
+    def visit_assignment(self, node: AssignmentNode):
         node.target.accept(self)
         node.expression.accept(self)
 
-    def visit_ref(self, node: RefNode) -> Any:
+    def visit_ref(self, node: RefNode):
         node.target.accept(self)
 
-    def visit_deref(self, node: DerefNode) -> Any:
+    def visit_deref(self, node: DerefNode):
         node.target.accept(self)
 
-    def visit_array(self, node: ArrayNode) -> Any:
+    def visit_array(self, node: ArrayNode):
         node.target.accept(self)
         node.index.accept(self)
 
-    def visit_variable(self, node: VariableNode) -> Any:
+    def visit_variable(self, node: VariableNode):
         pass
 
-    def visit_function(self, node: FunctionNode) -> Any:
+    def visit_function(self, node: FunctionNode):
         for arg in node.arguments:
             arg.accept(self)
 
-    def visit_value(self, node: ValueNode) -> Any:
+    def visit_value(self, node: ValueNode):
         pass
 
-    def visit_call(self, node: CallNode) -> Any:
+    def visit_call(self, node: CallNode):
         pass
 
-    def visit_if(self, node: IfNode) -> Any:
+    def visit_if(self, node: IfNode):
         node.condition.accept(self)
         for statement in node.statements:
             statement.accept(self)
 
-    def visit_exprstmt(self, node: ExpressionStatementNode) -> Any:
+    def visit_exprstmt(self, node: ExpressionStatementNode):
         node.expression.accept(self)
