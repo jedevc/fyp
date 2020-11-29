@@ -13,3 +13,6 @@ mypy synth
 
 # linting
 pylint synth
+
+# simple run
+python -m synth --help > /dev/null

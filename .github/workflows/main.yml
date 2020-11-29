@@ -39,3 +39,7 @@ jobs:
       - name: Check linting with pylint
         run: |
           pylint synth
+
+      - name: Check synth runs
+        run: |
+          python -m synth --help
