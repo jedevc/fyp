@@ -17,6 +17,9 @@ class ChunkifyVisitor(Visitor):
         self.chunks = []
         self.externs = []
 
+        self._constraint = ChunkConstraint()
+        self._variables = []
+
     def result(self) -> ChunkSet:
         return ChunkSet(self.externs, self.chunks)
 
@@ -25,40 +28,31 @@ class ChunkifyVisitor(Visitor):
             chunk.accept(self)
 
     def visit_chunk(self, node: ChunkNode):
-        constraint = ChunkConstraint()
-        variables = []
+        self._constraint = ChunkConstraint()
+        self._variables = []
         for var in node.variables:
-            res = var.accept(self)
-            if isinstance(res, ChunkConstraint):
-                constraint = constraint.join(res)
-            elif isinstance(res, Variable):
-                variables.append(res)
-            else:
-                raise RuntimeError()
+            var.accept(self)
 
-        chunk = Chunk(variables, constraint)
+        chunk = Chunk(self._variables, self._constraint)
         self.chunks.append(chunk)
 
     def visit_extern(self, node: ExternChunkNode):
-        variables = []
+        self._constraint = ChunkConstraint()
+        self._variables = []
         for var in node.variables:
-            res = var.accept(self)
-            if isinstance(res, Variable):
-                variables.append(res)
-            elif isinstance(res, ChunkConstraint):
-                raise ProcessingError(var, "cannot process extern chunk constraints")
-            else:
-                raise RuntimeError()
+            var.accept(self)
 
-        self.externs.extend(variables)
+        if not self._constraint.empty:
+            raise ProcessingError(node, "cannot process extern chunk constraints")
 
-    def visit_declaration(self, node: DeclarationNode) -> Variable:
-        return Variable(node.name, node.vartype)
+        self.externs.extend(self._variables)
 
-    def visit_special_declaration(
-        self, node: SpecialDeclarationNode
-    ) -> ChunkConstraint:
+    def visit_declaration(self, node: DeclarationNode):
+        var = Variable(node.name, node.vartype)
+        self._variables.append(var)
+
+    def visit_special_declaration(self, node: SpecialDeclarationNode):
         if node.name == "eof":
-            return ChunkConstraint(eof=True)
+            self._constraint.join(ChunkConstraint(eof=True))
         else:
             raise ProcessingError(node, f"invalid special variable {node.name}")

@@ -50,6 +50,10 @@ class ChunkConstraint:
             eof=self.eof or other.eof,
         )
 
+    @property
+    def empty(self) -> bool:
+        return not self.eof
+
     def __str__(self) -> str:
         return f"<ChunkConstraint eof={self.eof}>"
 
