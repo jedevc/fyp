@@ -1,4 +1,5 @@
 import argparse
+import subprocess
 import sys
 from typing import Optional, TextIO
 
@@ -14,12 +15,18 @@ def main() -> Optional[int]:
     arg_parser.add_argument(
         "--debug", choices=["print"], help="Perform debugging actions"
     )
+    arg_parser.add_argument(
+        "--format",
+        choices=["none", "llvm", "google", "chromium", "mozilla", "webkit"],
+        default="webkit",
+        help="Coding style to output",
+    )
     args = arg_parser.parse_args()
 
     stream = args.infile.read()
 
     try:
-        synthesize(stream, args.outfile, args.debug)
+        synthesize(stream, args.outfile, debug=args.debug, style=args.format)
     except SynthError as err:
         print(err.format(stream), file=sys.stderr)
         return 1
@@ -27,7 +34,7 @@ def main() -> Optional[int]:
     return 0
 
 
-def synthesize(stream: str, output: TextIO, debug: str = ""):
+def synthesize(stream: str, output: TextIO, debug: str = "", style: str = "none"):
     lex = Lexer(stream)
     tokens = lex.tokens_list()
 
@@ -51,4 +58,14 @@ def synthesize(stream: str, output: TextIO, debug: str = ""):
 
     inter = Interpreter(blocks, chunks)
     prog = inter.program()
-    print(prog.code, file=output)
+    code = prog.code
+
+    if style == "none":
+        print(code, file=output)
+    else:
+        subprocess.run(
+            ["clang-format", f"-style={style}"],
+            input=code.encode(),
+            stdout=output,
+            check=True,
+        )
