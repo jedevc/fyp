@@ -1,8 +1,8 @@
-from ..parser import (
+from ..error import ProcessingError
+from ..node import (
     BlockNode,
     CallNode,
     DeclarationNode,
-    ProcessingError,
     SpecNode,
     TraversalVisitor,
     VariableNode,

@@ -1,7 +1,7 @@
 import sys
 from typing import List, Union
 
-from ..parser import (
+from ..node import (
     ArrayNode,
     ArrayTypeNode,
     AssignmentNode,

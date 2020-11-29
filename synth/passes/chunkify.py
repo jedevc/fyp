@@ -1,9 +1,9 @@
 from ..chunk import Chunk, ChunkConstraint, ChunkSet, Variable
-from ..parser import (
+from ..error import ProcessingError
+from ..node import (
     ChunkNode,
     DeclarationNode,
     ExternChunkNode,
-    ProcessingError,
     SpecialDeclarationNode,
     SpecNode,
     Visitor,

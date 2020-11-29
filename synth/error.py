@@ -1,5 +1,5 @@
-from ..node import Node
-from .token import Token
+from .node import Node
+from .parser.token import Token
 
 
 class SynthError(BaseException):

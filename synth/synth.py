@@ -3,8 +3,9 @@ import subprocess
 import sys
 from typing import Optional, TextIO
 
+from .error import SynthError
 from .interpret import Interpreter
-from .parser import Lexer, Parser, SynthError
+from .parser import Lexer, Parser
 from .passes import BlockifyVisitor, ChunkifyVisitor, PrinterVisitor, TypeCheckVisitor
 
 

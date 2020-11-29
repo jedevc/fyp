@@ -14,7 +14,7 @@ from ..block import (
     Variable,
 )
 from ..chunk import Chunk, ChunkSet
-from ..parser import (
+from ..node import (
     ArrayNode,
     AssignmentNode,
     BlockNode,
