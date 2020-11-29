@@ -1,6 +1,7 @@
 from typing import Any, List, Union
 
 from .base import Node
+from .visitor import Visitor
 
 Lvalue = Union["VariableNode", "ArrayNode", "DerefNode"]
 Expression = Union["FunctionNode", "ValueNode", "RefNode", Lvalue]
@@ -12,7 +13,7 @@ class FunctionNode(Node):
         self.target = target
         self.arguments = arguments
 
-    def accept(self, visitor) -> Any:
+    def accept(self, visitor: Visitor) -> Any:
         return visitor.visit_function(self)
 
 
@@ -21,7 +22,7 @@ class RefNode(Node):
         super().__init__()
         self.target = target
 
-    def accept(self, visitor) -> Any:
+    def accept(self, visitor: Visitor) -> Any:
         return visitor.visit_ref(self)
 
 
@@ -30,7 +31,7 @@ class DerefNode(Node):
         super().__init__()
         self.target = target
 
-    def accept(self, visitor) -> Any:
+    def accept(self, visitor: Visitor) -> Any:
         return visitor.visit_deref(self)
 
 
@@ -39,7 +40,7 @@ class VariableNode(Node):
         super().__init__()
         self.name = name
 
-    def accept(self, visitor) -> Any:
+    def accept(self, visitor: Visitor) -> Any:
         return visitor.visit_variable(self)
 
 
@@ -49,7 +50,7 @@ class ArrayNode(Node):
         self.target = target
         self.index = index
 
-    def accept(self, visitor) -> Any:
+    def accept(self, visitor: Visitor) -> Any:
         return visitor.visit_array(self)
 
 
@@ -64,5 +65,5 @@ class ValueNode(Node):
     def is_int(self) -> bool:
         return isinstance(self.value, int)
 
-    def accept(self, visitor) -> Any:
+    def accept(self, visitor: Visitor) -> Any:
         return visitor.visit_value(self)
