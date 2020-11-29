@@ -1,6 +1,8 @@
-from typing import Any
+from typing import TypeVar
 
 from .visitor import Visitor
+
+X = TypeVar("X")
 
 
 class Node:
@@ -8,5 +10,5 @@ class Node:
         self.token_start = None
         self.token_end = None
 
-    def accept(self, visitor: Visitor) -> Any:
+    def accept(self, visitor: Visitor[X]) -> X:
         raise NotImplementedError()

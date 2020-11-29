@@ -2,7 +2,7 @@ from typing import List, Union
 
 from .chunk import Chunk
 
-Lvalue = Union["Variable", "Deref"]
+Lvalue = Union["Variable", "Array", "Deref"]
 Expression = Union["Function", "Value", "Ref", Lvalue]
 Statement = Union["Assignment", "Call", "If", "ExpressionStatement"]
 

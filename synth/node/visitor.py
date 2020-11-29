@@ -1,6 +1,7 @@
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Generic, TypeVar
 
 if TYPE_CHECKING:
+    from .base import Node
     from .expr import (
         ArrayNode,
         DerefNode,
@@ -20,73 +21,75 @@ if TYPE_CHECKING:
     from .stmt import AssignmentNode, CallNode, ExpressionStatementNode, IfNode
     from .types import ArrayTypeNode, FuncTypeNode, PointerTypeNode, SimpleTypeNode
 
+T = TypeVar("T")
 
-class Visitor:
+
+class Visitor(Generic[T]):
     def __init__(self):
         pass
 
-    def visit_spec(self, node: "SpecNode"):
+    def visit_spec(self, node: "SpecNode") -> T:
         pass
 
-    def visit_chunk(self, node: "ChunkNode"):
+    def visit_chunk(self, node: "ChunkNode") -> T:
         pass
 
-    def visit_extern(self, node: "ExternChunkNode"):
+    def visit_extern(self, node: "ExternChunkNode") -> T:
         pass
 
-    def visit_block(self, node: "BlockNode"):
+    def visit_block(self, node: "BlockNode") -> T:
         pass
 
-    def visit_declaration(self, node: "DeclarationNode"):
+    def visit_declaration(self, node: "DeclarationNode") -> T:
         pass
 
-    def visit_special_declaration(self, node: "SpecialDeclarationNode"):
+    def visit_special_declaration(self, node: "SpecialDeclarationNode") -> T:
         pass
 
-    def visit_type_simple(self, node: "SimpleTypeNode"):
+    def visit_type_simple(self, node: "SimpleTypeNode") -> T:
         pass
 
-    def visit_type_pointer(self, node: "PointerTypeNode"):
+    def visit_type_pointer(self, node: "PointerTypeNode") -> T:
         pass
 
-    def visit_type_array(self, node: "ArrayTypeNode"):
+    def visit_type_array(self, node: "ArrayTypeNode") -> T:
         pass
 
-    def visit_type_func(self, node: "FuncTypeNode"):
+    def visit_type_func(self, node: "FuncTypeNode") -> T:
         pass
 
-    def visit_assignment(self, node: "AssignmentNode"):
+    def visit_assignment(self, node: "AssignmentNode") -> T:
         pass
 
-    def visit_variable(self, node: "VariableNode"):
+    def visit_variable(self, node: "VariableNode") -> T:
         pass
 
-    def visit_ref(self, node: "RefNode"):
+    def visit_ref(self, node: "RefNode") -> T:
         pass
 
-    def visit_deref(self, node: "DerefNode"):
+    def visit_deref(self, node: "DerefNode") -> T:
         pass
 
-    def visit_array(self, node: "ArrayNode"):
+    def visit_array(self, node: "ArrayNode") -> T:
         pass
 
-    def visit_function(self, node: "FunctionNode"):
+    def visit_function(self, node: "FunctionNode") -> T:
         pass
 
-    def visit_value(self, node: "ValueNode"):
+    def visit_value(self, node: "ValueNode") -> T:
         pass
 
-    def visit_call(self, node: "CallNode"):
+    def visit_call(self, node: "CallNode") -> T:
         pass
 
-    def visit_if(self, node: "IfNode"):
+    def visit_if(self, node: "IfNode") -> T:
         pass
 
-    def visit_exprstmt(self, node: "ExpressionStatementNode"):
+    def visit_exprstmt(self, node: "ExpressionStatementNode") -> T:
         pass
 
 
-class TraversalVisitor(Visitor):
+class TraversalVisitor(Visitor[None]):
     """
     A basic visitor to traverse all the nodes in the AST.
 

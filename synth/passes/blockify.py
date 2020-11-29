@@ -6,10 +6,13 @@ from ..block import (
     Block,
     Call,
     Deref,
+    Expression,
     ExpressionStatement,
     Function,
     If,
+    Lvalue,
     Ref,
+    Statement,
     Value,
     Variable,
 )
@@ -31,60 +34,97 @@ from ..node import (
 )
 
 
-class BlockifyVisitor(Visitor):
+class BlockifyVisitor(Visitor[None]):
     def __init__(self, chunks: ChunkSet):
         super().__init__()
         self.chunks = chunks
+
         self.blocks: Dict[str, Block] = {}
 
     def result(self) -> List[Block]:
         return list(self.blocks.values())
 
-    def visit_spec(self, node: SpecNode):
+    def visit_spec(self, node: SpecNode) -> None:
         self.blocks = {block.name: Block(block.name) for block in node.blocks}
         for block in node.blocks:
             block.accept(self)
 
-    def visit_block(self, node: BlockNode):
+    def visit_block(self, node: BlockNode) -> None:
         for statement in node.statements:
-            stmt = statement.accept(self)
+            stmt = statement.accept(BlockifyStatementVisitor(self))
             self.blocks[node.name].add_statement(stmt)
 
-    def visit_assignment(self, node: AssignmentNode) -> Assignment:
-        return Assignment(node.target.accept(self), node.expression.accept(self))
-
-    def visit_function(self, node: FunctionNode) -> Function:
-        return Function(node.target, [expr.accept(self) for expr in node.arguments])
-
-    def visit_value(self, node: ValueNode):
-        return Value(node.value)
-
-    def visit_variable(self, node: VariableNode) -> Variable:
-        return Variable(self._lookup_var(node.name), node.name)
-
-    def visit_ref(self, node: RefNode) -> Ref:
-        return Ref(node.target.accept(self))
-
-    def visit_deref(self, node: DerefNode) -> Deref:
-        return Deref(node.target.accept(self))
-
-    def visit_array(self, node: ArrayNode) -> Array:
-        return Array(node.target.accept(self), node.index.accept(self))
-
-    def visit_call(self, node: CallNode) -> Call:
-        return Call(self.blocks[node.target])
-
-    def visit_if(self, node: IfNode) -> If:
-        return If(
-            node.condition.accept(self), [stmt.accept(self) for stmt in node.statements]
-        )
-
-    def visit_exprstmt(self, node: ExpressionStatementNode) -> ExpressionStatement:
-        return ExpressionStatement(node.expression.accept(self))
-
-    def _lookup_var(self, name: str) -> Chunk:
+    def lookup_var(self, name: str) -> Chunk:
         chunk = self.chunks.find(name)
         if chunk is None:
             # internal error, we should have applied a type check pass before this
             raise RuntimeError("variable was not found")
         return chunk
+
+
+class BlockifyStatementVisitor(Visitor[Statement]):
+    def __init__(self, parent: BlockifyVisitor):
+        super().__init__()
+        self.parent = parent
+
+    def visit_assignment(self, node: AssignmentNode) -> Statement:
+        return Assignment(
+            node.target.accept(BlockifyLvalueVisitor(self.parent)),
+            node.expression.accept(BlockifyExpressionVisitor(self.parent)),
+        )
+
+    def visit_call(self, node: CallNode) -> Statement:
+        return Call(self.parent.blocks[node.target])
+
+    def visit_if(self, node: IfNode) -> Statement:
+        return If(
+            node.condition.accept(BlockifyExpressionVisitor(self.parent)),
+            [stmt.accept(self) for stmt in node.statements],
+        )
+
+    def visit_exprstmt(self, node: ExpressionStatementNode) -> Statement:
+        return ExpressionStatement(
+            node.expression.accept(BlockifyExpressionVisitor(self.parent))
+        )
+
+
+class BlockifyLvalueVisitor(Visitor[Lvalue]):
+    def __init__(self, parent: BlockifyVisitor):
+        super().__init__()
+        self.parent = parent
+
+    def visit_variable(self, node: VariableNode) -> Lvalue:
+        return Variable(self.parent.lookup_var(node.name), node.name)
+
+    def visit_deref(self, node: DerefNode) -> Lvalue:
+        return Deref(node.target.accept(self))
+
+    def visit_array(self, node: ArrayNode) -> Lvalue:
+        return Array(
+            node.target.accept(self),
+            node.index.accept(BlockifyExpressionVisitor(self.parent)),
+        )
+
+
+class BlockifyExpressionVisitor(Visitor[Expression]):
+    def __init__(self, parent: BlockifyVisitor):
+        super().__init__()
+        self.parent = parent
+
+    def visit_array(self, node: ArrayNode) -> Expression:
+        return node.accept(BlockifyLvalueVisitor(self.parent))
+
+    def visit_variable(self, node: VariableNode) -> Expression:
+        return node.accept(BlockifyLvalueVisitor(self.parent))
+
+    def visit_deref(self, node: DerefNode) -> Expression:
+        return node.accept(BlockifyLvalueVisitor(self.parent))
+
+    def visit_ref(self, node: RefNode) -> Expression:
+        return Ref(node.target.accept(BlockifyLvalueVisitor(self.parent)))
+
+    def visit_function(self, node: FunctionNode) -> Expression:
+        return Function(node.target, [expr.accept(self) for expr in node.arguments])
+
+    def visit_value(self, node: ValueNode) -> Expression:
+        return Value(node.value)

@@ -1,6 +1,6 @@
-from typing import Any, List, Union
+from typing import List, Union
 
-from .base import Node
+from .base import Node, X
 from .expr import Expression, Lvalue
 from .visitor import Visitor
 
@@ -12,7 +12,7 @@ class CallNode(Node):
         super().__init__()
         self.target = target
 
-    def accept(self, visitor: Visitor) -> Any:
+    def accept(self, visitor: Visitor[X]) -> X:
         return visitor.visit_call(self)
 
 
@@ -22,7 +22,7 @@ class AssignmentNode(Node):
         self.target = target
         self.expression = expression
 
-    def accept(self, visitor: Visitor) -> Any:
+    def accept(self, visitor: Visitor[X]) -> X:
         return visitor.visit_assignment(self)
 
 
@@ -32,7 +32,7 @@ class IfNode(Node):
         self.condition = condition
         self.statements = statements
 
-    def accept(self, visitor: Visitor) -> Any:
+    def accept(self, visitor: Visitor[X]) -> X:
         return visitor.visit_if(self)
 
 
@@ -41,5 +41,5 @@ class ExpressionStatementNode(Node):
         super().__init__()
         self.expression = expression
 
-    def accept(self, visitor: Visitor) -> Any:
+    def accept(self, visitor: Visitor[X]) -> X:
         return visitor.visit_exprstmt(self)

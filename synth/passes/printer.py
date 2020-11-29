@@ -10,6 +10,7 @@ from ..node import (
     ChunkNode,
     DeclarationNode,
     DerefNode,
+    ExpressionStatementNode,
     ExternChunkNode,
     FunctionNode,
     FuncTypeNode,
@@ -25,7 +26,7 @@ from ..node import (
 )
 
 
-class PrinterVisitor(Visitor):
+class PrinterVisitor(Visitor[None]):
     """
     A pretty-printer for the AST, used to generate an equivalent
     representation of the source code.
@@ -165,6 +166,9 @@ class PrinterVisitor(Visitor):
         self.indent -= 4
         self._println()
         self._print("}")
+
+    def visit_exprstmt(self, node: ExpressionStatementNode):
+        node.expression.accept(self)
 
     def _print(self, msg: str = ""):
         print(msg, end="", file=self.output)

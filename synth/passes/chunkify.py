@@ -10,7 +10,7 @@ from ..node import (
 from .error import ProcessingError
 
 
-class ChunkifyVisitor(Visitor):
+class ChunkifyVisitor(Visitor[None]):
     def __init__(self):
         super().__init__()
 
