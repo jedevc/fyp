@@ -6,6 +6,7 @@ from ..block import (
     Block,
     Call,
     Deref,
+    ExpressionStatement,
     Function,
     If,
     Ref,
@@ -19,6 +20,7 @@ from ..parser import (
     BlockNode,
     CallNode,
     DerefNode,
+    ExpressionStatementNode,
     FunctionNode,
     IfNode,
     RefNode,
@@ -76,6 +78,9 @@ class BlockifyVisitor(Visitor):
         return If(
             node.condition.accept(self), [stmt.accept(self) for stmt in node.statements]
         )
+
+    def visit_exprstmt(self, node: ExpressionStatementNode) -> ExpressionStatement:
+        return ExpressionStatement(node.expression.accept(self))
 
     def _lookup_var(self, name: str) -> Chunk:
         chunk = self.chunks.find(name)

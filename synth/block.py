@@ -4,7 +4,16 @@ from .chunk import Chunk
 
 Lvalue = Union["Variable", "Deref"]
 Expression = Union["Function", "Value", "Ref", Lvalue]
-Statement = Union["Assignment", "Call", "If", Expression]
+Statement = Union["Assignment", "Call", "If", "ExpressionStatement"]
+
+
+class ExpressionStatement:
+    def __init__(self, expr: Expression):
+        self.expr = expr
+
+    @property
+    def code(self) -> str:
+        return self.expr.code + ";\n"
 
 
 class Block:
@@ -27,15 +36,15 @@ class FunctionDefinition:
 
     @property
     def code(self) -> str:
-        lines = [f"\t{stmt.code};" for stmt in self.statements]
+        lines = [stmt.code for stmt in self.statements]
 
         if self.func == "main":
             # NOTE: once we have function types, this will be much neater
-            lines.append("\treturn 0;")
-            block = "{\n" + "\n".join(lines) + "\n}"
+            lines.append("return 0;\n")
+            block = "{\n" + "".join(lines) + "}\n"
             return f"int main() {block}"
         else:
-            block = "{\n" + "\n".join(lines) + "\n}"
+            block = "{\n" + "".join(lines) + "}\n"
             return f"void {self.func}() {block}"
 
 
@@ -46,7 +55,7 @@ class Assignment:
 
     @property
     def code(self) -> str:
-        return f"{self.target.code} = {self.value.code}"
+        return f"{self.target.code} = {self.value.code};\n"
 
 
 class Deref:
@@ -93,7 +102,7 @@ class If:
 
     @property
     def code(self) -> str:
-        block = "{\n" + "\n".join(f"\t{stmt.code};" for stmt in self.statements) + "\n}"
+        block = "{\n" + "".join(stmt.code for stmt in self.statements) + "}\n"
         return f"if {self.condition.code} {block}"
 
 

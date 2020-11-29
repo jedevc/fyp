@@ -10,6 +10,7 @@ from .node import (
     DeclarationNode,
     DerefNode,
     Expression,
+    ExpressionStatementNode,
     ExternChunkNode,
     FunctionNode,
     FuncTypeNode,

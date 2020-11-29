@@ -1,6 +1,14 @@
 from typing import Iterable, List
 
-from .block import Block, Call, Function, FunctionDefinition, If, Statement
+from .block import (
+    Block,
+    Call,
+    ExpressionStatement,
+    Function,
+    FunctionDefinition,
+    If,
+    Statement,
+)
 from .chunk import ChunkSet, Variable
 
 
@@ -45,7 +53,7 @@ class Interpreter:
     def _transform(self, stmts: Iterable[Statement]) -> Iterable[Statement]:
         for stmt in stmts:
             if isinstance(stmt, Call):
-                new_stmt = Function(stmt.block.name, [])
+                new_stmt = ExpressionStatement(Function(stmt.block.name, []))
                 yield new_stmt
             elif isinstance(stmt, If):
                 yield If(stmt.condition, list(self._transform(stmt.statements)))

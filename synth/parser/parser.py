@@ -11,6 +11,7 @@ from .node import (
     DeclarationNode,
     DerefNode,
     Expression,
+    ExpressionStatementNode,
     ExternChunkNode,
     FunctionNode,
     FuncTypeNode,
@@ -173,7 +174,7 @@ class Parser:
                 self.pos, self.current, self.last = state
 
                 self.node_cancel()
-                stmt = self.expression()
+                stmt = ExpressionStatementNode(self.expression())
 
         self.end_of_line(after="statement")
         return stmt
