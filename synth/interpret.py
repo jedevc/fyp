@@ -1,6 +1,6 @@
-from typing import List
+from typing import Iterable, List
 
-from .block import Block, Call, Function, FunctionDefinition
+from .block import Block, Call, Function, FunctionDefinition, If, Statement
 from .chunk import ChunkSet, Variable
 
 
@@ -33,16 +33,21 @@ class Interpreter:
 
         for block in self.blocks:
             func = FunctionDefinition(block.name, [])
-            for stmt in block.statements:
-                if isinstance(stmt, Call):
-                    new_stmt = Function(stmt.block.name, [])
-                    func.add_statement(new_stmt)
-                else:
-                    func.add_statement(stmt)
-
+            for stmt in self._transform(block.statements):
+                func.add_statement(stmt)
             final.add_function(func)
 
         for var in self.chunks.variables:
             final.add_global(var)
 
         return final
+
+    def _transform(self, stmts: Iterable[Statement]) -> Iterable[Statement]:
+        for stmt in stmts:
+            if isinstance(stmt, Call):
+                new_stmt = Function(stmt.block.name, [])
+                yield new_stmt
+            elif isinstance(stmt, If):
+                yield If(stmt.condition, list(self._transform(stmt.statements)))
+            else:
+                yield stmt

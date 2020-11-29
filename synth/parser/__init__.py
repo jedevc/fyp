@@ -13,6 +13,7 @@ from .node import (
     ExternChunkNode,
     FunctionNode,
     FuncTypeNode,
+    IfNode,
     Node,
     PointerTypeNode,
     RefNode,

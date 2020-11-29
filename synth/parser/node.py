@@ -2,7 +2,7 @@ from typing import Any, List, Union
 
 Lvalue = Union["VariableNode", "ArrayNode", "DerefNode"]
 Expression = Union["FunctionNode", "ValueNode", "RefNode", Lvalue]
-Statement = Union["AssignmentNode", "CallNode", Expression]
+Statement = Union["AssignmentNode", "CallNode", "IfNode", Expression]
 
 Type = Union["SimpleTypeNode", "PointerTypeNode", "ArrayTypeNode", "FuncTypeNode"]
 
@@ -168,6 +168,16 @@ class AssignmentNode(Node):
         return visitor.visit_assignment(self)
 
 
+class IfNode(Node):
+    def __init__(self, condition: Expression, statements: List[Statement]):
+        super().__init__()
+        self.condition = condition
+        self.statements = statements
+
+    def accept(self, visitor: "Visitor") -> Any:
+        return visitor.visit_if(self)
+
+
 class BlockNode(Node):
     def __init__(self, name: str, statements: List[Statement]):
         super().__init__()
@@ -246,6 +256,9 @@ class Visitor:
     def visit_call(self, node: CallNode) -> Any:
         pass
 
+    def visit_if(self, node: IfNode) -> Any:
+        pass
+
 
 class TraversalVisitor(Visitor):
     """
@@ -317,3 +330,8 @@ class TraversalVisitor(Visitor):
 
     def visit_call(self, node: CallNode) -> Any:
         pass
+
+    def visit_if(self, node: IfNode) -> Any:
+        node.condition.accept(self)
+        for statement in node.statements:
+            statement.accept(self)

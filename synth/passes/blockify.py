@@ -7,6 +7,7 @@ from ..block import (
     Call,
     Deref,
     Function,
+    If,
     Ref,
     Value,
     Variable,
@@ -19,6 +20,7 @@ from ..parser import (
     CallNode,
     DerefNode,
     FunctionNode,
+    IfNode,
     RefNode,
     SpecNode,
     ValueNode,
@@ -69,6 +71,11 @@ class BlockifyVisitor(Visitor):
 
     def visit_call(self, node: CallNode) -> Call:
         return Call(self.blocks[node.target])
+
+    def visit_if(self, node: IfNode) -> If:
+        return If(
+            node.condition.accept(self), [stmt.accept(self) for stmt in node.statements]
+        )
 
     def _lookup_var(self, name: str) -> Chunk:
         chunk = self.chunks.find(name)

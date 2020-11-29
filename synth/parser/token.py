@@ -35,6 +35,8 @@ class TokenType(Enum):
 
 
 PRINTABLE_NAMES = {
+    TokenType.Unknown: "unknown",
+    TokenType.EOF: "EOF",
     TokenType.Newline: "newline",
     TokenType.Dot: "dot",
     TokenType.Comma: "comma",
@@ -65,9 +67,10 @@ class ReservedWord(Enum):
     Chunk = 2
     Extern = 3
 
-    Function = 5
+    Function = 4
 
-    Call = 4
+    Call = 5
+    If = 6
 
 
 RESERVED_WORD_LOOKUP = {
@@ -76,6 +79,7 @@ RESERVED_WORD_LOOKUP = {
     "extern": ReservedWord.Extern,
     "fn": ReservedWord.Function,
     "call": ReservedWord.Call,
+    "if": ReservedWord.If,
 }
 
 

@@ -4,7 +4,7 @@ from .chunk import Chunk
 
 Lvalue = Union["Variable", "Deref"]
 Expression = Union["Function", "Value", "Ref", Lvalue]
-Statement = Union["Assignment", "Call", Expression]
+Statement = Union["Assignment", "Call", "If", Expression]
 
 
 class Block:
@@ -84,6 +84,17 @@ class Call:
     @property
     def code(self) -> str:
         raise RuntimeError("calls cannot be translated directly into code")
+
+
+class If:
+    def __init__(self, condition: Expression, statements: List[Statement]):
+        self.condition = condition
+        self.statements = statements
+
+    @property
+    def code(self) -> str:
+        block = "{\n" + "\n".join(f"\t{stmt.code};" for stmt in self.statements) + "\n}"
+        return f"if {self.condition.code} {block}"
 
 
 class Function:

@@ -14,6 +14,7 @@ from .node import (
     ExternChunkNode,
     FunctionNode,
     FuncTypeNode,
+    IfNode,
     Lvalue,
     Node,
     PointerTypeNode,
@@ -136,33 +137,46 @@ class Parser:
         self.accept(TokenType.Newline)
 
         statements = []
-        while True:
-            if self.accept(TokenType.BraceClose):
-                break
-
-            self.node_enter()
-            stmt: Statement
-            if self.accept(TokenType.Reserved, ReservedWord.Call):
-                target = self.expect(TokenType.Name)
-                stmt = self.node_exit(CallNode(target.lexeme))
-            else:
-                # FIXME: backtracking is sad :(
-                state = (self.pos, self.current, self.last)
-                try:
-                    lvalue = self.lvalue()
-                    self.expect(TokenType.Equals)
-                    exp = self.expression()
-                    stmt = self.node_exit(AssignmentNode(lvalue, exp))
-                except ParseError:
-                    self.pos, self.current, self.last = state
-
-                    self.node_cancel()
-                    stmt = self.expression()
-
-            statements.append(stmt)
-            self.end_of_line(after="statement")
+        while not self.accept(TokenType.BraceClose):
+            statements.append(self.statement())
 
         return self.node_exit(BlockNode(block_name, statements))
+
+    def statement(self) -> Statement:
+        """
+        Parse a single statement.
+        """
+
+        self.node_enter()
+
+        stmt: Statement
+        if self.accept(TokenType.Reserved, ReservedWord.Call):
+            target = self.expect(TokenType.Name)
+            stmt = self.node_exit(CallNode(target.lexeme))
+        elif self.accept(TokenType.Reserved, ReservedWord.If):
+            condition = self.expression()
+            self.expect(TokenType.BraceOpen)
+            self.accept(TokenType.Newline)
+            statements = []
+            while not self.accept(TokenType.BraceClose):
+                statements.append(self.statement())
+            stmt = self.node_exit(IfNode(condition, statements))
+        else:
+            # FIXME: backtracking is sad :(
+            state = (self.pos, self.current, self.last)
+            try:
+                lvalue = self.lvalue()
+                self.expect(TokenType.Equals)
+                exp = self.expression()
+                stmt = self.node_exit(AssignmentNode(lvalue, exp))
+            except ParseError:
+                self.pos, self.current, self.last = state
+
+                self.node_cancel()
+                stmt = self.expression()
+
+        self.end_of_line(after="statement")
+        return stmt
 
     def expression(self) -> Expression:
         """

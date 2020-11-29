@@ -13,6 +13,7 @@ from ..parser import (
     ExternChunkNode,
     FunctionNode,
     FuncTypeNode,
+    IfNode,
     PointerTypeNode,
     RefNode,
     SimpleTypeNode,
@@ -151,6 +152,19 @@ class PrinterVisitor(Visitor):
             self._print(val)
         else:
             raise RuntimeError()
+
+    def visit_if(self, node: IfNode):
+        self._print("if ")
+        node.condition.accept(self)
+        self.indent += 4
+        self._println(" {")
+        for i, statement in enumerate(node.statements):
+            statement.accept(self)
+            if i != len(node.statements) - 1:
+                self._println()
+        self.indent -= 4
+        self._println()
+        self._print("}")
 
     def _print(self, msg: str = ""):
         print(msg, end="", file=self.output)
