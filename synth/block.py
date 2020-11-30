@@ -103,7 +103,7 @@ class If:
     @property
     def code(self) -> str:
         block = "{\n" + "".join(stmt.code for stmt in self.statements) + "}\n"
-        return f"if {self.condition.code} {block}"
+        return f"if ({self.condition.code}) {block}"
 
 
 class Function:
