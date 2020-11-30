@@ -12,7 +12,7 @@ class TokenType(Enum):
     Comma = 3
     Colon = 4
     Semicolon = 5
-    Equals = 6
+    Assign = 6
 
     BracketOpen = 7
     BracketClose = 8
@@ -33,6 +33,12 @@ class TokenType(Enum):
     Times = 22
     Divide = 23
 
+    CompareEQ = 24
+    CompareLT = 25
+    CompareGT = 26
+    CompareLE = 27
+    CompareGE = 28
+
 
 PRINTABLE_NAMES = {
     TokenType.Unknown: "unknown",
@@ -42,7 +48,7 @@ PRINTABLE_NAMES = {
     TokenType.Comma: "comma",
     TokenType.Colon: "colon",
     TokenType.Semicolon: "semicolon",
-    TokenType.Equals: "equals",
+    TokenType.Assign: "assign",
     TokenType.BracketOpen: "opening square bracket",
     TokenType.BracketClose: "closing square bracket",
     TokenType.ParenOpen: "opening paranthesis",
@@ -58,19 +64,23 @@ PRINTABLE_NAMES = {
     TokenType.Minus: "minus",
     TokenType.Times: "times",
     TokenType.Divide: "divide",
+    TokenType.CompareEQ: "equals",
+    TokenType.CompareLT: "less than",
+    TokenType.CompareGT: "greater than",
+    TokenType.CompareLE: "less than or equal to",
+    TokenType.CompareGE: "greater than or equal to",
 }
 
 
-@unique
-class ReservedWord(Enum):
-    Block = 1
-    Chunk = 2
-    Extern = 3
+class ReservedWord:
+    Block = "block"
+    Chunk = "chunk"
+    Extern = "extern"
 
-    Function = 4
+    Function = "fn"
 
-    Call = 5
-    If = 6
+    Call = "call"
+    If = "if"
 
 
 RESERVED_WORD_LOOKUP = {

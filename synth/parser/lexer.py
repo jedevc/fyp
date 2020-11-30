@@ -1,14 +1,25 @@
-from typing import Iterable, List, Optional
+from typing import Dict, Iterable, List, Optional, Union
 
 from .error import LexError
 from .token import RESERVED_WORD_LOOKUP, Token, TokenType
 
-SIMPLE_TOKENS = {
+SIMPLE_TOKENS: Dict[str, Union[TokenType, Dict[str, TokenType]]] = {
     ".": TokenType.Dot,
     ",": TokenType.Comma,
     ":": TokenType.Colon,
     ";": TokenType.Semicolon,
-    "=": TokenType.Equals,
+    "=": {
+        "==": TokenType.CompareEQ,
+        "=": TokenType.Assign,
+    },
+    ">": {
+        ">=": TokenType.CompareGE,
+        ">": TokenType.CompareGT,
+    },
+    "<": {
+        "<=": TokenType.CompareLE,
+        "<": TokenType.CompareLT,
+    },
     "[": TokenType.BracketOpen,
     "]": TokenType.BracketClose,
     "(": TokenType.ParenOpen,
@@ -32,8 +43,8 @@ class Lexer:
         self.stream = stream
 
         self.n = -1
-        self.ch = None
-        self.ch_prev = None
+        self.ch: Optional[str] = None
+        self.ch_prev: Optional[str] = None
         self._advance()
 
     def tokens(self) -> Iterable[Token]:
@@ -93,7 +104,17 @@ class Lexer:
             return None
         elif ttype := SIMPLE_TOKENS.get(self.ch):
             self._advance()
-            return Token(self.n, 1, ttype)
+            if isinstance(ttype, dict):
+                for target in ttype:
+                    piece = self.stream[self.n : self.n + len(target) - 1]
+                    if piece == target[1:]:
+                        self._skip(len(target) - 1)
+                        return Token(self.n, 1, ttype[target])
+
+                # FIXME: this isn't *the best* reponse
+                raise LexError(self.n, self.n, "invalid token")
+            else:
+                return Token(self.n, 1, ttype)
         elif self.ch == "/":
             self._advance()
             if self.ch == "/":
@@ -122,18 +143,18 @@ class Lexer:
             s = self._read_str()
             return Token(self.n, len(s) + 2, TokenType.String, s)
         elif self._isalpha() or self.ch == "$":
-            n = self._read_name()
-            if n in ("null", "NULL"):
-                return Token(self.n, len(n), TokenType.Integer, 0)
-            elif n in RESERVED_WORD_LOOKUP:
+            name = self._read_name()
+            if name in ("null", "NULL"):
+                return Token(self.n, len(name), TokenType.Integer, "0")
+            elif name in RESERVED_WORD_LOOKUP:
                 return Token(
-                    self.n, len(n), TokenType.Reserved, RESERVED_WORD_LOOKUP[n]
+                    self.n, len(name), TokenType.Reserved, RESERVED_WORD_LOOKUP[name]
                 )
             else:
-                return Token(self.n, len(n), TokenType.Name, n)
+                return Token(self.n, len(name), TokenType.Name, name)
         elif self._isnum():
-            n = self._read_num()
-            return Token(self.n, len(n), TokenType.Integer, n)
+            num = self._read_num()
+            return Token(self.n, len(num), TokenType.Integer, num)
         else:
             self._advance()
             return Token(self.n, 1, TokenType.Unknown)
@@ -186,6 +207,18 @@ class Lexer:
             self.ch = None
         else:
             self.ch = self.stream[self.n]
+
+    def _skip(self, n: int):
+        self.n += n
+        if self.n > len(self.stream):
+            self.ch = None
+            self.ch_prev = None
+        elif self.n == len(self.stream):
+            self.ch = None
+            self.ch_prev = self.stream[-1]
+        else:
+            self.ch = self.stream[self.n]
+            self.ch_prev = self.stream[self.n - 1]
 
     def _isspace(self):
         if self.ch is None:

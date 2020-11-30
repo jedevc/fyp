@@ -167,7 +167,7 @@ class Parser:
             state = (self.pos, self.current, self.last)
             try:
                 lvalue = self.lvalue()
-                self.expect(TokenType.Equals)
+                self.expect(TokenType.Assign)
                 exp = self.expression()
                 stmt = self.node_exit(AssignmentNode(lvalue, exp))
             except ParseError:
