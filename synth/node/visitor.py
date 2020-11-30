@@ -4,6 +4,7 @@ if TYPE_CHECKING:
     from .base import Node
     from .expr import (
         ArrayNode,
+        BinaryOperationNode,
         DerefNode,
         FunctionNode,
         RefNode,
@@ -71,6 +72,9 @@ class Visitor(Generic[T]):
         pass
 
     def visit_array(self, node: "ArrayNode") -> T:
+        pass
+
+    def visit_binary(self, node: "BinaryOperationNode") -> T:
         pass
 
     def visit_function(self, node: "FunctionNode") -> T:

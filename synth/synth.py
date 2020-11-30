@@ -39,6 +39,9 @@ def synthesize(stream: str, output: TextIO, debug: str = "", style: str = "none"
     lex = Lexer(stream)
     tokens = lex.tokens_list()
 
+    for token in tokens:
+        print(token)
+
     parser = Parser(tokens)
     spec = parser.parse()
 
