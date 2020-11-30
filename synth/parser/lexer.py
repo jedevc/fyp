@@ -123,7 +123,9 @@ class Lexer:
             return Token(self.n, len(s) + 2, TokenType.String, s)
         elif self._isalpha() or self.ch == "$":
             n = self._read_name()
-            if n in RESERVED_WORD_LOOKUP:
+            if n in ("null", "NULL"):
+                return Token(self.n, len(n), TokenType.Integer, 0)
+            elif n in RESERVED_WORD_LOOKUP:
                 return Token(
                     self.n, len(n), TokenType.Reserved, RESERVED_WORD_LOOKUP[n]
                 )
