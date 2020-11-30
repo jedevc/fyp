@@ -15,10 +15,15 @@ from .chunk import ChunkSet, Variable
 class Program:
     def __init__(self):
         self.globals = []
+        self.externs = []
+
         self.functions = []
 
     def add_global(self, var: Variable):
         self.globals.append(var)
+
+    def add_extern(self, var: Variable):
+        self.externs.append(var)
 
     def add_function(self, func: FunctionDefinition):
         self.functions.append(func)
@@ -27,6 +32,7 @@ class Program:
     def code(self) -> str:
         parts = []
         parts += [f"{var.code};" for var in self.globals]
+        parts += [f"extern {var.code};" for var in self.externs]
         parts += [func.code for func in self.functions]
         return "\n".join(parts)
 
@@ -47,6 +53,8 @@ class Interpreter:
 
         for var in self.chunks.variables:
             final.add_global(var)
+        for var in self.chunks.externs:
+            final.add_extern(var)
 
         return final
 
