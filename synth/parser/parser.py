@@ -182,6 +182,10 @@ class Parser:
         return stmt
 
     def expression(self) -> Expression:
+        """
+        Parse an expression.
+        """
+
         return self.binary(
             self.sum,
             self.sum,
@@ -195,6 +199,10 @@ class Parser:
         )
 
     def sum(self) -> Expression:
+        """
+        Parse a sum.
+        """
+
         return self.binary(
             self.product,
             self.sum,
@@ -205,6 +213,10 @@ class Parser:
         )
 
     def product(self) -> Expression:
+        """
+        Parse a product.
+        """
+
         return self.binary(
             self.atom,
             self.product,
@@ -220,6 +232,10 @@ class Parser:
         right: Callable[[], Expression],
         operators: Dict[TokenType, Operator],
     ) -> Expression:
+        """
+        Parse an arbitrary binary expression.
+        """
+
         self.node_enter()
         op1 = left()
         for op in operators:
