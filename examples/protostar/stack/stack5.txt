@@ -1,0 +1,8 @@
+// need external flag file
+
+chunk buffer: [64]char,
+      $eof
+
+block main {
+    gets(buffer)
+}

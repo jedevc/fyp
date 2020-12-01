@@ -1,0 +1,20 @@
+extern flag: fn () void,
+       tryagain: fn () void
+
+chunk buffer: [64]char,
+      modified: int
+
+block main {
+    if argc <= 1 {
+        puts("no argument specified\n");
+        exit(1)
+    }
+
+    modified = 0
+    strcpy(buffer, argv[1])
+    if modified == 0x61626364 {
+        flag()
+    } else {
+        tryagain()
+    }
+}

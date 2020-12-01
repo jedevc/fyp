@@ -1,0 +1,14 @@
+extern flag: fn () void,
+       tryagain: fn () void
+
+chunk buffer: [64]char,
+      fp: fn () void
+
+block main {
+    fp = 0
+    gets(buffer)
+
+    if fp {
+        fp()
+    }
+}

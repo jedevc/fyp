@@ -1,0 +1,9 @@
+extern flag: fn () void,
+       tryagain: fn () void
+
+chunk buffer: [64]char,
+      $eof
+
+block main {
+    gets(buffer)
+}

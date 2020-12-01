@@ -1,0 +1,15 @@
+extern flag: fn () void,
+       tryagain: fn () void
+
+chunk buffer: [64]char,
+      modified: int
+
+block main {
+    modified = 0
+    gets(buffer)
+    if modified != 0 {
+        flag()
+    } else {
+        tryagain()
+    }
+}

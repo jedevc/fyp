@@ -1,0 +1,21 @@
+extern flag: fn () void,
+       tryagain: fn () void
+
+chunk buffer: [64]char,
+      modified: int
+chunk variable: *char
+
+block main {
+    variable = getenv("GREENIE")
+    if variable == NULL {
+        puts("please set GREENIE\n");
+    }
+
+    modified = 0
+    strcpy(buffer, variable)
+    if modified == 0x0d0a0d0a {
+        flag()
+    } else {
+        tryagain()
+    }
+}
