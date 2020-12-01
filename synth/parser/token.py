@@ -34,10 +34,13 @@ class TokenType(Enum):
     Divide = 23
 
     CompareEQ = 24
-    CompareLT = 25
-    CompareGT = 26
-    CompareLE = 27
-    CompareGE = 28
+    CompareNE = 25
+    CompareLT = 26
+    CompareGT = 27
+    CompareLE = 28
+    CompareGE = 29
+
+    Negate = 30
 
 
 PRINTABLE_NAMES = {
@@ -64,7 +67,9 @@ PRINTABLE_NAMES = {
     TokenType.Minus: "minus",
     TokenType.Times: "times",
     TokenType.Divide: "divide",
+    TokenType.Negate: "negate",
     TokenType.CompareEQ: "equals",
+    TokenType.CompareNE: "not equals",
     TokenType.CompareLT: "less than",
     TokenType.CompareGT: "greater than",
     TokenType.CompareLE: "less than or equal to",

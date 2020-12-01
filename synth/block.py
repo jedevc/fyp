@@ -131,6 +131,7 @@ class Operation:
             OperatorType.Multiply: "*",
             OperatorType.Divide: "/",
             OperatorType.Eq: "==",
+            OperatorType.Neq: "!=",
             OperatorType.Gt: ">",
             OperatorType.Gte: ">=",
             OperatorType.Lt: "<",

@@ -190,6 +190,7 @@ class Parser:
             self.sum,
             self.sum,
             {
+                TokenType.CompareNE: Operator.Neq,
                 TokenType.CompareEQ: Operator.Eq,
                 TokenType.CompareLT: Operator.Lt,
                 TokenType.CompareLE: Operator.Lte,

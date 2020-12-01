@@ -20,6 +20,10 @@ SIMPLE_TOKENS: Dict[str, Union[TokenType, Dict[str, TokenType]]] = {
         "<=": TokenType.CompareLE,
         "<": TokenType.CompareLT,
     },
+    "!": {
+        "!=": TokenType.CompareNE,
+        "!": TokenType.Negate,
+    },
     "[": TokenType.BracketOpen,
     "]": TokenType.BracketClose,
     "(": TokenType.ParenOpen,

@@ -70,10 +70,11 @@ class Operator(Enum):
     Divide = 4
 
     Eq = 5
-    Gt = 6
-    Gte = 7
-    Lt = 8
-    Lte = 9
+    Neq = 6
+    Gt = 7
+    Gte = 8
+    Lt = 9
+    Lte = 10
 
 
 class BinaryOperationNode(Node):

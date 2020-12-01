@@ -165,6 +165,7 @@ class PrinterVisitor(Visitor[None]):
             Operator.Multiply: "*",
             Operator.Divide: "/",
             Operator.Eq: "==",
+            Operator.Neq: "!=",
             Operator.Gt: ">",
             Operator.Gte: ">=",
             Operator.Lt: "<",
