@@ -157,6 +157,7 @@ class PrinterVisitor(Visitor[None]):
             raise RuntimeError()
 
     def visit_binary(self, node: BinaryOperationNode):
+        self._print("(")
         node.left.accept(self)
         op = {
             Operator.Add: "+",
@@ -171,6 +172,7 @@ class PrinterVisitor(Visitor[None]):
         }[node.op]
         self._print(f" {op} ")
         node.right.accept(self)
+        self._print(")")
 
     def visit_if(self, node: IfNode):
         self._print("if ")

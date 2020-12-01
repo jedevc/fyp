@@ -11,6 +11,7 @@ from ..block import (
     Function,
     If,
     Lvalue,
+    Operation,
     Ref,
     Statement,
     Value,
@@ -20,6 +21,7 @@ from ..chunk import Chunk, ChunkSet
 from ..node import (
     ArrayNode,
     AssignmentNode,
+    BinaryOperationNode,
     BlockNode,
     CallNode,
     DerefNode,
@@ -128,3 +130,6 @@ class BlockifyExpressionVisitor(Visitor[Expression]):
 
     def visit_value(self, node: ValueNode) -> Expression:
         return Value(node.value)
+
+    def visit_binary(self, node: BinaryOperationNode) -> Expression:
+        return Operation(node.op, node.left.accept(self), node.right.accept(self))

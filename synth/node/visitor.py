@@ -151,6 +151,10 @@ class TraversalVisitor(Visitor[None]):
         node.target.accept(self)
         node.index.accept(self)
 
+    def visit_binary(self, node: "BinaryOperationNode"):
+        node.left.accept(self)
+        node.right.accept(self)
+
     def visit_variable(self, node: "VariableNode"):
         pass
 

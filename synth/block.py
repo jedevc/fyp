@@ -1,9 +1,10 @@
 from typing import List, Union
 
 from .chunk import Chunk
+from .node import Operator as OperatorType
 
 Lvalue = Union["Variable", "Array", "Deref"]
-Expression = Union["Function", "Value", "Ref", Lvalue]
+Expression = Union["Operation", "Function", "Value", "Ref", Lvalue]
 Statement = Union["Assignment", "Call", "If", "ExpressionStatement"]
 
 
@@ -114,6 +115,28 @@ class Function:
     @property
     def code(self) -> str:
         return f"{self.func}({', '.join(arg.code for arg in self.args)})"
+
+
+class Operation:
+    def __init__(self, op: OperatorType, left: Expression, right: Expression):
+        self.op = op
+        self.left = left
+        self.right = right
+
+    @property
+    def code(self) -> str:
+        op = {
+            OperatorType.Add: "+",
+            OperatorType.Subtract: "-",
+            OperatorType.Multiply: "*",
+            OperatorType.Divide: "/",
+            OperatorType.Eq: "==",
+            OperatorType.Gt: ">",
+            OperatorType.Gte: ">=",
+            OperatorType.Lt: "<",
+            OperatorType.Lte: "<=",
+        }[self.op]
+        return f"({self.left.code} {op} {self.right.code})"
 
 
 class Variable:
