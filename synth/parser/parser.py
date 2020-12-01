@@ -1,9 +1,10 @@
-from typing import Any, List, Optional, TypeVar, Union
+from typing import Any, Callable, Dict, List, Optional, TypeVar, Union
 
 from ..node import (
     ArrayNode,
     ArrayTypeNode,
     AssignmentNode,
+    BinaryOperationNode,
     BlockNode,
     CallNode,
     ChunkNode,
@@ -17,6 +18,7 @@ from ..node import (
     IfNode,
     Lvalue,
     Node,
+    Operator,
     PointerTypeNode,
     RefNode,
     SimpleTypeNode,
@@ -180,13 +182,67 @@ class Parser:
         return stmt
 
     def expression(self) -> Expression:
+        return self.binary(
+            self.sum,
+            self.sum,
+            {
+                TokenType.CompareEQ: Operator.Eq,
+                TokenType.CompareLT: Operator.Lt,
+                TokenType.CompareLE: Operator.Lte,
+                TokenType.CompareGT: Operator.Gt,
+                TokenType.CompareGE: Operator.Gte,
+            },
+        )
+
+    def sum(self) -> Expression:
+        return self.binary(
+            self.product,
+            self.sum,
+            {
+                TokenType.Plus: Operator.Add,
+                TokenType.Minus: Operator.Subtract,
+            },
+        )
+
+    def product(self) -> Expression:
+        return self.binary(
+            self.atom,
+            self.product,
+            {
+                TokenType.Times: Operator.Multiply,
+                TokenType.Divide: Operator.Divide,
+            },
+        )
+
+    def binary(
+        self,
+        left: Callable[[], Expression],
+        right: Callable[[], Expression],
+        operators: Dict[TokenType, Operator],
+    ) -> Expression:
+        self.node_enter()
+        op1 = left()
+        for op in operators:
+            if self.accept(op):
+                op2 = right()
+                return self.node_exit(BinaryOperationNode(operators[op], op1, op2))
+        self.node_cancel()
+        return op1
+
+    def atom(self) -> Expression:
         """
-        Parse an expression.
+        Parse an atomic expression.
         """
 
         self.node_enter()
 
-        if self.accept(TokenType.AddressOf):
+        if self.accept(TokenType.ParenOpen):
+            self.node_cancel()
+
+            node = self.expression()
+            self.expect(TokenType.ParenClose)
+            return node
+        elif self.accept(TokenType.AddressOf):
             target = self.lvalue()
             return self.node_exit(RefNode(target))
         elif self.accept(TokenType.String):

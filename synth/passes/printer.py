@@ -5,6 +5,7 @@ from ..node import (
     ArrayNode,
     ArrayTypeNode,
     AssignmentNode,
+    BinaryOperationNode,
     BlockNode,
     CallNode,
     ChunkNode,
@@ -15,6 +16,7 @@ from ..node import (
     FunctionNode,
     FuncTypeNode,
     IfNode,
+    Operator,
     PointerTypeNode,
     RefNode,
     SimpleTypeNode,
@@ -153,6 +155,22 @@ class PrinterVisitor(Visitor[None]):
             self._print(val)
         else:
             raise RuntimeError()
+
+    def visit_binary(self, node: BinaryOperationNode):
+        node.left.accept(self)
+        op = {
+            Operator.Add: "+",
+            Operator.Subtract: "-",
+            Operator.Multiply: "*",
+            Operator.Divide: "/",
+            Operator.Eq: "==",
+            Operator.Gt: ">",
+            Operator.Gte: ">=",
+            Operator.Lt: "<",
+            Operator.Lte: "<=",
+        }[node.op]
+        self._print(f" {op} ")
+        node.right.accept(self)
 
     def visit_if(self, node: IfNode):
         self._print("if ")

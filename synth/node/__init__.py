@@ -6,6 +6,7 @@ from .expr import (
     Expression,
     FunctionNode,
     Lvalue,
+    Operator,
     RefNode,
     ValueNode,
     VariableNode,

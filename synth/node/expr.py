@@ -65,7 +65,7 @@ class RefNode(Node):
 @unique
 class Operator(Enum):
     Add = 1
-    Minus = 2
+    Subtract = 2
     Multiply = 3
     Divide = 4
 
