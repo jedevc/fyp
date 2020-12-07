@@ -4,7 +4,9 @@ from .base import Node, X
 from .expr import Expression, Lvalue
 from .visitor import Visitor
 
-Statement = Union["AssignmentNode", "CallNode", "IfNode", "ExpressionStatementNode"]
+Statement = Union[
+    "AssignmentNode", "CallNode", "SplitNode", "IfNode", "ExpressionStatementNode"
+]
 
 
 class CallNode(Node):
@@ -14,6 +16,11 @@ class CallNode(Node):
 
     def accept(self, visitor: Visitor[X]) -> X:
         return visitor.visit_call(self)
+
+
+class SplitNode(Node):
+    def accept(self, visitor: Visitor[X]) -> X:
+        return visitor.visit_split(self)
 
 
 class AssignmentNode(Node):

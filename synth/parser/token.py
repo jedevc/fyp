@@ -42,6 +42,8 @@ class TokenType(Enum):
 
     Negate = 30
 
+    Ellipsis = 31
+
 
 PRINTABLE_NAMES = {
     TokenType.Unknown: "unknown",
@@ -74,6 +76,7 @@ PRINTABLE_NAMES = {
     TokenType.CompareGT: "greater than",
     TokenType.CompareLE: "less than or equal to",
     TokenType.CompareGE: "greater than or equal to",
+    TokenType.Ellipsis: "ellipsis",
 }
 
 

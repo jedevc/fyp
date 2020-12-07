@@ -22,6 +22,7 @@ from ..node import (
     SimpleTypeNode,
     SpecialDeclarationNode,
     SpecNode,
+    SplitNode,
     ValueNode,
     VariableNode,
     Visitor,
@@ -115,6 +116,9 @@ class PrinterVisitor(Visitor[None]):
         node.target.accept(self)
         self._print(" = ")
         node.expression.accept(self)
+
+    def visit_split(self, node: SplitNode):
+        self._print("...")
 
     def visit_call(self, node: CallNode):
         self._print("call ")

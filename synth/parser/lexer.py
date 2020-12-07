@@ -4,7 +4,10 @@ from .error import LexError
 from .token import RESERVED_WORD_LOOKUP, Token, TokenType
 
 SIMPLE_TOKENS: Dict[str, Union[TokenType, Dict[str, TokenType]]] = {
-    ".": TokenType.Dot,
+    ".": {
+        "...": TokenType.Ellipsis,
+        ".": TokenType.Dot,
+    },
     ",": TokenType.Comma,
     ":": TokenType.Colon,
     ";": TokenType.Semicolon,
@@ -113,7 +116,7 @@ class Lexer:
                     piece = self.stream[self.n : self.n + len(target) - 1]
                     if piece == target[1:]:
                         self._skip(len(target) - 1)
-                        return Token(self.n, 1, ttype[target])
+                        return Token(self.n, len(target), ttype[target])
 
                 # FIXME: this isn't *the best* reponse
                 raise LexError(self.n, self.n, "invalid token")

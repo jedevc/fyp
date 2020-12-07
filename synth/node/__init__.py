@@ -19,6 +19,13 @@ from .high import (
     SpecialDeclarationNode,
     SpecNode,
 )
-from .stmt import AssignmentNode, CallNode, ExpressionStatementNode, IfNode, Statement
+from .stmt import (
+    AssignmentNode,
+    CallNode,
+    ExpressionStatementNode,
+    IfNode,
+    SplitNode,
+    Statement,
+)
 from .types import ArrayTypeNode, FuncTypeNode, PointerTypeNode, SimpleTypeNode, Type
 from .visitor import TraversalVisitor, Visitor

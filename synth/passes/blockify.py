@@ -1,4 +1,4 @@
-from typing import Dict, List
+from typing import Dict, List, Union
 
 from ..block import (
     Array,
@@ -30,10 +30,16 @@ from ..node import (
     IfNode,
     RefNode,
     SpecNode,
+    SplitNode,
     ValueNode,
     VariableNode,
     Visitor,
 )
+from .error import ProcessingError
+
+
+class Splitter:
+    pass
 
 
 class BlockifyVisitor(Visitor[None]):
@@ -52,9 +58,26 @@ class BlockifyVisitor(Visitor[None]):
             block.accept(self)
 
     def visit_block(self, node: BlockNode) -> None:
+        count = 1
+
+        def name(n):
+            if n == 1:
+                return node.name
+            else:
+                return f"{node.name}{n}"
+
         for statement in node.statements:
-            stmt = statement.accept(BlockifyStatementVisitor(self))
-            self.blocks[node.name].add_statement(stmt)
+            if isinstance(statement, SplitNode):
+                # split off into new block
+                next_block = Block(name(count + 1))
+                caller = Call(next_block)
+                self.blocks[name(count)].add_statement(caller)
+
+                self.blocks[name(count + 1)] = next_block
+                count += 1
+            else:
+                stmt = statement.accept(BlockifyStatementVisitor(self))
+                self.blocks[name(count)].add_statement(stmt)
 
     def lookup_var(self, name: str) -> Chunk:
         chunk = self.chunks.find(name)
@@ -64,7 +87,7 @@ class BlockifyVisitor(Visitor[None]):
         return chunk
 
 
-class BlockifyStatementVisitor(Visitor[Statement]):
+class BlockifyStatementVisitor(Visitor[Union[Statement]]):
     def __init__(self, parent: BlockifyVisitor):
         super().__init__()
         self.parent = parent
@@ -77,6 +100,9 @@ class BlockifyStatementVisitor(Visitor[Statement]):
 
     def visit_call(self, node: CallNode) -> Statement:
         return Call(self.parent.blocks[node.target])
+
+    def visit_split(self, node: SplitNode) -> Statement:
+        raise ProcessingError(node, "split is invalid here")
 
     def visit_if(self, node: IfNode) -> Statement:
         return If(

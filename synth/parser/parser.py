@@ -24,6 +24,7 @@ from ..node import (
     SimpleTypeNode,
     SpecialDeclarationNode,
     SpecNode,
+    SplitNode,
     Statement,
     Type,
     ValueNode,
@@ -153,7 +154,9 @@ class Parser:
         self.node_enter()
 
         stmt: Statement
-        if self.accept(TokenType.Reserved, ReservedWord.Call):
+        if self.accept(TokenType.Ellipsis):
+            stmt = self.node_exit(SplitNode())
+        elif self.accept(TokenType.Reserved, ReservedWord.Call):
             target = self.expect(TokenType.Name)
             stmt = self.node_exit(CallNode(target.lexeme))
         elif self.accept(TokenType.Reserved, ReservedWord.If):

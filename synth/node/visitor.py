@@ -19,7 +19,13 @@ if TYPE_CHECKING:
         SpecialDeclarationNode,
         SpecNode,
     )
-    from .stmt import AssignmentNode, CallNode, ExpressionStatementNode, IfNode
+    from .stmt import (
+        AssignmentNode,
+        CallNode,
+        ExpressionStatementNode,
+        IfNode,
+        SplitNode,
+    )
     from .types import ArrayTypeNode, FuncTypeNode, PointerTypeNode, SimpleTypeNode
 
 T = TypeVar("T")
@@ -84,6 +90,9 @@ class Visitor(Generic[T]):
         pass
 
     def visit_call(self, node: "CallNode") -> T:
+        pass
+
+    def visit_split(self, node: "SplitNode") -> T:
         pass
 
     def visit_if(self, node: "IfNode") -> T:
@@ -166,6 +175,9 @@ class TraversalVisitor(Visitor[None]):
         pass
 
     def visit_call(self, node: "CallNode"):
+        pass
+
+    def visit_split(self, node: "SplitNode") -> T:
         pass
 
     def visit_if(self, node: "IfNode"):
