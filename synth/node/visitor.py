@@ -138,13 +138,15 @@ class TraversalVisitor(Visitor[None]):
         pass
 
     def visit_type_pointer(self, node: "PointerTypeNode"):
-        pass
+        node.base.accept(self)
 
     def visit_type_array(self, node: "ArrayTypeNode"):
-        pass
+        node.base.accept(self)
 
     def visit_type_func(self, node: "FuncTypeNode"):
-        pass
+        for arg in node.args:
+            arg.accept(self)
+        node.ret.accept(self)
 
     def visit_assignment(self, node: "AssignmentNode"):
         node.target.accept(self)
