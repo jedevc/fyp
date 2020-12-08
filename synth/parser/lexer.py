@@ -1,7 +1,7 @@
 from typing import Dict, Iterable, List, Optional, Union
 
 from .error import LexError
-from .token import RESERVED_WORD_LOOKUP, Token, TokenType
+from .token import RESERVED_WORDS, Token, TokenType
 
 SIMPLE_TOKENS: Dict[str, Union[TokenType, Dict[str, TokenType]]] = {
     ".": {
@@ -153,10 +153,8 @@ class Lexer:
             name = self._read_name()
             if name in ("null", "NULL"):
                 return Token(self.n, len(name), TokenType.Integer, "0")
-            elif name in RESERVED_WORD_LOOKUP:
-                return Token(
-                    self.n, len(name), TokenType.Reserved, RESERVED_WORD_LOOKUP[name]
-                )
+            elif name in RESERVED_WORDS:
+                return Token(self.n, len(name), TokenType.Reserved, name)
             else:
                 return Token(self.n, len(name), TokenType.Name, name)
         elif self._isnum():

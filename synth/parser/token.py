@@ -91,13 +91,13 @@ class ReservedWord:
     If = "if"
 
 
-RESERVED_WORD_LOOKUP = {
-    "block": ReservedWord.Block,
-    "chunk": ReservedWord.Chunk,
-    "extern": ReservedWord.Extern,
-    "fn": ReservedWord.Function,
-    "call": ReservedWord.Call,
-    "if": ReservedWord.If,
+RESERVED_WORDS = {
+    ReservedWord.Block,
+    ReservedWord.Chunk,
+    ReservedWord.Extern,
+    ReservedWord.Function,
+    ReservedWord.Call,
+    ReservedWord.If,
 }
 
 
