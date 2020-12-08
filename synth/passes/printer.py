@@ -26,6 +26,7 @@ from ..node import (
     ValueNode,
     VariableNode,
     Visitor,
+    WhileNode,
 )
 
 
@@ -203,6 +204,21 @@ class PrinterVisitor(Visitor[None]):
             self.indent -= 4
             self._println()
             self._print("}")
+
+    def visit_while(self, node: WhileNode):
+        # TODO: remove duplication with this and visit_if
+        self._print("while ")
+        node.condition.accept(self)
+
+        self.indent += 4
+        self._println(" {")
+        for i, statement in enumerate(node.statements):
+            statement.accept(self)
+            if i != len(node.statements) - 1:
+                self._println()
+        self.indent -= 4
+        self._println()
+        self._print("}")
 
     def visit_exprstmt(self, node: ExpressionStatementNode):
         node.expression.accept(self)

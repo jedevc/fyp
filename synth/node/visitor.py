@@ -25,6 +25,7 @@ if TYPE_CHECKING:
         ExpressionStatementNode,
         IfNode,
         SplitNode,
+        WhileNode,
     )
     from .types import ArrayTypeNode, FuncTypeNode, PointerTypeNode, SimpleTypeNode
 
@@ -96,6 +97,9 @@ class Visitor(Generic[T]):
         pass
 
     def visit_if(self, node: "IfNode") -> T:
+        pass
+
+    def visit_while(self, node: "WhileNode") -> T:
         pass
 
     def visit_exprstmt(self, node: "ExpressionStatementNode") -> T:
@@ -187,6 +191,11 @@ class TraversalVisitor(Visitor[None]):
         for statement in node.if_statements:
             statement.accept(self)
         for statement in node.else_statements:
+            statement.accept(self)
+
+    def visit_while(self, node: "WhileNode"):
+        node.condition.accept(self)
+        for statement in node.statements:
             statement.accept(self)
 
     def visit_exprstmt(self, node: "ExpressionStatementNode"):

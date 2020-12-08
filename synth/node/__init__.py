@@ -26,6 +26,7 @@ from .stmt import (
     IfNode,
     SplitNode,
     Statement,
+    WhileNode,
 )
 from .types import ArrayTypeNode, FuncTypeNode, PointerTypeNode, SimpleTypeNode, Type
 from .visitor import TraversalVisitor, Visitor

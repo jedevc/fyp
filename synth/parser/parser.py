@@ -29,6 +29,7 @@ from ..node import (
     Type,
     ValueNode,
     VariableNode,
+    WhileNode,
 )
 from .error import ParseError
 from .token import PRINTABLE_NAMES, ReservedWord, Token, TokenType
@@ -153,6 +154,10 @@ class Parser:
         elif self.accept(TokenType.Reserved, ReservedWord.Call):
             target = self.expect(TokenType.Name)
             stmt = self.node_exit(CallNode(target.lexeme))
+        elif self.accept(TokenType.Reserved, ReservedWord.While):
+            condition = self.expression()
+            statements = self.scope()
+            stmt = self.node_exit(WhileNode(condition, statements))
         elif self.accept(TokenType.Reserved, ReservedWord.If):
             condition = self.expression()
             if_statements = self.scope()

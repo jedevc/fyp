@@ -5,7 +5,12 @@ from .expr import Expression, Lvalue
 from .visitor import Visitor
 
 Statement = Union[
-    "AssignmentNode", "CallNode", "SplitNode", "IfNode", "ExpressionStatementNode"
+    "AssignmentNode",
+    "CallNode",
+    "SplitNode",
+    "IfNode",
+    "WhileNode",
+    "ExpressionStatementNode",
 ]
 
 
@@ -47,6 +52,20 @@ class IfNode(Node):
 
     def accept(self, visitor: Visitor[X]) -> X:
         return visitor.visit_if(self)
+
+
+class WhileNode(Node):
+    def __init__(
+        self,
+        condition: Expression,
+        statements: List[Statement],
+    ):
+        super().__init__()
+        self.condition = condition
+        self.statements = statements
+
+    def accept(self, visitor: Visitor[X]) -> X:
+        return visitor.visit_while(self)
 
 
 class ExpressionStatementNode(Node):

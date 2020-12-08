@@ -88,8 +88,10 @@ class ReservedWord:
     Function = "fn"
 
     Call = "call"
+
     If = "if"
     Else = "else"
+    While = "while"
 
 
 RESERVED_WORDS = {
@@ -100,6 +102,7 @@ RESERVED_WORDS = {
     ReservedWord.Call,
     ReservedWord.If,
     ReservedWord.Else,
+    ReservedWord.While,
 }
 
 

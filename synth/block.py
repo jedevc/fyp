@@ -5,7 +5,7 @@ from .node import Operator as OperatorType
 
 Lvalue = Union["Variable", "Array", "Deref"]
 Expression = Union["Operation", "Function", "Value", "Ref", Lvalue]
-Statement = Union["Assignment", "Call", "If", "ExpressionStatement"]
+Statement = Union["Assignment", "Call", "If", "While", "ExpressionStatement"]
 
 
 class ExpressionStatement:
@@ -113,6 +113,17 @@ class If:
             return f"if ({self.condition.code}) {if_block} else {else_block}\n"
         else:
             return f"if ({self.condition.code}) {if_block}\n"
+
+
+class While:
+    def __init__(self, condition: Expression, stmts: List[Statement]):
+        self.condition = condition
+        self.statements = stmts
+
+    @property
+    def code(self) -> str:
+        block = "{\n" + "".join(stmt.code for stmt in self.statements) + "}"
+        return f"while ({self.condition.code}) {block}\n"
 
 
 class Function:
