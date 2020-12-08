@@ -1,3 +1,4 @@
+from .. import types
 from ..node import (
     BlockNode,
     CallNode,
@@ -8,37 +9,6 @@ from ..node import (
     VariableNode,
 )
 from .error import ProcessingError
-
-BASE_TYPES = {
-    "char",
-    "char_signed",
-    "char_unsigned",
-    "short",
-    "short_signed",
-    "short_unsigned",
-    "int",
-    "int_signed",
-    "int_unsigned",
-    "long",
-    "long_unsigned",
-    "long_signed",
-    "long_long",
-    "long_long_signed",
-    "long_long_unsigned",
-    "float",
-    "double",
-    "double_long",
-}
-BOOL_TYPES = {
-    "bool",
-}
-INT_SIZES = [8, 16, 32, 64, 128, 256]
-INT_TEMPLATES = ["int{}_t", "uint{}_t"]
-INT_TYPES = {"intptr_t", "uintptr_t"} | set(
-    tp.format(size) for size in INT_SIZES for tp in INT_TEMPLATES
-)
-
-ALL_TYPES = BASE_TYPES | BOOL_TYPES | INT_TYPES
 
 
 class TypeCheckVisitor(TraversalVisitor):
@@ -86,7 +56,7 @@ class TypeCheckVisitor(TraversalVisitor):
         super().visit_declaration(node)
 
     def visit_type_simple(self, node: SimpleTypeNode):
-        if node.core not in ALL_TYPES:
+        if node.core not in types.TYPES:
             raise ProcessingError(node, f"{node.core} is not a valid core type")
 
     # def visit_type_pointer(self, node: PointerTypeNode):

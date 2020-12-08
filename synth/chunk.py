@@ -1,5 +1,6 @@
 from typing import List, Optional, Union
 
+from . import types
 from .node import ArrayTypeNode, FuncTypeNode, PointerTypeNode, SimpleTypeNode, Type
 
 
@@ -10,7 +11,7 @@ class Variable:
 
     def _typestr(self, tp: Type):
         if isinstance(tp, SimpleTypeNode):
-            return tp.core
+            return types.TYPES[tp.core]
         elif isinstance(tp, PointerTypeNode):
             return f"*{self._typestr(tp.base)}"
         elif isinstance(tp, ArrayTypeNode):
@@ -24,7 +25,7 @@ class Variable:
 
     def _typenamestr(self, name: str, tp: Type):
         if isinstance(tp, SimpleTypeNode):
-            return f"{tp.core} {name}"
+            return f"{types.TYPES[tp.core]} {name}"
         elif isinstance(tp, PointerTypeNode):
             return self._typenamestr(f"*{name}", tp.base)
         elif isinstance(tp, ArrayTypeNode):

@@ -6,6 +6,6 @@ isort \
     --force-grid-wrap=0 \
     --use-parentheses \
     --line-width=88 \
-    synth
+    synth tools
 
-black synth
+black synth tools
