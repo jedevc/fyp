@@ -182,15 +182,27 @@ class PrinterVisitor(Visitor[None]):
     def visit_if(self, node: IfNode):
         self._print("if ")
         node.condition.accept(self)
+
         self.indent += 4
         self._println(" {")
-        for i, statement in enumerate(node.statements):
+        for i, statement in enumerate(node.if_statements):
             statement.accept(self)
-            if i != len(node.statements) - 1:
+            if i != len(node.if_statements) - 1:
                 self._println()
         self.indent -= 4
         self._println()
         self._print("}")
+
+        if node.else_statements:
+            self.indent += 4
+            self._println(" else {")
+            for i, statement in enumerate(node.else_statements):
+                statement.accept(self)
+                if i != len(node.else_statements) - 1:
+                    self._println()
+            self.indent -= 4
+            self._println()
+            self._print("}")
 
     def visit_exprstmt(self, node: ExpressionStatementNode):
         node.expression.accept(self)

@@ -97,14 +97,22 @@ class Call:
 
 
 class If:
-    def __init__(self, condition: Expression, statements: List[Statement]):
+    def __init__(
+        self, condition: Expression, ifs: List[Statement], elses: List[Statement]
+    ):
         self.condition = condition
-        self.statements = statements
+        self.ifs = ifs
+        self.elses = elses
 
     @property
     def code(self) -> str:
-        block = "{\n" + "".join(stmt.code for stmt in self.statements) + "}\n"
-        return f"if ({self.condition.code}) {block}"
+        if_block = "{\n" + "".join(stmt.code for stmt in self.ifs) + "}"
+        else_block = "{\n" + "".join(stmt.code for stmt in self.elses) + "}"
+
+        if self.elses:
+            return f"if ({self.condition.code}) {if_block} else {else_block}\n"
+        else:
+            return f"if ({self.condition.code}) {if_block}\n"
 
 
 class Function:

@@ -34,10 +34,16 @@ class AssignmentNode(Node):
 
 
 class IfNode(Node):
-    def __init__(self, condition: Expression, statements: List[Statement]):
+    def __init__(
+        self,
+        condition: Expression,
+        if_statements: List[Statement],
+        else_statements: List[Statement],
+    ):
         super().__init__()
         self.condition = condition
-        self.statements = statements
+        self.if_statements = if_statements
+        self.else_statements = else_statements
 
     def accept(self, visitor: Visitor[X]) -> X:
         return visitor.visit_if(self)

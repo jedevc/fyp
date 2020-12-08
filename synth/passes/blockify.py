@@ -107,7 +107,8 @@ class BlockifyStatementVisitor(Visitor[Union[Statement]]):
     def visit_if(self, node: IfNode) -> Statement:
         return If(
             node.condition.accept(BlockifyExpressionVisitor(self.parent)),
-            [stmt.accept(self) for stmt in node.statements],
+            [stmt.accept(self) for stmt in node.if_statements],
+            [stmt.accept(self) for stmt in node.else_statements],
         )
 
     def visit_exprstmt(self, node: ExpressionStatementNode) -> Statement:

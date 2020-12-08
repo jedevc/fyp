@@ -89,6 +89,7 @@ class ReservedWord:
 
     Call = "call"
     If = "if"
+    Else = "else"
 
 
 RESERVED_WORDS = {
@@ -98,6 +99,7 @@ RESERVED_WORDS = {
     ReservedWord.Function,
     ReservedWord.Call,
     ReservedWord.If,
+    ReservedWord.Else,
 }
 
 

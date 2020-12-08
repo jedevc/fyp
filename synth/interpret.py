@@ -64,6 +64,10 @@ class Interpreter:
                 new_stmt = ExpressionStatement(Function(stmt.block.name, []))
                 yield new_stmt
             elif isinstance(stmt, If):
-                yield If(stmt.condition, list(self._transform(stmt.statements)))
+                yield If(
+                    stmt.condition,
+                    list(self._transform(stmt.ifs)),
+                    list(self._transform(stmt.elses)),
+                )
             else:
                 yield stmt

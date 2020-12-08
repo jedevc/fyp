@@ -137,13 +137,7 @@ class Parser:
         self.expect(TokenType.Reserved, ReservedWord.Block)
 
         block_name = self.expect(TokenType.Name).lexeme
-        self.expect(TokenType.BraceOpen)
-        self.accept(TokenType.Newline)
-
-        statements = []
-        while not self.accept(TokenType.BraceClose):
-            statements.append(self.statement())
-
+        statements = self.scope()
         return self.node_exit(BlockNode(block_name, statements))
 
     def statement(self) -> Statement:
@@ -161,12 +155,13 @@ class Parser:
             stmt = self.node_exit(CallNode(target.lexeme))
         elif self.accept(TokenType.Reserved, ReservedWord.If):
             condition = self.expression()
-            self.expect(TokenType.BraceOpen)
-            self.accept(TokenType.Newline)
-            statements = []
-            while not self.accept(TokenType.BraceClose):
-                statements.append(self.statement())
-            stmt = self.node_exit(IfNode(condition, statements))
+            if_statements = self.scope()
+            if self.accept(TokenType.Reserved, ReservedWord.Else):
+                else_statements = self.scope()
+            else:
+                else_statements = []
+
+            stmt = self.node_exit(IfNode(condition, if_statements, else_statements))
         else:
             # FIXME: backtracking is sad :(
             state = (self.pos, self.current, self.last)
@@ -183,6 +178,14 @@ class Parser:
 
         self.end_of_line(after="statement")
         return stmt
+
+    def scope(self) -> List[Statement]:
+        self.expect(TokenType.BraceOpen)
+        self.accept(TokenType.Newline)
+        statements = []
+        while not self.accept(TokenType.BraceClose):
+            statements.append(self.statement())
+        return statements
 
     def expression(self) -> Expression:
         """
