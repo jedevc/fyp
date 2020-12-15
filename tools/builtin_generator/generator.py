@@ -60,12 +60,18 @@ def main():
         + "\n\n"
     )
 
-    types_path = Path(args.directory, "types.py")
-    with types_path.open("w") as f:
-        f.write(header)
-        generate_types(f, config, buckets)
+    targets = {
+        "types.py": generate_types,
+        "functions.py": generate_functions,
+        "variables.py": generate_variables,
+    }
+    Path(args.directory, "__init__.py").touch()
+    for target, generator in targets.items():
+        path = Path(args.directory, target)
+        with path.open("w") as f:
+            f.write(header)
+            generator(f, config, buckets)
 
-    for path in (types_path,):
         black.format_file_in_place(
             path, fast=True, mode=black.Mode(()), write_back=black.WriteBack.YES
         )
@@ -95,16 +101,69 @@ def generate_types(output, config, buckets):
         ],
     )
     for (tag, lib) in tags.values():
+        paths[tag.name] = tag.path
+
         name = f"{lib.name}::{tag.name}"
         if tag.kind in (TagKind.UNION, TagKind.STRUCT, TagKind.ENUM):
             translations[name] = f"{tag.kind} {tag.name}"
         else:
             translations[name] = tag.name
-        paths[name] = tag.path
 
     contents = ""
-    contents += f"TYPES = {pformat(translations)}\n\n"
-    contents += f"PATH = {pformat(paths)}\n\n"
+    contents += f"TRANSLATIONS = {pformat(translations)}\n\n"
+    contents += f"PATHS = {pformat(paths)}\n\n"
+    output.write(contents)
+
+
+def generate_functions(output, config, buckets):
+    paths = {}
+    translations = {}
+    signatures = {}
+
+    tags = extract(
+        buckets,
+        [
+            TagKind.FUNCTION,
+            TagKind.PROTOTYPE,
+        ],
+    )
+    for (tag, lib) in tags.values():
+        paths[tag.name] = tag.path
+
+        name = f"{lib.name}::{tag.name}"
+        translations[name] = tag.name
+        signatures[name] = (tag.signature, tag.typeref)
+
+    contents = ""
+    contents += f"TRANSLATIONS = {pformat(translations)}\n\n"
+    contents += f"SIGNATURES = {pformat(signatures)}\n\n"
+    contents += f"PATHS = {pformat(paths)}\n\n"
+    output.write(contents)
+
+
+def generate_variables(output, config, buckets):
+    paths = {}
+    translations = {}
+    types = {}
+
+    tags = extract(
+        buckets,
+        [
+            TagKind.VARIABLE,
+            TagKind.EXTERN,
+        ],
+    )
+    for (tag, lib) in tags.values():
+        paths[tag.name] = tag.path
+
+        name = f"{lib.name}::{tag.name}"
+        translations[name] = tag.name
+        types[name] = tag.typeref
+
+    contents = ""
+    contents += f"TRANSLATIONS = {pformat(translations)}\n\n"
+    contents += f"TYPES = {pformat(types)}\n\n"
+    contents += f"PATHS = {pformat(paths)}\n\n"
     output.write(contents)
 
 
@@ -124,36 +183,3 @@ def extract(buckets, kinds):
             types[tag.name] = (tag, lib)
 
     return types
-
-
-# variables = extract(
-#     buckets,
-#     [
-#         TagKind.VARIABLE,
-#         TagKind.EXTERN,
-#     ],
-#     LangVariable,
-# )
-# functions = extract(
-#     buckets,
-#     [
-#         TagKind.FUNCTION,
-#         TagKind.PROTOTYPE,
-#     ],
-#     LangFunction,
-# )
-
-# class LangVariable(Lang):
-#     def __init__(self, tag: Tag, library: Optional[Library] = None):
-#         super().__init__(tag, library)
-#         self.type = " ".join(tag.typeref.split(":")).removeprefix("typename ")
-
-# class LangFunction(Lang):
-#     def __init__(self, tag: Tag, library: Optional[Library] = None):
-#         super().__init__(tag, library)
-
-#         try:
-#             self.type = " ".join(tag.typeref.split(":")).removeprefix("typename ")
-#         except AttributeError:
-#             self.type = "void"
-#         self.args = tag.signature
