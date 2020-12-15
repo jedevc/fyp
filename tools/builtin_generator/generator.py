@@ -2,7 +2,6 @@ import argparse
 import os
 from datetime import datetime
 from pathlib import Path
-from pprint import pformat
 
 import black
 import yaml
@@ -110,12 +109,12 @@ def generate_types(output, config, buckets):
             translations[name] = tag.name
 
     contents = ""
-    contents += f"TRANSLATIONS = {pformat(translations)}\n\n"
-    contents += f"PATHS = {pformat(paths)}\n\n"
+    contents += f"TRANSLATIONS = {translations}\n\n"
+    contents += f"PATHS = {paths}\n\n"
     output.write(contents)
 
 
-def generate_functions(output, config, buckets):
+def generate_functions(output, config, buckets):  # pylint: disable=unused-argument
     paths = {}
     translations = {}
     signatures = {}
@@ -135,13 +134,13 @@ def generate_functions(output, config, buckets):
         signatures[name] = (tag.signature, tag.typeref)
 
     contents = ""
-    contents += f"TRANSLATIONS = {pformat(translations)}\n\n"
-    contents += f"SIGNATURES = {pformat(signatures)}\n\n"
-    contents += f"PATHS = {pformat(paths)}\n\n"
+    contents += f"TRANSLATIONS = {translations}\n\n"
+    contents += f"SIGNATURES = {signatures}\n\n"
+    contents += f"PATHS = {paths}\n\n"
     output.write(contents)
 
 
-def generate_variables(output, config, buckets):
+def generate_variables(output, config, buckets):  # pylint: disable=unused-argument
     paths = {}
     translations = {}
     types = {}
@@ -161,9 +160,9 @@ def generate_variables(output, config, buckets):
         types[name] = tag.typeref
 
     contents = ""
-    contents += f"TRANSLATIONS = {pformat(translations)}\n\n"
-    contents += f"TYPES = {pformat(types)}\n\n"
-    contents += f"PATHS = {pformat(paths)}\n\n"
+    contents += f"TRANSLATIONS = {translations}\n\n"
+    contents += f"TYPES = {types}\n\n"
+    contents += f"PATHS = {paths}\n\n"
     output.write(contents)
 
 
