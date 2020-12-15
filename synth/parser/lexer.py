@@ -233,7 +233,7 @@ class Lexer:
     def _isalpha(self):
         if self.ch is None:
             return False
-        return self.ch == "_" or "a" <= self.ch <= "z" or "A" <= self.ch <= "Z"
+        return self.ch in ("_",) or "a" <= self.ch <= "z" or "A" <= self.ch <= "Z"
 
     def _isnum(self):
         if self.ch is None:
@@ -244,7 +244,7 @@ class Lexer:
         if self.ch is None:
             return False
         return (
-            self.ch == "_"
+            self.ch in ("_", "@")
             or "a" <= self.ch <= "z"
             or "A" <= self.ch <= "Z"
             or "0" <= self.ch <= "9"

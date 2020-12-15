@@ -102,7 +102,7 @@ def generate_types(output, config, buckets):
     for (tag, lib) in tags.values():
         paths[tag.name] = tag.path
 
-        name = f"{lib.name}::{tag.name}"
+        name = f"{tag.name}@{lib.name}"
         if tag.kind in (TagKind.UNION, TagKind.STRUCT, TagKind.ENUM):
             translations[name] = f"{tag.kind} {tag.name}"
         else:
@@ -129,7 +129,7 @@ def generate_functions(output, config, buckets):  # pylint: disable=unused-argum
     for (tag, lib) in tags.values():
         paths[tag.name] = tag.path
 
-        name = f"{lib.name}::{tag.name}"
+        name = f"{tag.name}@{lib.name}"
         translations[name] = tag.name
         signatures[name] = (tag.signature, tag.typeref)
 
@@ -155,7 +155,7 @@ def generate_variables(output, config, buckets):  # pylint: disable=unused-argum
     for (tag, lib) in tags.values():
         paths[tag.name] = tag.path
 
-        name = f"{lib.name}::{tag.name}"
+        name = f"{tag.name}@{lib.name}"
         translations[name] = tag.name
         types[name] = tag.typeref
 

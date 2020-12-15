@@ -1,4 +1,4 @@
-from .. import types
+from ..builtins import types
 from ..node import (
     BlockNode,
     CallNode,
@@ -56,8 +56,8 @@ class TypeCheckVisitor(TraversalVisitor):
         super().visit_declaration(node)
 
     def visit_type_simple(self, node: SimpleTypeNode):
-        if node.core not in types.TYPES:
-            raise ProcessingError(node, f"{node.core} is not a valid core type")
+        if node.core not in types.TRANSLATIONS:
+            raise ProcessingError(node, f"{node.core} is not a valid type")
 
     # def visit_type_pointer(self, node: PointerTypeNode):
     #     pass
