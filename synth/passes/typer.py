@@ -1,8 +1,10 @@
-from ..builtins import types
+from ..builtins import functions, types
 from ..node import (
     BlockNode,
     CallNode,
     DeclarationNode,
+    FunctionNode,
+    FuncTypeNode,
     SimpleTypeNode,
     SpecNode,
     TraversalVisitor,
@@ -73,3 +75,14 @@ class TypeCheckVisitor(TraversalVisitor):
             raise ProcessingError(node, f"variable {node.name} has not been declared")
 
         super().visit_variable(node)
+
+    def visit_function(self, node: FunctionNode):
+        if node.target not in self.vars and node.target not in functions.TRANSLATIONS:
+            raise ProcessingError(node, f"function {node.target} does not exist")
+
+        if node.target in self.vars and not isinstance(
+            self.vars[node.target], FuncTypeNode
+        ):
+            raise ProcessingError(node, f"{node.target} exists, but is not a function")
+
+        super().visit_function(node)
