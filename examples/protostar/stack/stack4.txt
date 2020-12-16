@@ -5,5 +5,5 @@ chunk buffer: [64]char,
       $eof
 
 block main {
-    gets(buffer)
+    gets@libc(buffer)
 }

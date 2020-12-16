@@ -6,13 +6,13 @@ chunk buffer: [64]char,
 chunk variable: *char
 
 block main {
-    variable = getenv("GREENIE")
+    variable = getenv@libc("GREENIE")
     if variable == NULL {
-        puts("please set GREENIE\n");
+        puts@libc("please set GREENIE\n")
     }
 
     modified = 0
-    strcpy(buffer, variable)
+    strcpy@libc(buffer, variable)
     if modified == 0x0d0a0d0a {
         flag()
     } else {

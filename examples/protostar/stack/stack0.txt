@@ -6,7 +6,7 @@ chunk buffer: [64]char,
 
 block main {
     modified = 0
-    gets(buffer)
+    gets@libc(buffer)
     if modified != 0 {
         flag()
     } else {
