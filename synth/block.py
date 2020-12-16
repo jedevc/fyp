@@ -1,5 +1,6 @@
-from typing import List, Union
+from typing import List, Optional, Union
 
+from .builtins import functions, variables
 from .chunk import Chunk
 from .node import Operator as OperatorType
 
@@ -133,7 +134,11 @@ class Function:
 
     @property
     def code(self) -> str:
-        return f"{self.func}({', '.join(arg.code for arg in self.args)})"
+        if self.func in functions.TRANSLATIONS:
+            func = functions.TRANSLATIONS[self.func]
+        else:
+            func = self.func
+        return f"{func}({', '.join(arg.code for arg in self.args)})"
 
 
 class Operation:
@@ -160,13 +165,16 @@ class Operation:
 
 
 class Variable:
-    def __init__(self, chunk: Chunk, variable: str):
-        self.chunk = chunk
+    def __init__(self, variable: str, chunk: Optional[Chunk]):
         self.variable = variable
+        self.chunk = chunk
 
     @property
     def code(self) -> str:
-        return self.variable
+        if self.variable in variables.TRANSLATIONS:
+            return variables.TRANSLATIONS[self.variable]
+        else:
+            return self.variable
 
 
 class Value:

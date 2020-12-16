@@ -1,4 +1,4 @@
-from typing import Dict, List, Union
+from typing import Dict, List, Optional, Union
 
 from ..block import (
     Array,
@@ -81,12 +81,8 @@ class BlockifyVisitor(Visitor[None]):
                 stmt = statement.accept(BlockifyStatementVisitor(self))
                 self.blocks[name(count)].add_statement(stmt)
 
-    def lookup_var(self, name: str) -> Chunk:
-        chunk = self.chunks.find(name)
-        if chunk is None:
-            # internal error, we should have applied a type check pass before this
-            raise RuntimeError("variable was not found")
-        return chunk
+    def lookup_var(self, name: str) -> Optional[Chunk]:
+        return self.chunks.find(name)
 
 
 class BlockifyStatementVisitor(Visitor[Union[Statement]]):
@@ -131,7 +127,7 @@ class BlockifyLvalueVisitor(Visitor[Lvalue]):
         self.parent = parent
 
     def visit_variable(self, node: VariableNode) -> Lvalue:
-        return Variable(self.parent.lookup_var(node.name), node.name)
+        return Variable(node.name, self.parent.lookup_var(node.name))
 
     def visit_deref(self, node: DerefNode) -> Lvalue:
         return Deref(node.target.accept(self))

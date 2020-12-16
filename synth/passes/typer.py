@@ -1,4 +1,4 @@
-from ..builtins import functions, types
+from ..builtins import functions, types, variables
 from ..node import (
     BlockNode,
     CallNode,
@@ -71,8 +71,8 @@ class TypeCheckVisitor(TraversalVisitor):
     #     pass
 
     def visit_variable(self, node: VariableNode):
-        if node.name not in self.vars:
-            raise ProcessingError(node, f"variable {node.name} has not been declared")
+        if node.name not in self.vars and node.name not in variables.TRANSLATIONS:
+            raise ProcessingError(node, f"variable {node.name} does not exist")
 
         super().visit_variable(node)
 
