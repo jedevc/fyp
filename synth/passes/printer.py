@@ -16,6 +16,7 @@ from ..node import (
     FunctionNode,
     FuncTypeNode,
     IfNode,
+    IntValueNode,
     Operator,
     PointerTypeNode,
     RefNode,
@@ -23,6 +24,7 @@ from ..node import (
     SpecialDeclarationNode,
     SpecNode,
     SplitNode,
+    StringValueNode,
     ValueNode,
     VariableNode,
     Visitor,
@@ -153,11 +155,10 @@ class PrinterVisitor(Visitor[None]):
         self._print(")")
 
     def visit_value(self, node: ValueNode):
-        val = str(node.value)
-        if node.is_str():
-            self._print(quote(val))
-        elif node.is_int():
-            self._print(val)
+        if isinstance(node, StringValueNode):
+            self._print(quote(node.value))
+        elif isinstance(node, IntValueNode):
+            self._print(str(node.value))
         else:
             raise RuntimeError()
 

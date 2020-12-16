@@ -178,14 +178,9 @@ class Variable:
 
 
 class Value:
-    def __init__(self, value: Union[str, int]):
+    def __init__(self, value: str):
         self.value = value
 
     @property
     def code(self) -> str:
-        if isinstance(self.value, str):
-            return '"' + self.value + '"'
-        elif isinstance(self.value, int):
-            return str(self.value)
-        else:
-            raise RuntimeError("value is of invalid type")
+        return self.value

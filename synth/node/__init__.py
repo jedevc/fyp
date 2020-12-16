@@ -5,9 +5,11 @@ from .expr import (
     DerefNode,
     Expression,
     FunctionNode,
+    IntValueNode,
     Lvalue,
     Operator,
     RefNode,
+    StringValueNode,
     ValueNode,
     VariableNode,
 )

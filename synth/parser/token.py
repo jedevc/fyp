@@ -1,4 +1,5 @@
 from enum import Enum, unique
+from typing import Any
 
 
 @unique
@@ -111,7 +112,7 @@ class Token:
     The atomic building-block of the underlying code.
     """
 
-    def __init__(self, position: int, length: int, ttype: TokenType, lexeme: str = ""):
+    def __init__(self, position: int, length: int, ttype: TokenType, lexeme: Any = ""):
         self.position = position
         self.length = length
         self.ttype = ttype

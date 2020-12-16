@@ -1,4 +1,4 @@
-from typing import Dict, Iterable, List, Optional, Union
+from typing import Dict, Iterable, List, Optional, Tuple, Union
 
 from .error import LexError
 from .token import RESERVED_WORDS, Token, TokenType
@@ -152,7 +152,7 @@ class Lexer:
         elif self._isalpha() or self.ch == "$":
             name = self._read_name()
             if name in ("null", "NULL"):
-                return Token(self.n, len(name), TokenType.Integer, "0")
+                return Token(self.n, len(name), TokenType.Integer, ("0", 10))
             elif name in RESERVED_WORDS:
                 return Token(self.n, len(name), TokenType.Reserved, name)
             else:
@@ -176,17 +176,29 @@ class Lexer:
 
         return self.stream[start : self.n]
 
-    def _read_num(self) -> str:
-        start = self.n
+    def _read_num(self) -> Tuple[str, int]:
+        base = 10
 
+        start = self.n
         self._advance()
-        while self._isnum():
+        if self.ch_prev == "0":
+            if self.ch == "x":
+                self._advance()
+                base = 16
+            elif self.ch == "b":
+                self._advance()
+                base = 2
+            elif self.ch == "o":
+                self._advance()
+                base = 8
+
+        while self._isnum(base):
             self._advance()
 
         if self.ch is not None and not self._isspace() and self.ch not in SIMPLE_TOKENS:
             raise LexError(start, self.n, "invalid number")
 
-        return self.stream[start : self.n]
+        return self.stream[start : self.n], base
 
     def _read_str(self) -> str:
         start = self.n
@@ -235,10 +247,11 @@ class Lexer:
             return False
         return self.ch in ("_",) or "a" <= self.ch <= "z" or "A" <= self.ch <= "Z"
 
-    def _isnum(self):
+    def _isnum(self, base: int = 10):
+        NUMBERS = "0123456789abcdef"
         if self.ch is None:
             return False
-        return "0" <= self.ch <= "9"
+        return self.ch in NUMBERS[:base]
 
     def _isalnum(self):
         if self.ch is None:

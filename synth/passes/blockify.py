@@ -29,9 +29,11 @@ from ..node import (
     ExpressionStatementNode,
     FunctionNode,
     IfNode,
+    IntValueNode,
     RefNode,
     SpecNode,
     SplitNode,
+    StringValueNode,
     ValueNode,
     VariableNode,
     Visitor,
@@ -160,7 +162,21 @@ class BlockifyExpressionVisitor(Visitor[Expression]):
         return Function(node.target, [expr.accept(self) for expr in node.arguments])
 
     def visit_value(self, node: ValueNode) -> Expression:
-        return Value(node.value)
+        if isinstance(node, StringValueNode):
+            return Value('"' + node.value + '"')
+        elif isinstance(node, IntValueNode):
+            if node.base == 2:
+                return Value(f"0b{bin(node.value)}")
+            elif node.base == 8:
+                return Value(f"0o{oct(node.value)}")
+            elif node.base == 10:
+                return Value(f"{node.value}")
+            elif node.base == 16:
+                return Value(f"0x{hex(node.value)}")
+            else:
+                raise RuntimeError("value unrepresentable in C")
+        else:
+            raise RuntimeError()
 
     def visit_binary(self, node: BinaryOperationNode) -> Expression:
         return Operation(node.op, node.left.accept(self), node.right.accept(self))

@@ -16,6 +16,7 @@ from ..node import (
     FunctionNode,
     FuncTypeNode,
     IfNode,
+    IntValueNode,
     Lvalue,
     Node,
     Operator,
@@ -26,8 +27,8 @@ from ..node import (
     SpecNode,
     SplitNode,
     Statement,
+    StringValueNode,
     Type,
-    ValueNode,
     VariableNode,
     WhileNode,
 )
@@ -275,10 +276,11 @@ class Parser:
             return self.node_exit(RefNode(target))
         elif self.accept(TokenType.String):
             assert self.last is not None
-            return self.node_exit(ValueNode(self.last.lexeme))
+            return self.node_exit(StringValueNode(self.last.lexeme))
         elif self.accept(TokenType.Integer):
             assert self.last is not None
-            return self.node_exit(ValueNode(int(self.last.lexeme)))
+            value, base = self.last.lexeme
+            return self.node_exit(IntValueNode(int(value, base), base))
         elif (
             peek := self.peek()
         ) and peek.ttype == TokenType.ParenOpen:  # pylint: disable=used-before-assignment
@@ -369,7 +371,7 @@ class Parser:
             size = self.expect(TokenType.Integer)
             self.expect(TokenType.BracketClose)
             base = self.declaration_type()
-            return self.node_exit(ArrayTypeNode(base, int(size.lexeme)))
+            return self.node_exit(ArrayTypeNode(base, int(*size.lexeme)))
         elif self.accept(TokenType.Reserved, ReservedWord.Function):
             args = []
             self.expect(TokenType.ParenOpen)

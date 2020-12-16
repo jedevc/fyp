@@ -11,18 +11,21 @@ Expression = Union[
 
 
 class ValueNode(Node):
-    def __init__(self, value: Union[str, int]):
-        super().__init__()
-        self.value = value
-
-    def is_str(self) -> bool:
-        return isinstance(self.value, str)
-
-    def is_int(self) -> bool:
-        return isinstance(self.value, int)
-
     def accept(self, visitor: Visitor[X]) -> X:
         return visitor.visit_value(self)
+
+
+class IntValueNode(ValueNode):
+    def __init__(self, value: int, base: int):
+        super().__init__()
+        self.value = value
+        self.base = base
+
+
+class StringValueNode(ValueNode):
+    def __init__(self, value: str):
+        super().__init__()
+        self.value = value
 
 
 class VariableNode(Node):
