@@ -1,14 +1,17 @@
+from typing import Dict
+
+
 class Tag:
-    def __init__(self, spec):
+    def __init__(self, spec: Dict[str, str]):
         self.name = spec.get("name")
-        self.path = spec.get("path")
         self.pattern = spec.get("pattern")
         self.kind = spec.get("kind")
+        self.path = spec.get("path")
 
         if "signature" in spec:
             self.signature = spec["signature"].lstrip("(").rstrip(")").split(",")
         else:
-            self.signature = None
+            self.signature = []
 
         self.typeref = spec.get("typeref", "void").removeprefix("typename:")
         if ":" in self.typeref:

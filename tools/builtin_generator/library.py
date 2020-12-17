@@ -1,37 +1,35 @@
 import json
-import os
 import shlex
 import subprocess
-from glob import glob
+from pathlib import Path
 from typing import List, Optional
 
 from .tags import Tag
 
 
 class Library:
-    def __init__(self, name: str, path: str, includes: List[str]):
+    def __init__(self, name: str, path: Path, includes: List[str]):
         self.name = name
         self.path = path
-        self.includes = [
-            f
-            for include in includes
-            for f in glob(os.path.join(path, include), recursive=True)
-        ]
+        self.includes = includes
 
     def build(self):
-        if os.path.exists(os.path.join(self.path, "configure")):
+        if (self.path / "configure").exists():
             run_cmd("./configure", cwd=self.path)
-        if os.path.exists(os.path.join(self.path, "Makefile")):
+        if (self.path / "Makefile").exists():
             run_cmd("make -j", cwd=self.path)
 
     def tags(self):
         tags = []
         for include in self.includes:
-            tags += ctags(include)
+            include_dir = self.path / include
+            for header in include_dir.glob("**/*.h"):
+                relative = str(header).removeprefix(str(include_dir)).strip("/")
+                tags += ctags(include_dir, Path(relative))
         return tags
 
 
-def ctags(header_path: str):
+def ctags(base: Path, header: Path):
     kinds = "+xp"
     fields = "+Sn"
 
@@ -41,10 +39,10 @@ def ctags(header_path: str):
             "-f -",
             "--output-format=json",
             f"--kinds-c={kinds}",
-            f"--fields={fields} {header_path}",
+            f"--fields={fields} {header}",
         ]
     )
-    output = run_cmd(cmd, capture_output=True)
+    output = run_cmd(cmd, cwd=base, capture_output=True)
     if not output:
         return []
 
@@ -53,7 +51,7 @@ def ctags(header_path: str):
 
 
 def run_cmd(
-    cmd: str, cwd: Optional[str] = None, capture_output: bool = False
+    cmd: str, cwd: Optional[Path] = None, capture_output: bool = False
 ) -> Optional[str]:
     print(f"$ {cmd}")
     cmd_words = shlex.split(cmd)

@@ -1,3 +1,4 @@
+---
 types:
   signed:
     - char
@@ -16,6 +17,6 @@ libraries:
   libc:
     path: ../musl-1.2.1
     includes:
-      - ./include/**/*.h
-      - ./obj/include/**/*.h
-      - ./arch/x86_64/**/*.h
+      - ./include/
+      - ./obj/include/
+      - ./arch/x86_64/

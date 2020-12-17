@@ -1,5 +1,4 @@
 import argparse
-import os
 from datetime import datetime
 from pathlib import Path
 
@@ -16,8 +15,10 @@ def main():
     arg_parser.add_argument("--skip-build", dest="build", action="store_false")
     args = arg_parser.parse_args()
 
-    config_path = os.path.join(args.directory, "config.yaml")
-    with open(config_path) as config_file:
+    root = Path(args.directory)
+
+    config_path = root / "config.yaml"
+    with config_path.open() as config_file:
         config = yaml.load(config_file, Loader=yaml.SafeLoader)
 
     buckets = {
@@ -35,7 +36,9 @@ def main():
     }
 
     for library, data in config["libraries"].items():
-        lib = Library(library, data["path"], data["includes"])
+        # TODO: path shouldn't be relative to cwd.
+        # would make more sense to be relative to the config.yaml
+        lib = Library(library, Path(data["path"]), data["includes"])
         if args.build:
             lib.build()
         tags = lib.tags()
