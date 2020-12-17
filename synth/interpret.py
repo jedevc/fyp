@@ -1,15 +1,16 @@
 from typing import Iterable, List
 
-from .block import (
+from .graph import (
     Block,
     Call,
+    ChunkSet,
+    ChunkVariable,
     ExpressionStatement,
     Function,
     FunctionDefinition,
     If,
     Statement,
 )
-from .chunk import ChunkSet, Variable
 
 
 class Program:
@@ -19,10 +20,10 @@ class Program:
 
         self.functions = []
 
-    def add_global(self, var: Variable):
+    def add_global(self, var: ChunkVariable):
         self.globals.append(var)
 
-    def add_extern(self, var: Variable):
+    def add_extern(self, var: ChunkVariable):
         self.externs.append(var)
 
     def add_function(self, func: FunctionDefinition):

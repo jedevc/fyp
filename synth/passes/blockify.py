@@ -1,10 +1,12 @@
 from typing import Dict, List, Optional, Union
 
-from ..block import (
+from ..graph import (
     Array,
     Assignment,
     Block,
     Call,
+    Chunk,
+    ChunkSet,
     Deref,
     Expression,
     ExpressionStatement,
@@ -18,7 +20,6 @@ from ..block import (
     Variable,
     While,
 )
-from ..chunk import Chunk, ChunkSet
 from ..node import (
     ArrayNode,
     AssignmentNode,

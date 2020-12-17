@@ -1,10 +1,10 @@
 from typing import List, Optional, Union
 
-from .builtins import types
-from .node import ArrayTypeNode, FuncTypeNode, PointerTypeNode, SimpleTypeNode, Type
+from ..builtins import types
+from ..node import ArrayTypeNode, FuncTypeNode, PointerTypeNode, SimpleTypeNode, Type
 
 
-class Variable:
+class ChunkVariable:
     def __init__(self, name: str, vtype: Type):
         self.name = name
         self.vtype = vtype
@@ -61,7 +61,9 @@ class ChunkConstraint:
 
 class Chunk:
     def __init__(
-        self, variables: List[Variable], constraint: Optional[ChunkConstraint] = None
+        self,
+        variables: List[ChunkVariable],
+        constraint: Optional[ChunkConstraint] = None,
     ):
         self._vars = variables
         self._table = {
@@ -72,10 +74,10 @@ class Chunk:
         self.constraint = constraint
 
     @property
-    def variables(self) -> List[Variable]:
+    def variables(self) -> List[ChunkVariable]:
         return self._vars
 
-    def lookup(self, name: str) -> Optional[Variable]:
+    def lookup(self, name: str) -> Optional[ChunkVariable]:
         if name.startswith("_"):
             raise KeyError("cannot lookup hidden variable")
 
@@ -85,35 +87,18 @@ class Chunk:
         else:
             return self._vars[i]
 
-    # def add(self, variable: Variable):
-    #     for i, var in enumerate(self._vars):
-    #         if not var.name.startswith("_"):
-    #             continue
-
-    #         if var.vtype == variable.vtype:
-    #             if var.size == variable.size:
-    #                 self._vars[i] = variable
-    #                 self._table[variable.name] = i
-    #                 return
-    #             elif var.size >= variable.size:
-    #                 self._vars.insert(i, variable)
-    #                 self._table[variable.name] = i
-    #                 return
-
-    #     raise RuntimeError("no space")
-
 
 class ChunkSet(Chunk):
-    def __init__(self, externs: List[Variable], chunks: List[Chunk]):
+    def __init__(self, externs: List[ChunkVariable], chunks: List[Chunk]):
         super().__init__(externs)
         self.chunks = chunks
 
     @property
-    def externs(self) -> List[Variable]:
+    def externs(self) -> List[ChunkVariable]:
         return super().variables
 
     @property
-    def variables(self) -> List[Variable]:
+    def variables(self) -> List[ChunkVariable]:
         result = []
         for chunk in self.chunks:
             result.extend(chunk.variables)

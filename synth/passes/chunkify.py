@@ -1,4 +1,4 @@
-from ..chunk import Chunk, ChunkConstraint, ChunkSet, Variable
+from ..graph import Chunk, ChunkConstraint, ChunkSet, ChunkVariable
 from ..node import (
     ChunkNode,
     DeclarationNode,
@@ -48,7 +48,7 @@ class ChunkifyVisitor(Visitor[None]):
         self.externs.extend(self._variables)
 
     def visit_declaration(self, node: DeclarationNode):
-        var = Variable(node.name, node.vartype)
+        var = ChunkVariable(node.name, node.vartype)
         self._variables.append(var)
 
     def visit_special_declaration(self, node: SpecialDeclarationNode):

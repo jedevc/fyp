@@ -1,8 +1,8 @@
 from typing import List, Optional, Union
 
-from .builtins import functions, variables
+from ..builtins import functions, variables
+from ..node import Operator as OperatorType
 from .chunk import Chunk
-from .node import Operator as OperatorType
 
 Lvalue = Union["Variable", "Array", "Deref"]
 Expression = Union["Operation", "Function", "Value", "Ref", Lvalue]
