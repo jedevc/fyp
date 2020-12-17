@@ -1,4 +1,4 @@
-from typing import List
+from typing import List, Set
 
 from ..builtins import functions, variables
 from .block import (
@@ -26,6 +26,8 @@ class CodeGen:
     def __init__(self, program: Program):
         self.program = program
 
+        self._includes: Set[str] = set()
+
     def generate(self) -> str:
         return self._gen_program(self.program)
 
@@ -36,9 +38,13 @@ class CodeGen:
         parts.extend(f"{self._gen_decl(var)};" for var in program.globals)
         parts.append("")
         parts.extend(self._gen_func_decl(func) for func in program.functions)
-        return "\n".join(parts)
+
+        includes = [f"#include <{include}>" for include in self._includes]
+
+        return "\n".join(includes + [""] + parts)
 
     def _gen_decl(self, var: ChunkVariable) -> str:
+        # TODO: extract the types as well
         return var.typename()
 
     def _gen_func_decl(self, func: FunctionDefinition) -> str:
@@ -81,9 +87,18 @@ class CodeGen:
     def _gen_expr(self, expr: Expression) -> str:
         if isinstance(expr, Variable):
             if expr.variable in variables.TRANSLATIONS:
-                return variables.TRANSLATIONS[expr.variable]
+                vname = variables.TRANSLATIONS[expr.variable]
+                self._includes.add(variables.PATHS[vname])
             else:
-                return expr.variable
+                vname = expr.variable
+            return vname
+        elif isinstance(expr, Function):
+            if expr.func in functions.TRANSLATIONS:
+                fname = functions.TRANSLATIONS[expr.func]
+                self._includes.add(functions.PATHS[fname])
+            else:
+                fname = expr.func
+            return f"{fname}({', '.join(self._gen_expr(arg) for arg in expr.args)})"
         elif isinstance(expr, Array):
             return f"{self._gen_expr(expr.target)}[{self._gen_expr(expr.index)}]"
         elif isinstance(expr, Operation):
@@ -102,12 +117,6 @@ class CodeGen:
             return (
                 "(" + self._gen_expr(expr.left) + op + self._gen_expr(expr.right) + ")"
             )
-        elif isinstance(expr, Function):
-            if expr.func in functions.TRANSLATIONS:
-                fname = functions.TRANSLATIONS[expr.func]
-            else:
-                fname = expr.func
-            return f"{fname}({', '.join(self._gen_expr(arg) for arg in expr.args)})"
         elif isinstance(expr, Value):
             return expr.value
         elif isinstance(expr, Deref):
