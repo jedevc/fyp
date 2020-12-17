@@ -24,7 +24,7 @@ class Library:
         for include in self.includes:
             include_dir = self.path / include
             for header in include_dir.glob("**/*.h"):
-                relative = str(header).removeprefix(str(include_dir)).strip("/")
+                relative = header.relative_to(include_dir)
                 tags += ctags(include_dir, Path(relative))
         return tags
 
