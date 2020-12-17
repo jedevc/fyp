@@ -4,6 +4,7 @@ import sys
 from typing import Optional, TextIO
 
 from .error import SynthError
+from .graph.codegen import CodeGen
 from .interpret import Interpreter
 from .parser import Lexer, Parser
 from .passes import BlockifyVisitor, ChunkifyVisitor, PrinterVisitor, TypeCheckVisitor
@@ -59,7 +60,8 @@ def synthesize(stream: str, output: TextIO, debug: str = "", style: str = "none"
 
     inter = Interpreter(blocks, chunks)
     prog = inter.program()
-    code = prog.code
+    gen = CodeGen(prog)
+    code = gen.generate()
 
     if style == "none":
         print(code, file=output)

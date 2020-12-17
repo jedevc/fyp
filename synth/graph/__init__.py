@@ -18,3 +18,4 @@ from .block import (
     While,
 )
 from .chunk import Chunk, ChunkConstraint, ChunkSet, ChunkVariable
+from .program import Program

@@ -9,7 +9,7 @@ class ChunkVariable:
         self.name = name
         self.vtype = vtype
 
-    def _typestr(self, tp: Type):
+    def _typestr(self, tp: Type) -> str:
         if isinstance(tp, SimpleTypeNode):
             return types.TRANSLATIONS[tp.core]
         elif isinstance(tp, PointerTypeNode):
@@ -23,7 +23,7 @@ class ChunkVariable:
         else:
             raise RuntimeError("invalid variable type")
 
-    def _typenamestr(self, name: str, tp: Type):
+    def _typenamestr(self, name: str, tp: Type) -> str:
         if isinstance(tp, SimpleTypeNode):
             return f"{types.TRANSLATIONS[tp.core]} {name}"
         elif isinstance(tp, PointerTypeNode):
@@ -37,8 +37,7 @@ class ChunkVariable:
         else:
             raise RuntimeError("invalid variable type")
 
-    @property
-    def code(self) -> str:
+    def typename(self) -> str:
         return self._typenamestr(self.name, self.vtype)
 
 
@@ -54,9 +53,6 @@ class ChunkConstraint:
     @property
     def empty(self) -> bool:
         return not self.eof
-
-    def __str__(self) -> str:
-        return f"<ChunkConstraint eof={self.eof}>"
 
 
 class Chunk:
