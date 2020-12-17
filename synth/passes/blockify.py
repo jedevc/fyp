@@ -167,13 +167,13 @@ class BlockifyExpressionVisitor(Visitor[Expression]):
             return Value('"' + node.value + '"')
         elif isinstance(node, IntValueNode):
             if node.base == 2:
-                return Value(f"0b{bin(node.value)}")
+                return Value(bin(node.value))
             elif node.base == 8:
-                return Value(f"0o{oct(node.value)}")
+                return Value(oct(node.value))
             elif node.base == 10:
-                return Value(f"{node.value}")
+                return Value(str(node.value))
             elif node.base == 16:
-                return Value(f"0x{hex(node.value)}")
+                return Value(hex(node.value))
             else:
                 raise RuntimeError("value unrepresentable in C")
         else:
