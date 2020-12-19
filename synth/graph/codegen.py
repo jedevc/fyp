@@ -1,6 +1,6 @@
 from typing import List, Set
 
-from ..builtins import functions, variables
+from ..builtins import functions, types, variables
 from .block import (
     Array,
     Assignment,
@@ -44,7 +44,13 @@ class CodeGen:
         return "\n".join(includes + [""] + parts)
 
     def _gen_decl(self, var: ChunkVariable) -> str:
-        # TODO: extract the types as well
+        for tp in var.basic_types():
+            try:
+                ttp = types.TRANSLATIONS[tp]
+                self._includes.add(types.PATHS[ttp])
+            except KeyError:
+                pass
+
         return var.typename()
 
     def _gen_func_decl(self, func: FunctionDefinition) -> str:
@@ -62,8 +68,6 @@ class CodeGen:
     def _gen_stmt(self, stmt: Statement) -> str:
         if isinstance(stmt, Assignment):
             return f"{self._gen_expr(stmt.target)} = {self._gen_expr(stmt.value)};\n"
-        # elif isinstance(stmt, Call):
-        #     pass
         elif isinstance(stmt, If):
             if_block = "{\n" + "".join(self._gen_stmt(stmt) for stmt in stmt.ifs) + "}"
             else_block = (

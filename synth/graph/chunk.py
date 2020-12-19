@@ -1,4 +1,4 @@
-from typing import List, Optional, Union
+from typing import Iterable, List, Optional, Union
 
 from ..builtins import types
 from ..node import ArrayTypeNode, FuncTypeNode, PointerTypeNode, SimpleTypeNode, Type
@@ -39,6 +39,23 @@ class ChunkVariable:
 
     def typename(self) -> str:
         return self._typenamestr(self.name, self.vtype)
+
+    def _basic_types(self, tp: Type) -> Iterable[str]:
+        if isinstance(tp, SimpleTypeNode):
+            yield tp.core
+        elif isinstance(tp, PointerTypeNode):
+            yield from self._basic_types(tp.base)
+        elif isinstance(tp, ArrayTypeNode):
+            yield from self._basic_types(tp.base)
+        elif isinstance(tp, FuncTypeNode):
+            yield from self._basic_types(tp.ret)
+            for arg in tp.args:
+                yield from self._basic_types(arg)
+        else:
+            raise RuntimeError("invalid variable type")
+
+    def basic_types(self) -> Iterable[str]:
+        return self._basic_types(self.vtype)
 
 
 class ChunkConstraint:
