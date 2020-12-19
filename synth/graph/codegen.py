@@ -60,7 +60,7 @@ class CodeGen:
             # NOTE: once we have function types, this will be much neater
             lines.append("return 0;\n")
             block = "{\n" + "".join(lines) + "}\n"
-            return f"int main() {block}"
+            return f"int main(int argc, char *argv[]) {block}"
         else:
             block = "{\n" + "".join(lines) + "}\n"
             return f"void {func.func}() {block}"

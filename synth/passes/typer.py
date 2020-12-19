@@ -7,6 +7,7 @@ from ..node import (
     FuncTypeNode,
     SimpleTypeNode,
     SpecNode,
+    SplitNode,
     TraversalVisitor,
     VariableNode,
 )
@@ -20,6 +21,9 @@ class TypeCheckVisitor(TraversalVisitor):
 
         self.blocks = {}
         self.block_refs = {}
+
+        self.block_current = None
+        self.block_seen_split = False
 
     def visit_spec(self, node: SpecNode):
         # resolve block references after traversal
@@ -35,12 +39,19 @@ class TypeCheckVisitor(TraversalVisitor):
                 )
 
     def visit_block(self, node: BlockNode):
-        if node.name in self.blocks:
-            raise ProcessingError(node, f"block {node.name} cannot be defined twice")
+        self.block_current = node.name
+        self.block_seen_split = False
+        if self.block_current in self.blocks:
+            raise ProcessingError(
+                node, f"block {self.block_current} cannot be defined twice"
+            )
 
-        self.blocks[node.name] = node
+        self.blocks[self.block_current] = node
 
         super().visit_block(node)
+
+    def visit_split(self, node: SplitNode):
+        self.block_seen_split = True
 
     def visit_call(self, node: CallNode):
         self.block_refs[node.target] = node
@@ -71,10 +82,24 @@ class TypeCheckVisitor(TraversalVisitor):
     #     pass
 
     def visit_variable(self, node: VariableNode):
-        if node.name not in self.vars and node.name not in variables.TRANSLATIONS:
+        if node.name in ("argc", "argv"):
+            if self.block_current == "main":
+                if self.block_seen_split:
+                    raise ProcessingError(
+                        node, f"variable {node.name} must appear before split"
+                    )
+                else:
+                    super().visit_variable(node)
+            else:
+                raise ProcessingError(
+                    node, f"variable {node.name} cannot be referenced outside of main"
+                )
+        elif node.name in self.vars:
+            super().visit_variable(node)
+        elif node.name not in variables.TRANSLATIONS:
+            super().visit_variable(node)
+        else:
             raise ProcessingError(node, f"variable {node.name} does not exist")
-
-        super().visit_variable(node)
 
     def visit_function(self, node: FunctionNode):
         if node.target not in self.vars and node.target not in functions.TRANSLATIONS:
