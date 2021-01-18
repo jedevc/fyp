@@ -69,15 +69,22 @@ class CodeGen:
         if isinstance(stmt, Assignment):
             return f"{self._gen_expr(stmt.target)} = {self._gen_expr(stmt.value)};\n"
         elif isinstance(stmt, If):
-            if_block = "{\n" + "".join(self._gen_stmt(stmt) for stmt in stmt.ifs) + "}"
-            else_block = (
-                "{\n" + "".join(self._gen_stmt(stmt) for stmt in stmt.elses) + "}"
-            )
-
-            if stmt.elses:
-                return f"if ({self._gen_expr(stmt.condition)}) {if_block} else {else_block}\n"
-            else:
-                return f"if ({self._gen_expr(stmt.condition)}) {if_block}\n"
+            lines = []
+            for i, (condition, statements) in enumerate(stmt.groups):
+                if i == 0:
+                    assert condition is not None
+                    lines.append(f"if ({self._gen_expr(condition)})" + " {\n")
+                    lines.extend([self._gen_stmt(stmt) for stmt in statements])
+                elif condition is None:
+                    lines.append("} else {\n")
+                    lines.extend([self._gen_stmt(stmt) for stmt in statements])
+                else:
+                    lines.append(
+                        "} " + f"else if ({self._gen_expr(condition)})" + " {\n"
+                    )
+                    lines.extend([self._gen_stmt(stmt) for stmt in statements])
+            lines.append("}\n")
+            return "".join(lines)
         elif isinstance(stmt, While):
             block = (
                 "{\n" + "".join(self._gen_stmt(stmt) for stmt in stmt.statements) + "}"

@@ -1,4 +1,4 @@
-from typing import List, Union
+from typing import List, Optional, Union
 
 from .base import Node, X
 from .expr import Expression, Lvalue
@@ -42,13 +42,21 @@ class IfNode(Node):
     def __init__(
         self,
         condition: Expression,
-        if_statements: List[Statement],
-        else_statements: List[Statement],
+        statements: List[Statement],
+        else_action: Optional[Union["IfNode", List[Statement]]],
     ):
         super().__init__()
         self.condition = condition
-        self.if_statements = if_statements
-        self.else_statements = else_statements
+        self.statements = statements
+
+        self.else_if = None
+        self.else_statements = None
+        if else_action is None:
+            pass
+        elif isinstance(else_action, IfNode):
+            self.else_if = else_action
+        else:
+            self.else_statements = else_action
 
     def accept(self, visitor: Visitor[X]) -> X:
         return visitor.visit_if(self)

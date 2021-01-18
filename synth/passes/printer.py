@@ -187,13 +187,17 @@ class PrinterVisitor(Visitor[None]):
 
         self.indent += 4
         self._println(" {")
-        for i, statement in enumerate(node.if_statements):
+        for i, statement in enumerate(node.statements):
             statement.accept(self)
-            if i != len(node.if_statements) - 1:
+            if i != len(node.statements) - 1:
                 self._println()
         self.indent -= 4
         self._println()
         self._print("}")
+
+        if node.else_if:
+            self._println(" else ")
+            node.else_if.accept(self)
 
         if node.else_statements:
             self.indent += 4

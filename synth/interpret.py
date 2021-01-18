@@ -56,9 +56,10 @@ class Interpreter:
                     raise RuntimeError()
             elif isinstance(stmt, If):
                 yield If(
-                    stmt.condition,
-                    list(self._transform(stmt.ifs)),
-                    list(self._transform(stmt.elses)),
+                    [
+                        (condition, list(self._transform(stmts)))
+                        for condition, stmts in stmt.groups
+                    ]
                 )
             else:
                 yield stmt

@@ -152,22 +152,34 @@ class Parser:
         stmt: Statement
         if self.accept(TokenType.Ellipsis):
             stmt = self.node_exit(SplitNode())
+            self.end_of_line(after="splitter")
         elif self.accept(TokenType.Reserved, ReservedWord.Call):
             target = self.expect(TokenType.Name)
             stmt = self.node_exit(CallNode(target.lexeme))
+            self.end_of_line(after="call")
         elif self.accept(TokenType.Reserved, ReservedWord.While):
             condition = self.expression()
             statements = self.scope()
             stmt = self.node_exit(WhileNode(condition, statements))
+            self.end_of_line(after="while")
         elif self.accept(TokenType.Reserved, ReservedWord.If):
             condition = self.expression()
-            if_statements = self.scope()
+            statements = self.scope()
+            else_action: Optional[Union[IfNode, List[Statement]]] = None
             if self.accept(TokenType.Reserved, ReservedWord.Else):
-                else_statements = self.scope()
+                if self.match(TokenType.Reserved, ReservedWord.If):
+                    # read another If
+                    stmt = self.statement()
+                    assert isinstance(stmt, IfNode)
+                    else_action = stmt
+                else:
+                    else_action = self.scope()
+                    self.end_of_line(after="else")
             else:
-                else_statements = []
+                else_action = None
+                self.end_of_line(after="if")
 
-            stmt = self.node_exit(IfNode(condition, if_statements, else_statements))
+            stmt = self.node_exit(IfNode(condition, statements, else_action))
         else:
             # FIXME: backtracking is sad :(
             state = (self.pos, self.current, self.last)
@@ -176,13 +188,14 @@ class Parser:
                 self.expect(TokenType.Assign)
                 exp = self.expression()
                 stmt = self.node_exit(AssignmentNode(lvalue, exp))
+                self.end_of_line(after="assignment")
             except ParseError:
                 self.pos, self.current, self.last = state
 
                 self.node_cancel()
                 stmt = ExpressionStatementNode(self.expression())
+                self.end_of_line(after="expression statement")
 
-        self.end_of_line(after="statement")
         return stmt
 
     def scope(self) -> List[Statement]:
@@ -440,6 +453,19 @@ class Parser:
                 )
 
         return result
+
+    def match(self, ttype: TokenType, lexeme: Optional[Any] = None) -> Optional[Token]:
+        """
+        Attempt to match a token of the provided type (and optional lexeme).
+        """
+
+        assert self.current is not None
+
+        if self.current.ttype == ttype:
+            if lexeme is None or self.current.lexeme == lexeme:
+                return self.last
+
+        return None
 
     def accept(self, ttype: TokenType, lexeme: Optional[Any] = None) -> Optional[Token]:
         """

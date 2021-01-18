@@ -1,4 +1,4 @@
-from typing import List, Optional, Union
+from typing import List, Optional, Tuple, Union
 
 from ..node import Operator as OperatorType
 from .chunk import Chunk
@@ -61,11 +61,10 @@ class Call:
 
 class If:
     def __init__(
-        self, condition: Expression, ifs: List[Statement], elses: List[Statement]
+        self,
+        groups: List[Tuple[Optional[Expression], List[Statement]]],
     ):
-        self.condition = condition
-        self.ifs = ifs
-        self.elses = elses
+        self.groups = groups
 
 
 class While:

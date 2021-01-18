@@ -188,10 +188,14 @@ class TraversalVisitor(Visitor[None]):
 
     def visit_if(self, node: "IfNode"):
         node.condition.accept(self)
-        for statement in node.if_statements:
+        for statement in node.statements:
             statement.accept(self)
-        for statement in node.else_statements:
-            statement.accept(self)
+
+        if node.else_if:
+            node.else_if.accept(self)
+        if node.else_statements:
+            for statement in node.else_statements:
+                statement.accept(self)
 
     def visit_while(self, node: "WhileNode"):
         node.condition.accept(self)

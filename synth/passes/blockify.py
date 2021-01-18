@@ -1,4 +1,4 @@
-from typing import Dict, List, Optional, Union
+from typing import Dict, List, Optional, Tuple, Union
 
 from ..graph import (
     Array,
@@ -106,11 +106,23 @@ class BlockifyStatementVisitor(Visitor[Union[Statement]]):
         raise ProcessingError(node, "split is invalid here")
 
     def visit_if(self, node: IfNode) -> Statement:
-        return If(
-            node.condition.accept(BlockifyExpressionVisitor(self.parent)),
-            [stmt.accept(self) for stmt in node.if_statements],
-            [stmt.accept(self) for stmt in node.else_statements],
-        )
+        groups: List[Tuple[Optional[Expression], List[Statement]]] = []
+
+        nodeiter: Optional[IfNode] = node
+        while nodeiter is not None:
+            groups.append(
+                (
+                    nodeiter.condition.accept(BlockifyExpressionVisitor(self.parent)),
+                    [stmt.accept(self) for stmt in nodeiter.statements],
+                )
+            )
+            if nodeiter.else_statements:
+                groups.append(
+                    (None, [stmt.accept(self) for stmt in nodeiter.else_statements])
+                )
+            nodeiter = nodeiter.else_if
+
+        return If(groups)
 
     def visit_while(self, node: WhileNode) -> Statement:
         return While(
