@@ -17,11 +17,3 @@ class Program:
 
     def add_function(self, func: FunctionDefinition):
         self.functions.append(func)
-
-    @property
-    def code(self) -> str:
-        parts = []
-        parts += [f"{var.code};" for var in self.globals]
-        parts += [f"extern {var.code};" for var in self.externs]
-        parts += [func.code for func in self.functions]
-        return "\n".join(parts)
