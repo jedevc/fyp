@@ -1,4 +1,4 @@
-from typing import Iterable, List, Optional
+from typing import Iterable, List, Optional, overload
 
 from ..builtins import types
 from ..node import ArrayTypeNode, FuncTypeNode, PointerTypeNode, SimpleTypeNode, Type
@@ -86,6 +86,13 @@ class Chunk:
         }
         self.constraint = ChunkConstraint() if constraint is None else constraint
 
+    def add_variable(self, variable: ChunkVariable):
+        if variable.name in self._table:
+            raise KeyError("variable already exists in chunk")
+
+        self._vars.append(variable)
+        self._table[variable.name] = len(self._vars) - 1
+
     @property
     def variables(self) -> List[ChunkVariable]:
         return self._vars
@@ -101,7 +108,24 @@ class Chunk:
             return self._vars[i]
 
 
-def merge_chunks(first: Chunk, second: Chunk) -> Chunk:
+@overload
+def merge_chunks(first: Optional[Chunk], second: Chunk) -> Chunk:
+    ...
+
+
+@overload
+def merge_chunks(first: Chunk, second: Optional[Chunk]) -> Chunk:
+    ...
+
+
+def merge_chunks(first: Optional[Chunk], second: Optional[Chunk]) -> Chunk:
+    if first is None:
+        assert second is not None
+        return second
+    if second is None:
+        assert first is not None
+        return first
+
     return Chunk(
         [*first.variables, *second.variables], first.constraint.join(second.constraint)
     )

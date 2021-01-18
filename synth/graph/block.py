@@ -1,7 +1,7 @@
 from typing import List, Optional, Tuple, Union
 
 from ..node import Operator as OperatorType
-from .chunk import Chunk
+from .chunk import Chunk, ChunkVariable, merge_chunks
 
 Lvalue = Union["Variable", "Array", "Deref"]
 Expression = Union["Operation", "Function", "Value", "Ref", Lvalue]
@@ -26,7 +26,18 @@ class FunctionDefinition:
     def __init__(self, func: str, args: List[str]):
         self.func = func
         self.args = args
+
+        self.locals: Optional[Chunk] = None
         self.statements: List[Statement] = []
+
+    def add_local(self, var: ChunkVariable):
+        if self.locals:
+            self.locals.add_variable(var)
+        else:
+            self.locals = Chunk([var])
+
+    def add_locals(self, chunk: Chunk):
+        self.locals = merge_chunks(self.locals, chunk)
 
     def add_statement(self, statement: Statement):
         self.statements.append(statement)

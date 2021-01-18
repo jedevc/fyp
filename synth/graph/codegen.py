@@ -55,6 +55,8 @@ class CodeGen:
 
     def _gen_func_decl(self, func: FunctionDefinition) -> str:
         lines = [self._gen_stmt(stmt) for stmt in func.statements]
+        if func.locals is not None:
+            lines = [f"{self._gen_decl(var)};" for var in func.locals.variables] + lines
 
         if func.func == "main":
             # NOTE: once we have function types, this will be much neater
