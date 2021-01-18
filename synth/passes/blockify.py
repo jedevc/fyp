@@ -6,7 +6,6 @@ from ..graph import (
     Block,
     Call,
     Chunk,
-    ChunkSet,
     Deref,
     Expression,
     ExpressionStatement,
@@ -48,9 +47,10 @@ class Splitter:
 
 
 class BlockifyVisitor(Visitor[None]):
-    def __init__(self, chunks: ChunkSet):
+    def __init__(self, chunks: List[Chunk], extern: Chunk):
         super().__init__()
         self.chunks = chunks
+        self.extern = extern
 
         self.blocks: Dict[str, Block] = {}
 
@@ -85,7 +85,14 @@ class BlockifyVisitor(Visitor[None]):
                 self.blocks[name(count)].add_statement(stmt)
 
     def lookup_var(self, name: str) -> Optional[Chunk]:
-        return self.chunks.find(name)
+        if self.extern.lookup(name):
+            return self.extern
+
+        for chunk in self.chunks:
+            if chunk.lookup(name):
+                return chunk
+
+        return None
 
 
 class BlockifyStatementVisitor(Visitor[Union[Statement]]):

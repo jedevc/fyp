@@ -17,5 +17,5 @@ from .block import (
     Variable,
     While,
 )
-from .chunk import Chunk, ChunkConstraint, ChunkSet, ChunkVariable
+from .chunk import Chunk, ChunkConstraint, ChunkVariable, merge_chunks
 from .program import Program

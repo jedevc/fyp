@@ -1,4 +1,4 @@
-from ..graph import Chunk, ChunkConstraint, ChunkSet, ChunkVariable
+from ..graph import Chunk, ChunkConstraint, ChunkVariable, merge_chunks
 from ..node import (
     ChunkNode,
     DeclarationNode,
@@ -15,13 +15,10 @@ class ChunkifyVisitor(Visitor[None]):
         super().__init__()
 
         self.chunks = []
-        self.externs = []
+        self.extern = Chunk([])
 
         self._constraint = ChunkConstraint()
         self._variables = []
-
-    def result(self) -> ChunkSet:
-        return ChunkSet(self.externs, self.chunks)
 
     def visit_spec(self, node: SpecNode):
         for chunk in node.chunks:
@@ -45,7 +42,7 @@ class ChunkifyVisitor(Visitor[None]):
         if not self._constraint.empty:
             raise ProcessingError(node, "cannot process extern chunk constraints")
 
-        self.externs.extend(self._variables)
+        self.extern = merge_chunks(self.extern, Chunk(self._variables))
 
     def visit_declaration(self, node: DeclarationNode):
         var = ChunkVariable(node.name, node.vartype)

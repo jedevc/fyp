@@ -1,4 +1,4 @@
-from typing import Iterable, List, Optional, Union
+from typing import Iterable, List, Optional
 
 from ..builtins import types
 from ..node import ArrayTypeNode, FuncTypeNode, PointerTypeNode, SimpleTypeNode, Type
@@ -84,7 +84,7 @@ class Chunk:
             for i, var in enumerate(variables)
             if not var.name.startswith("_")
         }
-        self.constraint = constraint
+        self.constraint = ChunkConstraint() if constraint is None else constraint
 
     @property
     def variables(self) -> List[ChunkVariable]:
@@ -101,28 +101,7 @@ class Chunk:
             return self._vars[i]
 
 
-class ChunkSet(Chunk):
-    def __init__(self, externs: List[ChunkVariable], chunks: List[Chunk]):
-        super().__init__(externs)
-        self.chunks = chunks
-
-    @property
-    def externs(self) -> List[ChunkVariable]:
-        return super().variables
-
-    @property
-    def variables(self) -> List[ChunkVariable]:
-        result = []
-        for chunk in self.chunks:
-            result.extend(chunk.variables)
-        return result
-
-    def find(self, name: str) -> Union[Chunk, "ChunkSet", None]:
-        if name in self._table:
-            return self
-
-        for chunk in self.chunks:
-            if chunk.lookup(name):
-                return chunk
-
-        return None
+def merge_chunks(first: Chunk, second: Chunk) -> Chunk:
+    return Chunk(
+        [*first.variables, *second.variables], first.constraint.join(second.constraint)
+    )

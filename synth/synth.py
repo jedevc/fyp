@@ -52,13 +52,14 @@ def synthesize(stream: str, output: TextIO, debug: str = "", style: str = "none"
 
     chunk_visitor = ChunkifyVisitor()
     spec.accept(chunk_visitor)
-    chunks = chunk_visitor.result()
+    chunks = chunk_visitor.chunks
+    extern = chunk_visitor.extern
 
-    block_visitor = BlockifyVisitor(chunks)
+    block_visitor = BlockifyVisitor(chunks, extern)
     spec.accept(block_visitor)
     blocks = block_visitor.result()
 
-    inter = Interpreter(blocks, chunks)
+    inter = Interpreter(blocks, chunks, extern)
     prog = inter.program()
     gen = CodeGen(prog)
     code = gen.generate()
