@@ -1,5 +1,5 @@
 import random
-from typing import Iterable, List
+from typing import Any, Dict, Iterable, List
 
 from .graph import (
     Block,
@@ -28,10 +28,28 @@ class Interpreter:
         self.chunks = chunks
         self.extern = extern
 
-        self.global_chunks = {chunk for chunk in chunks if random.random() > 0.5}
-        self.stack_chunks = {
+        self.global_chunks = {chunk for chunk in chunks if random.random() > 1}
+        self.local_chunks = {
             chunk for chunk in chunks if chunk not in self.global_chunks
         }
+
+        self.blocks_with_locals: Dict[Block, List[Chunk]] = {}
+        for chunk in self.local_chunks:
+            result = self._find_chunk_refs(chunk, self.blocks["main"], [])
+
+            prefix = find_common_prefix(result)
+            while len(prefix) > 0 and prefix[-1].block not in self.func_blocks:
+                prefix.pop()
+
+            if len(prefix) == 0:
+                bl = self.blocks["main"]
+            else:
+                bl = prefix[-1].block
+
+            if bl in self.blocks_with_locals:
+                self.blocks_with_locals[bl].append(chunk)
+            else:
+                self.blocks_with_locals[bl] = [chunk]
 
     def program(self) -> Program:
         final = Program()
@@ -43,7 +61,10 @@ class Interpreter:
             func = FunctionDefinition(blname, [])
             for stmt in self._transform(block.statements):
                 func.add_statement(stmt)
-            # TODO: can add function arguments here
+            if block in self.blocks_with_locals:
+                for chunk in self.blocks_with_locals[block]:
+                    func.add_locals(chunk)
+
             final.add_function(func)
 
         for chunk in self.chunks:
@@ -84,8 +105,7 @@ class Interpreter:
                     new_stmt = ExpressionStatement(Function(stmt.block.name, []))
                     yield new_stmt
                 elif stmt.block in self.inline_blocks:
-                    for st in self._transform(self.blocks[stmt.block.name].statements):
-                        yield st
+                    yield from self._transform(self.blocks[stmt.block.name].statements)
                 else:
                     raise RuntimeError()
             elif isinstance(stmt, If):
@@ -99,3 +119,24 @@ class Interpreter:
                 yield While(stmt.condition, list(self._transform(stmt.statements)))
             else:
                 yield stmt
+
+
+def find_common_prefix(lists: List[List[Any]]) -> List[Any]:
+    if len(lists) == 0:
+        return []
+
+    prefix = lists[0]
+    for li in lists[1:]:
+        mismatch = False
+        count = min(len(li), len(prefix))
+        for i in range(count):
+            if prefix[i] != li[i]:
+                mismatch = True
+                break
+
+        if mismatch:
+            prefix = prefix[:i]
+        else:
+            prefix = prefix[:count]
+
+    return prefix
