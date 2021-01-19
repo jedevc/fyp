@@ -1,5 +1,5 @@
 import random
-from typing import Any, Dict, Iterable, List
+from typing import Dict, Iterable, List
 
 from .graph import (
     Block,
@@ -14,6 +14,7 @@ from .graph import (
     Variable,
     While,
 )
+from .utils import find_common_prefix
 
 
 class Interpreter:
@@ -82,6 +83,8 @@ class Interpreter:
         matches = False
         paths = []
 
+        # FIXME: this can recurse infinitely, which is very fun
+
         def finder(part):
             nonlocal matches, paths
 
@@ -119,24 +122,3 @@ class Interpreter:
                 yield While(stmt.condition, list(self._transform(stmt.statements)))
             else:
                 yield stmt
-
-
-def find_common_prefix(lists: List[List[Any]]) -> List[Any]:
-    if len(lists) == 0:
-        return []
-
-    prefix = lists[0]
-    for li in lists[1:]:
-        mismatch = False
-        count = min(len(li), len(prefix))
-        for i in range(count):
-            if prefix[i] != li[i]:
-                mismatch = True
-                break
-
-        if mismatch:
-            prefix = prefix[:i]
-        else:
-            prefix = prefix[:count]
-
-    return prefix
