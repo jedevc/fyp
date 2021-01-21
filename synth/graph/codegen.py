@@ -59,13 +59,16 @@ class CodeGen:
             lines = [f"{self._gen_decl(var)};" for var in func.locals.variables] + lines
 
         if func.func == "main":
-            # NOTE: once we have function types, this will be much neater
             lines.append("return 0;\n")
             block = "{\n" + "".join(lines) + "}\n"
             return f"int main(int argc, char *argv[]) {block}"
         else:
+            if func.args:
+                args = ", ".join(self._gen_decl(arg) for arg in func.args)
+            else:
+                args = ""
             block = "{\n" + "".join(lines) + "}\n"
-            return f"void {func.func}() {block}"
+            return f"void {func.func}({args}) {block}"
 
     def _gen_stmt(self, stmt: Statement) -> str:
         if isinstance(stmt, Assignment):

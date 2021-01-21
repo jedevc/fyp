@@ -1,4 +1,4 @@
-from typing import Any, Callable, List, Optional, Tuple, Union
+from typing import Any, Callable, List, Optional, Sequence, Tuple, Union
 
 from ..node import Operator as OperatorType
 from .chunk import Chunk, ChunkVariable, merge_chunks
@@ -35,7 +35,7 @@ class Block:
 
 
 class FunctionDefinition:
-    def __init__(self, func: str, args: List[str]):
+    def __init__(self, func: str, args: List[ChunkVariable]):
         self.func = func
         self.args = args
 
@@ -138,7 +138,7 @@ class While:
 
 
 class Function:
-    def __init__(self, func: str, args: List[Expression]):
+    def __init__(self, func: str, args: Sequence[Expression]):
         self.func = func
         self.args = args
 
@@ -165,8 +165,17 @@ class Variable:
         self.variable = variable
         self.chunk = chunk
 
+    @property
+    def chunk_variable(self) -> Optional[ChunkVariable]:
+        if self.chunk is None:
+            return None
+        return self.chunk.lookup(self.variable)
+
     def traverse(self, func: Callable[[Any], None]):
         func(self)
+
+    def __repr__(self) -> str:
+        return f"<Variable {self.variable}>"
 
 
 class Value:

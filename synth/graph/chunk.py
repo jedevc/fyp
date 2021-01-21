@@ -57,6 +57,9 @@ class ChunkVariable:
     def basic_types(self) -> Iterable[str]:
         return self._basic_types(self.vtype)
 
+    def __repr__(self) -> str:
+        return f"<ChunkVariable {self.typename()}>"
+
 
 class ChunkConstraint:
     def __init__(self, eof=False):
