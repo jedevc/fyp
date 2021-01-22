@@ -3,7 +3,7 @@ from typing import List, Union
 from .base import Node, X
 from .visitor import Visitor
 
-Type = Union["SimpleTypeNode", "PointerTypeNode", "ArrayTypeNode", "FuncTypeNode"]
+TypeNode = Union["SimpleTypeNode", "PointerTypeNode", "ArrayTypeNode", "FuncTypeNode"]
 
 
 class SimpleTypeNode(Node):
@@ -16,7 +16,7 @@ class SimpleTypeNode(Node):
 
 
 class PointerTypeNode(Node):
-    def __init__(self, base: Type):
+    def __init__(self, base: TypeNode):
         super().__init__()
         self.base = base
 
@@ -25,7 +25,7 @@ class PointerTypeNode(Node):
 
 
 class ArrayTypeNode(Node):
-    def __init__(self, base: Type, size: int):
+    def __init__(self, base: TypeNode, size: int):
         super().__init__()
         self.base = base
         self.size = size
@@ -35,7 +35,7 @@ class ArrayTypeNode(Node):
 
 
 class FuncTypeNode(Node):
-    def __init__(self, ret: Type, args: List[Type]):
+    def __init__(self, ret: TypeNode, args: List[TypeNode]):
         super().__init__()
         self.ret = ret
         self.args = args

@@ -1,10 +1,10 @@
 from typing import List, Optional, Union
 
 from .base import Node, X
-from .expr import Expression, Lvalue
+from .expr import ExpressionNode, LvalueNode
 from .visitor import Visitor
 
-Statement = Union[
+StatementNode = Union[
     "AssignmentNode",
     "CallNode",
     "SplitNode",
@@ -29,7 +29,7 @@ class SplitNode(Node):
 
 
 class AssignmentNode(Node):
-    def __init__(self, target: Lvalue, expression: Expression):
+    def __init__(self, target: LvalueNode, expression: ExpressionNode):
         super().__init__()
         self.target = target
         self.expression = expression
@@ -41,9 +41,9 @@ class AssignmentNode(Node):
 class IfNode(Node):
     def __init__(
         self,
-        condition: Expression,
-        statements: List[Statement],
-        else_action: Optional[Union["IfNode", List[Statement]]],
+        condition: ExpressionNode,
+        statements: List[StatementNode],
+        else_action: Optional[Union["IfNode", List[StatementNode]]],
     ):
         super().__init__()
         self.condition = condition
@@ -65,8 +65,8 @@ class IfNode(Node):
 class WhileNode(Node):
     def __init__(
         self,
-        condition: Expression,
-        statements: List[Statement],
+        condition: ExpressionNode,
+        statements: List[StatementNode],
     ):
         super().__init__()
         self.condition = condition
@@ -77,7 +77,7 @@ class WhileNode(Node):
 
 
 class ExpressionStatementNode(Node):
-    def __init__(self, expression: Expression):
+    def __init__(self, expression: ExpressionNode):
         super().__init__()
         self.expression = expression
 

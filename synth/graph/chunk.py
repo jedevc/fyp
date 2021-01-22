@@ -1,15 +1,21 @@
 from typing import Iterable, List, Optional, overload
 
 from ..builtins import types
-from ..node import ArrayTypeNode, FuncTypeNode, PointerTypeNode, SimpleTypeNode, Type
+from ..node import (
+    ArrayTypeNode,
+    FuncTypeNode,
+    PointerTypeNode,
+    SimpleTypeNode,
+    TypeNode,
+)
 
 
 class ChunkVariable:
-    def __init__(self, name: str, vtype: Type):
+    def __init__(self, name: str, vtype: TypeNode):
         self.name = name
         self.vtype = vtype
 
-    def _typestr(self, tp: Type) -> str:
+    def _typestr(self, tp: TypeNode) -> str:
         if isinstance(tp, SimpleTypeNode):
             return types.TRANSLATIONS[tp.core]
         elif isinstance(tp, PointerTypeNode):
@@ -23,7 +29,7 @@ class ChunkVariable:
         else:
             raise RuntimeError("invalid variable type")
 
-    def _typenamestr(self, name: str, tp: Type) -> str:
+    def _typenamestr(self, name: str, tp: TypeNode) -> str:
         if isinstance(tp, SimpleTypeNode):
             return f"{types.TRANSLATIONS[tp.core]} {name}"
         elif isinstance(tp, PointerTypeNode):
@@ -40,7 +46,7 @@ class ChunkVariable:
     def typename(self) -> str:
         return self._typenamestr(self.name, self.vtype)
 
-    def _basic_types(self, tp: Type) -> Iterable[str]:
+    def _basic_types(self, tp: TypeNode) -> Iterable[str]:
         if isinstance(tp, SimpleTypeNode):
             yield tp.core
         elif isinstance(tp, PointerTypeNode):

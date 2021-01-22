@@ -4,9 +4,9 @@ from typing import List, Union
 from .base import Node, X
 from .visitor import Visitor
 
-Lvalue = Union["VariableNode", "ArrayNode", "DerefNode"]
-Expression = Union[
-    "BinaryOperationNode", "FunctionNode", "ValueNode", "RefNode", Lvalue
+LvalueNode = Union["VariableNode", "ArrayNode", "DerefNode"]
+ExpressionNode = Union[
+    "BinaryOperationNode", "FunctionNode", "ValueNode", "RefNode", LvalueNode
 ]
 
 
@@ -38,7 +38,7 @@ class VariableNode(Node):
 
 
 class DerefNode(Node):
-    def __init__(self, target: Expression):
+    def __init__(self, target: ExpressionNode):
         super().__init__()
         self.target = target
 
@@ -47,7 +47,7 @@ class DerefNode(Node):
 
 
 class ArrayNode(Node):
-    def __init__(self, target: Expression, index: Expression):
+    def __init__(self, target: ExpressionNode, index: ExpressionNode):
         super().__init__()
         self.target = target
         self.index = index
@@ -57,7 +57,7 @@ class ArrayNode(Node):
 
 
 class RefNode(Node):
-    def __init__(self, target: Lvalue):
+    def __init__(self, target: LvalueNode):
         super().__init__()
         self.target = target
 
@@ -81,7 +81,7 @@ class Operator(Enum):
 
 
 class BinaryOperationNode(Node):
-    def __init__(self, op: Operator, left: Expression, right: Expression):
+    def __init__(self, op: Operator, left: ExpressionNode, right: ExpressionNode):
         super().__init__()
         self.op = op
         self.left = left
@@ -92,7 +92,7 @@ class BinaryOperationNode(Node):
 
 
 class FunctionNode(Node):
-    def __init__(self, target: str, arguments: List[Expression]):
+    def __init__(self, target: str, arguments: List[ExpressionNode]):
         super().__init__()
         self.target = target
         self.arguments = arguments

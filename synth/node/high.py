@@ -1,13 +1,13 @@
 from typing import List, Union
 
 from .base import Node, X
-from .stmt import Statement
-from .types import Type
+from .stmt import StatementNode
+from .types import TypeNode
 from .visitor import Visitor
 
 
 class DeclarationNode(Node):
-    def __init__(self, name: str, vartype: Type):
+    def __init__(self, name: str, vartype: TypeNode):
         super().__init__()
         self.name = name
         self.vartype = vartype
@@ -40,7 +40,7 @@ class ExternChunkNode(ChunkNode):
 
 
 class BlockNode(Node):
-    def __init__(self, name: str, statements: List[Statement]):
+    def __init__(self, name: str, statements: List[StatementNode]):
         super().__init__()
         self.name = name
         self.statements = statements

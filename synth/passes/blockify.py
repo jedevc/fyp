@@ -34,9 +34,13 @@ from ..node import (
     RefNode,
     SpecNode,
     SplitNode,
+    StatementNode,
+    StringValueNode,
+    ValueNode,
+    VariableNode,
+    Visitor,
+    WhileNode,
 )
-from ..node import Statement as StatementNode
-from ..node import StringValueNode, ValueNode, VariableNode, Visitor, WhileNode
 
 
 class Splitter:

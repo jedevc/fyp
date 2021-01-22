@@ -10,14 +10,14 @@ from ..node import (
     ChunkNode,
     DeclarationNode,
     DerefNode,
-    Expression,
+    ExpressionNode,
     ExpressionStatementNode,
     ExternChunkNode,
     FunctionNode,
     FuncTypeNode,
     IfNode,
     IntValueNode,
-    Lvalue,
+    LvalueNode,
     Node,
     Operator,
     PointerTypeNode,
@@ -26,9 +26,9 @@ from ..node import (
     SpecialDeclarationNode,
     SpecNode,
     SplitNode,
-    Statement,
+    StatementNode,
     StringValueNode,
-    Type,
+    TypeNode,
     VariableNode,
     WhileNode,
 )
@@ -142,14 +142,14 @@ class Parser:
         statements = self.scope()
         return self.node_exit(BlockNode(block_name, statements))
 
-    def statement(self) -> Statement:
+    def statement(self) -> StatementNode:
         """
         Parse a single statement.
         """
 
         self.node_enter()
 
-        stmt: Statement
+        stmt: StatementNode
         if self.accept(TokenType.Ellipsis):
             stmt = self.node_exit(SplitNode())
             self.end_of_line(after="splitter")
@@ -165,7 +165,7 @@ class Parser:
         elif self.accept(TokenType.Reserved, ReservedWord.If):
             condition = self.expression()
             statements = self.scope()
-            else_action: Optional[Union[IfNode, List[Statement]]] = None
+            else_action: Optional[Union[IfNode, List[StatementNode]]] = None
             if self.accept(TokenType.Reserved, ReservedWord.Else):
                 if self.match(TokenType.Reserved, ReservedWord.If):
                     # read another If
@@ -198,7 +198,7 @@ class Parser:
 
         return stmt
 
-    def scope(self) -> List[Statement]:
+    def scope(self) -> List[StatementNode]:
         self.expect(TokenType.BraceOpen)
         self.accept(TokenType.Newline)
         statements = []
@@ -206,7 +206,7 @@ class Parser:
             statements.append(self.statement())
         return statements
 
-    def expression(self) -> Expression:
+    def expression(self) -> ExpressionNode:
         """
         Parse an expression.
         """
@@ -224,7 +224,7 @@ class Parser:
             },
         )
 
-    def sum(self) -> Expression:
+    def sum(self) -> ExpressionNode:
         """
         Parse a sum.
         """
@@ -238,7 +238,7 @@ class Parser:
             },
         )
 
-    def product(self) -> Expression:
+    def product(self) -> ExpressionNode:
         """
         Parse a product.
         """
@@ -254,10 +254,10 @@ class Parser:
 
     def binary(
         self,
-        left: Callable[[], Expression],
-        right: Callable[[], Expression],
+        left: Callable[[], ExpressionNode],
+        right: Callable[[], ExpressionNode],
         operators: Dict[TokenType, Operator],
-    ) -> Expression:
+    ) -> ExpressionNode:
         """
         Parse an arbitrary binary expression.
         """
@@ -271,7 +271,7 @@ class Parser:
         self.node_cancel()
         return op1
 
-    def atom(self) -> Expression:
+    def atom(self) -> ExpressionNode:
         """
         Parse an atomic expression.
         """
@@ -324,7 +324,7 @@ class Parser:
 
         return self.node_exit(FunctionNode(name.lexeme, args))
 
-    def lvalue(self) -> Lvalue:
+    def lvalue(self) -> LvalueNode:
         """
         Parse a left-hand side value.
         """
@@ -370,7 +370,7 @@ class Parser:
 
         return self.node_exit(DeclarationNode(var.lexeme, var_type))
 
-    def declaration_type(self) -> Type:
+    def declaration_type(self) -> TypeNode:
         """
         Parse the type portion of a variable declaration.
         """

@@ -3,10 +3,10 @@ from .expr import (
     ArrayNode,
     BinaryOperationNode,
     DerefNode,
-    Expression,
+    ExpressionNode,
     FunctionNode,
     IntValueNode,
-    Lvalue,
+    LvalueNode,
     Operator,
     RefNode,
     StringValueNode,
@@ -27,8 +27,14 @@ from .stmt import (
     ExpressionStatementNode,
     IfNode,
     SplitNode,
-    Statement,
+    StatementNode,
     WhileNode,
 )
-from .types import ArrayTypeNode, FuncTypeNode, PointerTypeNode, SimpleTypeNode, Type
+from .types import (
+    ArrayTypeNode,
+    FuncTypeNode,
+    PointerTypeNode,
+    SimpleTypeNode,
+    TypeNode,
+)
 from .visitor import TraversalVisitor, Visitor
