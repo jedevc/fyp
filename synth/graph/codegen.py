@@ -103,10 +103,10 @@ class CodeGen:
     def _gen_expr(self, expr: Expression) -> str:
         if isinstance(expr, Variable):
             if expr.variable in variables.TRANSLATIONS:
-                vname = variables.TRANSLATIONS[expr.variable]
+                vname = variables.TRANSLATIONS[expr.variable.name]
                 self._includes.add(variables.PATHS[vname])
             else:
-                vname = expr.variable
+                vname = expr.variable.name
             return vname
         elif isinstance(expr, Function):
             if expr.func in functions.TRANSLATIONS:

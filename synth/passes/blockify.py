@@ -7,6 +7,7 @@ from ..graph import (
     Block,
     Call,
     Chunk,
+    ChunkVariable,
     Deref,
     Expression,
     ExpressionStatement,
@@ -90,13 +91,13 @@ class BlockifyVisitor(Visitor[None]):
 
         return result_statements
 
-    def lookup_var(self, name: str) -> Optional[Chunk]:
-        if self.extern.lookup(name):
-            return self.extern
+    def lookup_var(self, name: str) -> Optional[ChunkVariable]:
+        if (var := self.extern.lookup(name)) :
+            return var
 
         for chunk in self.chunks:
-            if chunk.lookup(name):
-                return chunk
+            if (var := chunk.lookup(name)) :
+                return var
 
         return None
 
@@ -155,7 +156,9 @@ class BlockifyLvalueVisitor(Visitor[Lvalue]):
         self.parent = parent
 
     def visit_variable(self, node: VariableNode) -> Lvalue:
-        return Variable(node.name, self.parent.lookup_var(node.name))
+        var = self.parent.lookup_var(node.name)
+        assert var is not None
+        return Variable(var.chunk, var)
 
     def visit_deref(self, node: DerefNode) -> Lvalue:
         return Deref(node.target.accept(self))

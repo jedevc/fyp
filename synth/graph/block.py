@@ -164,15 +164,9 @@ class Operation:
 
 
 class Variable:
-    def __init__(self, variable: str, chunk: Optional[Chunk]):
+    def __init__(self, chunk: Chunk, variable: ChunkVariable):
         self.variable = variable
         self.chunk = chunk
-
-    @property
-    def chunk_variable(self) -> Optional[ChunkVariable]:
-        if self.chunk is None:
-            return None
-        return self.chunk.lookup(self.variable)
 
     def traverse(self, func: Callable[[Any], None]):
         func(self)

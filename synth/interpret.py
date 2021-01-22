@@ -84,7 +84,7 @@ class Interpreter:
                 if stmt.block in self.func_blocks:
                     if stmt.block in self.block_patches:
                         args = [
-                            Variable(var.name, None)
+                            Variable(var.chunk, var)
                             for var in self.block_patches[stmt.block]
                         ]
                     else:
@@ -157,7 +157,7 @@ class Tracer:
 
             if isinstance(part, Variable):
                 chunks.add(part.chunk)
-                variables.add(part.chunk_variable)
+                variables.add(part.variable)
             elif isinstance(part, Call):
                 self._trace(part.block, prefix + [part])
 
