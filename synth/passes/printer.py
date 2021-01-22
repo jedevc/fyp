@@ -24,6 +24,7 @@ from ..node import (
     SpecialDeclarationNode,
     SpecNode,
     SplitNode,
+    StatementNode,
     StringValueNode,
     ValueNode,
     VariableNode,
@@ -105,15 +106,8 @@ class PrinterVisitor(Visitor[None]):
     def visit_block(self, node: BlockNode):
         self._print("block ")
         self._print(node.name)
-        self.indent += 4
-        self._println(" {")
-        for i, statement in enumerate(node.statements):
-            statement.accept(self)
-            if i != len(node.statements) - 1:
-                self._println()
-        self.indent -= 4
+        self._visit_scope(node.statements)
         self._println()
-        self._println("}")
 
     def visit_assignment(self, node: AssignmentNode):
         node.target.accept(self)
@@ -184,49 +178,33 @@ class PrinterVisitor(Visitor[None]):
     def visit_if(self, node: IfNode):
         self._print("if ")
         node.condition.accept(self)
-
-        self.indent += 4
-        self._println(" {")
-        for i, statement in enumerate(node.statements):
-            statement.accept(self)
-            if i != len(node.statements) - 1:
-                self._println()
-        self.indent -= 4
-        self._println()
-        self._print("}")
+        self._visit_scope(node.statements)
 
         if node.else_if:
             self._print(" else ")
             node.else_if.accept(self)
-
         if node.else_statements:
-            self.indent += 4
-            self._println(" else {")
-            for i, statement in enumerate(node.else_statements):
-                statement.accept(self)
-                if i != len(node.else_statements) - 1:
-                    self._println()
-            self.indent -= 4
-            self._println()
-            self._print("}")
+            self._print(" else ")
+            self._visit_scope(node.else_statements)
 
     def visit_while(self, node: WhileNode):
-        # TODO: remove duplication with this and visit_if
         self._print("while ")
         node.condition.accept(self)
+        self._visit_scope(node.statements)
 
+    def visit_exprstmt(self, node: ExpressionStatementNode):
+        node.expression.accept(self)
+
+    def _visit_scope(self, stmts: List[StatementNode]):
         self.indent += 4
         self._println(" {")
-        for i, statement in enumerate(node.statements):
+        for i, statement in enumerate(stmts):
             statement.accept(self)
-            if i != len(node.statements) - 1:
+            if i != len(stmts) - 1:
                 self._println()
         self.indent -= 4
         self._println()
         self._print("}")
-
-    def visit_exprstmt(self, node: ExpressionStatementNode):
-        node.expression.accept(self)
 
     def _print(self, msg: str = ""):
         print(msg, end="", file=self.output)
