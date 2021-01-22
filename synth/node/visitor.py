@@ -183,7 +183,7 @@ class TraversalVisitor(Visitor[None]):
     def visit_call(self, node: "CallNode"):
         pass
 
-    def visit_split(self, node: "SplitNode") -> T:
+    def visit_split(self, node: "SplitNode"):
         pass
 
     def visit_if(self, node: "IfNode"):

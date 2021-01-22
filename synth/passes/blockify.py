@@ -1,3 +1,4 @@
+import random
 from typing import Dict, List, Optional, Tuple, Union
 
 from ..graph import (
@@ -33,13 +34,9 @@ from ..node import (
     RefNode,
     SpecNode,
     SplitNode,
-    StringValueNode,
-    ValueNode,
-    VariableNode,
-    Visitor,
-    WhileNode,
 )
-from .error import ProcessingError
+from ..node import Statement as StatementNode
+from ..node import StringValueNode, ValueNode, VariableNode, Visitor, WhileNode
 
 
 class Splitter:
@@ -57,32 +54,37 @@ class BlockifyVisitor(Visitor[None]):
     def result(self) -> List[Block]:
         return list(self.blocks.values())
 
-    def visit_spec(self, node: SpecNode) -> None:
+    def visit_spec(self, node: SpecNode):
         self.blocks = {block.name: Block(block.name) for block in node.blocks}
         for block in node.blocks:
             block.accept(self)
 
-    def visit_block(self, node: BlockNode) -> None:
-        count = 1
+    def visit_block(self, node: BlockNode):
+        statements = self.process_statements(node.statements)
+        self.blocks[node.name].add_statements(statements)
 
-        def name(n):
-            if n == 1:
-                return node.name
-            else:
-                return f"{node.name}{n}"
+    def process_statements(self, statements: List[StatementNode]) -> List[Statement]:
+        name = None
+        result_statements: List[Statement] = []
 
-        for statement in node.statements:
+        for statement in statements:
             if isinstance(statement, SplitNode):
-                # split off into new block
-                next_block = Block(name(count + 1))
-                caller = Call(next_block)
-                self.blocks[name(count)].add_statement(caller)
+                # FIXME: this is a poor naming scheme
+                name = "".join(random.choice("abcdef") for i in range(8))
 
-                self.blocks[name(count + 1)] = next_block
-                count += 1
+                next_block = Block(name)
+                self.blocks[name] = next_block
+
+                caller = Call(next_block)
+                result_statements.append(caller)
+            elif name is not None:
+                stmt = statement.accept(BlockifyStatementVisitor(self))
+                self.blocks[name].add_statement(stmt)
             else:
                 stmt = statement.accept(BlockifyStatementVisitor(self))
-                self.blocks[name(count)].add_statement(stmt)
+                result_statements.append(stmt)
+
+        return result_statements
 
     def lookup_var(self, name: str) -> Optional[Chunk]:
         if self.extern.lookup(name):
@@ -110,7 +112,7 @@ class BlockifyStatementVisitor(Visitor[Union[Statement]]):
         return Call(self.parent.blocks[node.target])
 
     def visit_split(self, node: SplitNode) -> Statement:
-        raise ProcessingError(node, "split is invalid here")
+        raise RuntimeError("split should never be manually visited")
 
     def visit_if(self, node: IfNode) -> Statement:
         groups: List[Tuple[Optional[Expression], List[Statement]]] = []
@@ -120,12 +122,12 @@ class BlockifyStatementVisitor(Visitor[Union[Statement]]):
             groups.append(
                 (
                     nodeiter.condition.accept(BlockifyExpressionVisitor(self.parent)),
-                    [stmt.accept(self) for stmt in nodeiter.statements],
+                    self.parent.process_statements(nodeiter.statements),
                 )
             )
             if nodeiter.else_statements:
                 groups.append(
-                    (None, [stmt.accept(self) for stmt in nodeiter.else_statements])
+                    (None, self.parent.process_statements(nodeiter.else_statements))
                 )
             nodeiter = nodeiter.else_if
 
@@ -134,7 +136,7 @@ class BlockifyStatementVisitor(Visitor[Union[Statement]]):
     def visit_while(self, node: WhileNode) -> Statement:
         return While(
             node.condition.accept(BlockifyExpressionVisitor(self.parent)),
-            [stmt.accept(self) for stmt in node.statements],
+            self.parent.process_statements(node.statements),
         )
 
     def visit_exprstmt(self, node: ExpressionStatementNode) -> Statement:

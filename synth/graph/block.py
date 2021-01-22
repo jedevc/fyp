@@ -30,6 +30,9 @@ class Block:
     def add_statement(self, statement: Statement):
         self.statements.append(statement)
 
+    def add_statements(self, statements: List[Statement]):
+        self.statements.extend(statements)
+
     def __repr__(self) -> str:
         return f"<Block {self.name}>"
 

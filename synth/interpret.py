@@ -132,8 +132,6 @@ class Tracer:
                     else:
                         self.patches[bl] = list(collected)
 
-        print(self.patches)
-
     def root(
         self, chunk: Chunk, predicate: Optional[Callable[[Block], bool]] = None
     ) -> Block:
