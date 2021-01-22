@@ -19,17 +19,27 @@ from .utils import find_common_prefix
 
 
 class Interpreter:
+    """
+    Utility for translating an abstract representation of code into concrete
+    language features.
+
+    To do this, we assign (randomly, but guided through heuristics), an
+    interpreation to each abstract item, and then instantiate it.
+    """
+
     def __init__(self, blocks: List[Block], chunks: List[Chunk], extern: Chunk):
         self.blocks = {block.name: block for block in blocks}
 
+        self.chunks = chunks
+        self.extern = extern
+
+        # assign each block an interpretation
         self.func_blocks = {block for block in blocks if random.random() > 0}
         self.inline_blocks = {
             block for block in blocks if block not in self.func_blocks
         }
 
-        self.chunks = chunks
-        self.extern = extern
-
+        # assign each chunk an interpretation
         self.local_chunks = {
             chunk for chunk in chunks if chunk.constraint.eof or random.random() > 0.5
         }
@@ -39,16 +49,20 @@ class Interpreter:
 
         traces = Tracer(self.blocks["main"])
 
-        self.blocks_with_locals: Dict[Block, List[Chunk]] = {}
+        # determine functions that local chunks should be allocated on
+        self.block_locals: Dict[Block, List[Chunk]] = {}
         for chunk in self.local_chunks:
             root = traces.root(chunk, lambda bl: bl in self.func_blocks)
-            if root in self.blocks_with_locals:
-                self.blocks_with_locals[root].append(chunk)
-            else:
-                self.blocks_with_locals[root] = [chunk]
+            if root not in self.block_locals:
+                self.block_locals[root] = []
+            self.block_locals[root].append(chunk)
 
+        # determine patches to make for function blocks
         self.block_patches = {}
         for block, patches in traces.patches.items():
+            if block not in self.func_blocks:
+                continue
+
             self.block_patches[block] = [
                 patch for patch in patches if patch.chunk in self.local_chunks
             ]
@@ -67,8 +81,8 @@ class Interpreter:
 
             for stmt in self._transform(block.statements):
                 func.add_statement(stmt)
-            if block in self.blocks_with_locals:
-                for chunk in self.blocks_with_locals[block]:
+            if block in self.block_locals:
+                for chunk in self.block_locals[block]:
                     func.add_locals(chunk)
 
             final.add_function(func)
@@ -113,6 +127,15 @@ class Interpreter:
 
 
 class Tracer:
+    """
+    Tracer to traverse the Block graph, finding references to chunks and
+    variables, and their respective paths.
+
+    Essentially, we perform these computations to establish primitives that can
+    be used in creating more complex heuristics, and properly interpreting
+    blocks and chunks.
+    """
+
     def __init__(self, base: Block):
         self.base = base
 
@@ -141,6 +164,11 @@ class Tracer:
     def root(
         self, chunk: Chunk, predicate: Optional[Callable[[Block], bool]] = None
     ) -> Block:
+        """
+        Find the deepest block node that contains all references to a chunk,
+        such that no siblings of the result reference the chunk.
+        """
+
         prefix = self.prefixes[chunk]
 
         if predicate:
