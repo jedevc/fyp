@@ -80,6 +80,9 @@ class ChunkConstraint:
     def empty(self) -> bool:
         return not self.eof
 
+    def __repr__(self) -> str:
+        return f"<ChunkConstraint eof={self.eof}>"
+
 
 class Chunk:
     def __init__(

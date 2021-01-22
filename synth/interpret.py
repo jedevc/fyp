@@ -30,9 +30,11 @@ class Interpreter:
         self.chunks = chunks
         self.extern = extern
 
-        self.global_chunks = {chunk for chunk in chunks if random.random() > 1}
         self.local_chunks = {
-            chunk for chunk in chunks if chunk not in self.global_chunks
+            chunk for chunk in chunks if chunk.constraint.eof or random.random() > 0.5
+        }
+        self.global_chunks = {
+            chunk for chunk in chunks if chunk not in self.local_chunks
         }
 
         traces = Tracer(self.blocks["main"])

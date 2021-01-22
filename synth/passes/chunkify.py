@@ -50,6 +50,6 @@ class ChunkifyVisitor(Visitor[None]):
 
     def visit_special_declaration(self, node: SpecialDeclarationNode):
         if node.name == "eof":
-            self._constraint.join(ChunkConstraint(eof=True))
+            self._constraint = self._constraint.join(ChunkConstraint(eof=True))
         else:
             raise ProcessingError(node, f"invalid special variable {node.name}")
