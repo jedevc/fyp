@@ -47,7 +47,11 @@ class Interpreter:
             else:
                 self.blocks_with_locals[root] = [chunk]
 
-        self.block_patches = traces.patches
+        self.block_patches = {}
+        for block, patches in traces.patches.items():
+            self.block_patches[block] = [
+                patch for patch in patches if patch.chunk in self.local_chunks
+            ]
 
     def program(self) -> Program:
         final = Program()
