@@ -196,7 +196,7 @@ class PrinterVisitor(Visitor[None]):
         self._print("}")
 
         if node.else_if:
-            self._println(" else ")
+            self._print(" else ")
             node.else_if.accept(self)
 
         if node.else_statements:
