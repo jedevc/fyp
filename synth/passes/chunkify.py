@@ -17,39 +17,47 @@ class ChunkifyVisitor(Visitor[None]):
         self.chunks = []
         self.extern = Chunk([])
 
-        self._constraint = ChunkConstraint()
-        self._variables = []
-
     def visit_spec(self, node: SpecNode):
         for chunk in node.chunks:
             chunk.accept(self)
 
     def visit_chunk(self, node: ChunkNode):
-        self._constraint = ChunkConstraint()
-        self._variables = []
-        for var in node.variables:
-            var.accept(self)
-
-        chunk = Chunk(self._variables, self._constraint)
-        self.chunks.append(chunk)
+        visitor = ChunkifyChunkVisitor()
+        node.accept(visitor)
+        self.chunks.append(visitor.chunk)
 
     def visit_extern(self, node: ExternChunkNode):
-        self._constraint = ChunkConstraint()
-        self._variables = []
+        visitor = ChunkifyChunkVisitor(allow_constraints=False)
+        node.accept(visitor)
+        self.extern = merge_chunks(self.extern, visitor.chunk)
+
+
+class ChunkifyChunkVisitor(Visitor[None]):
+    def __init__(self, allow_constraints: bool = True):
+        super().__init__()
+
+        self.chunk = Chunk([])
+        self.allow_constraints = allow_constraints
+
+    def visit_chunk(self, node: ChunkNode):
         for var in node.variables:
             var.accept(self)
 
-        if not self._constraint.empty:
-            raise ProcessingError(node, "cannot process extern chunk constraints")
-
-        self.extern = merge_chunks(self.extern, Chunk(self._variables))
+    def visit_extern(self, node: ExternChunkNode):
+        for var in node.variables:
+            var.accept(self)
 
     def visit_declaration(self, node: DeclarationNode):
-        var = ChunkVariable(node.name, node.vartype)
-        self._variables.append(var)
+        var = ChunkVariable(node.name, node.vartype, self.chunk)
+        self.chunk.add_variable(var)
 
     def visit_special_declaration(self, node: SpecialDeclarationNode):
+        if not self.allow_constraints:
+            raise ProcessingError(node, "cannot process chunk constraints here")
+
         if node.name == "eof":
-            self._constraint = self._constraint.join(ChunkConstraint(eof=True))
+            self.chunk.constraint = self.chunk.constraint.join(
+                ChunkConstraint(eof=True)
+            )
         else:
             raise ProcessingError(node, f"invalid special variable {node.name}")

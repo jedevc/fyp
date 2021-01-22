@@ -11,9 +11,10 @@ from ..node import (
 
 
 class ChunkVariable:
-    def __init__(self, name: str, vtype: TypeNode):
+    def __init__(self, name: str, vtype: TypeNode, chunk: "Chunk"):
         self.name = name
         self.vtype = vtype
+        self.chunk = chunk
 
     def _typestr(self, tp: TypeNode) -> str:
         if isinstance(tp, SimpleTypeNode):
