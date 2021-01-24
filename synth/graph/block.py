@@ -3,7 +3,7 @@ from typing import Any, Callable, List, Optional, Sequence, Tuple, Union
 from ..node import Operator as OperatorType
 from .chunk import Chunk, ChunkVariable, merge_chunks
 
-Lvalue = Union["Variable", "Array", "Deref", "Literal"]
+Lvalue = Union["Variable", "Array", "Deref"]
 Expression = Union["Operation", "Function", "Value", "Ref", Lvalue]
 Statement = Union["Assignment", "Call", "If", "While", "ExpressionStatement"]
 
@@ -178,14 +178,6 @@ class Variable:
 class Value:
     def __init__(self, value: str):
         self.value = value
-
-    def traverse(self, func: Callable[[Any], None]):
-        func(self)
-
-
-class Literal:
-    def __init__(self, content: str):
-        self.content = content
 
     def traverse(self, func: Callable[[Any], None]):
         func(self)

@@ -9,7 +9,6 @@ from .block import (
     Function,
     FunctionDefinition,
     If,
-    Literal,
     Lvalue,
     Operation,
     Ref,

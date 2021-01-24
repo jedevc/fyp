@@ -170,8 +170,13 @@ class Lexer:
             else:
                 return Token(self.n, len(name), TokenType.Name, name)
         elif self._isnum():
-            num = self._read_num()
-            return Token(self.n, len(num), TokenType.Integer, num)
+            lhs, rhs = self._read_num()
+            if isinstance(rhs, int):
+                return Token(self.n, len(lhs), TokenType.Integer, (lhs, rhs))
+            else:
+                return Token(
+                    self.n, len(lhs) + 1 + len(rhs), TokenType.Float, (lhs, rhs)
+                )
         else:
             self._advance()
             return Token(self.n, 1, TokenType.Unknown)
@@ -188,7 +193,7 @@ class Lexer:
 
         return self.stream[start : self.n]
 
-    def _read_num(self) -> Tuple[str, int]:
+    def _read_num(self) -> Union[Tuple[str, int], Tuple[str, str]]:
         base = 10
 
         start = self.n
@@ -207,10 +212,20 @@ class Lexer:
         while self._isnum(base):
             self._advance()
 
+        mid = self.n
+
+        if base == 10 and self.ch == ".":
+            self._advance()
+            while self._isnum(base):
+                self._advance()
+
         if self.ch is not None and not self._isspace() and self.ch not in SIMPLE_TOKENS:
             raise LexError(start, self.n, "invalid number")
 
-        return self.stream[start : self.n], base
+        if mid == self.n:
+            return self.stream[start : self.n], base
+        else:
+            return self.stream[start:mid], self.stream[mid + 1 : self.n]
 
     def _read_str(self) -> str:
         start = self.n

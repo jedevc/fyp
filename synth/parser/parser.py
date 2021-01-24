@@ -13,6 +13,7 @@ from ..node import (
     ExpressionNode,
     ExpressionStatementNode,
     ExternChunkNode,
+    FloatValueNode,
     FunctionNode,
     FuncTypeNode,
     IfNode,
@@ -298,6 +299,10 @@ class Parser:
                 return self.node_exit(IntValueNode(int(value, base), base))
             except TypeError:
                 return self.node_exit(IntValueNode(self.last.lexeme, 10))
+        elif self.accept(TokenType.Float):
+            assert self.last is not None
+            lhs, rhs = self.last.lexeme
+            return self.node_exit(FloatValueNode(int(lhs), int(rhs)))
         elif (
             peek := self.peek()
         ) and peek.ttype == TokenType.ParenOpen:  # pylint: disable=used-before-assignment

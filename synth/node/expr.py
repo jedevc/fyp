@@ -22,6 +22,13 @@ class IntValueNode(ValueNode):
         self.base = base
 
 
+class FloatValueNode(ValueNode):
+    def __init__(self, left: int, right: int):
+        super().__init__()
+        self.left = left
+        self.right = right
+
+
 class StringValueNode(ValueNode):
     def __init__(self, value: str):
         super().__init__()

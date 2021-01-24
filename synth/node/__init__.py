@@ -4,6 +4,7 @@ from .expr import (
     BinaryOperationNode,
     DerefNode,
     ExpressionNode,
+    FloatValueNode,
     FunctionNode,
     IntValueNode,
     LiteralNode,

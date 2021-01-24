@@ -26,24 +26,25 @@ class TokenType(Enum):
     Reserved = 16
     String = 17
     Integer = 18
+    Float = 19
 
-    AddressOf = 19
+    AddressOf = 20
 
-    Plus = 20
-    Minus = 21
-    Times = 22
-    Divide = 23
+    Plus = 21
+    Minus = 22
+    Times = 23
+    Divide = 24
 
-    CompareEQ = 24
-    CompareNE = 25
-    CompareLT = 26
-    CompareGT = 27
-    CompareLE = 28
-    CompareGE = 29
+    CompareEQ = 25
+    CompareNE = 26
+    CompareLT = 27
+    CompareGT = 28
+    CompareLE = 29
+    CompareGE = 30
 
-    Negate = 30
+    Negate = 31
 
-    Ellipsis = 31
+    Ellipsis = 32
 
 
 PRINTABLE_NAMES = {
@@ -65,6 +66,7 @@ PRINTABLE_NAMES = {
     TokenType.Reserved: "reserved name",
     TokenType.String: "string",
     TokenType.Integer: "integer",
+    TokenType.Float: "float",
     TokenType.AddressOf: "address",
     TokenType.Plus: "plus",
     TokenType.Minus: "minus",
