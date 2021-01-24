@@ -1,4 +1,3 @@
-import random
 from typing import Dict, List, Optional, Tuple, Union
 
 from ..graph import (
@@ -42,6 +41,7 @@ from ..node import (
     Visitor,
     WhileNode,
 )
+from ..utils import generate_unique_name
 
 
 class Splitter:
@@ -74,8 +74,7 @@ class BlockifyVisitor(Visitor[None]):
 
         for statement in statements:
             if isinstance(statement, SplitNode):
-                # FIXME: this is a poor naming scheme
-                name = "".join(random.choice("abcdef") for i in range(8))
+                name = generate_unique_name(8)
 
                 next_block = Block(name)
                 self.blocks[name] = next_block
