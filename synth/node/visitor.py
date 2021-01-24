@@ -7,6 +7,7 @@ if TYPE_CHECKING:
         BinaryOperationNode,
         DerefNode,
         FunctionNode,
+        LiteralNode,
         RefNode,
         ValueNode,
         VariableNode,
@@ -67,6 +68,9 @@ class Visitor(Generic[T]):
         pass
 
     def visit_assignment(self, node: "AssignmentNode") -> T:
+        pass
+
+    def visit_literal(self, node: "LiteralNode") -> T:
         pass
 
     def visit_variable(self, node: "VariableNode") -> T:

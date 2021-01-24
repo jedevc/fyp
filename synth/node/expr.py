@@ -4,7 +4,7 @@ from typing import List, Union
 from .base import Node, X
 from .visitor import Visitor
 
-LvalueNode = Union["VariableNode", "ArrayNode", "DerefNode"]
+LvalueNode = Union["VariableNode", "ArrayNode", "DerefNode", "LiteralNode"]
 ExpressionNode = Union[
     "BinaryOperationNode", "FunctionNode", "ValueNode", "RefNode", LvalueNode
 ]
@@ -26,6 +26,15 @@ class StringValueNode(ValueNode):
     def __init__(self, value: str):
         super().__init__()
         self.value = value
+
+
+class LiteralNode(Node):
+    def __init__(self, content: str):
+        super().__init__()
+        self.content = content
+
+    def accept(self, visitor: Visitor[X]) -> X:
+        return visitor.visit_literal(self)
 
 
 class VariableNode(Node):

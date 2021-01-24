@@ -17,6 +17,7 @@ from ..node import (
     FuncTypeNode,
     IfNode,
     IntValueNode,
+    LiteralNode,
     LvalueNode,
     Node,
     Operator,
@@ -292,8 +293,11 @@ class Parser:
             return self.node_exit(StringValueNode(self.last.lexeme))
         elif self.accept(TokenType.Integer):
             assert self.last is not None
-            value, base = self.last.lexeme
-            return self.node_exit(IntValueNode(int(value, base), base))
+            try:
+                value, base = self.last.lexeme
+                return self.node_exit(IntValueNode(int(value, base), base))
+            except TypeError:
+                return self.node_exit(IntValueNode(self.last.lexeme, 10))
         elif (
             peek := self.peek()
         ) and peek.ttype == TokenType.ParenOpen:  # pylint: disable=used-before-assignment
@@ -341,7 +345,10 @@ class Parser:
             node = self.node_exit(DerefNode(target))
         else:
             name = self.expect(TokenType.Name)
-            node = self.node_exit(VariableNode(name.lexeme))
+            if name.lexeme in ("null", "NULL"):
+                return self.node_exit(LiteralNode("NULL"))
+            else:
+                node = self.node_exit(VariableNode(name.lexeme))
 
         while self.accept(TokenType.BracketOpen):
             # try to read optional array indexes at end

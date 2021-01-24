@@ -10,6 +10,7 @@ from .block import (
     Function,
     FunctionDefinition,
     If,
+    Literal,
     Operation,
     OperatorType,
     Ref,
@@ -101,7 +102,9 @@ class CodeGen:
             raise RuntimeError("cannot be translated into code")
 
     def _gen_expr(self, expr: Expression) -> str:
-        if isinstance(expr, Variable):
+        if isinstance(expr, Literal):
+            return expr.content
+        elif isinstance(expr, Variable):
             if expr.variable in variables.TRANSLATIONS:
                 vname = variables.TRANSLATIONS[expr.variable.name]
                 self._includes.add(variables.PATHS[vname])

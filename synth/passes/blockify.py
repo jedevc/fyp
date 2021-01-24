@@ -12,6 +12,7 @@ from ..graph import (
     ExpressionStatement,
     Function,
     If,
+    Literal,
     Lvalue,
     Operation,
     Ref,
@@ -31,6 +32,7 @@ from ..node import (
     FunctionNode,
     IfNode,
     IntValueNode,
+    LiteralNode,
     RefNode,
     SpecNode,
     SplitNode,
@@ -205,6 +207,9 @@ class BlockifyExpressionVisitor(Visitor[Expression]):
                 raise RuntimeError("value unrepresentable in C")
         else:
             raise RuntimeError()
+
+    def visit_literal(self, node: LiteralNode) -> Expression:
+        return Literal(node.content)
 
     def visit_binary(self, node: BinaryOperationNode) -> Expression:
         return Operation(node.op, node.left.accept(self), node.right.accept(self))

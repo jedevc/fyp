@@ -1,3 +1,4 @@
+import string
 from typing import Dict, Iterable, List, Optional, Tuple, Union
 
 from .error import LexError
@@ -146,14 +147,25 @@ class Lexer:
             else:
                 # just a division operator
                 return Token(self.n, 1, TokenType.Divide)
-        elif self.ch == "'" or self.ch == '"':
+        elif self.ch in ("'", '"'):
             s = self._read_str()
             return Token(self.n, len(s) + 2, TokenType.String, s)
+        elif self.ch == "#":
+            self._advance()
+            if self.ch in ("'", '"'):
+                s = self._read_str()
+                if len(s) != 1:
+                    raise LexError(start, self.n, "char literal is too long")
+                return Token(self.n, len(s) + 3, TokenType.Integer, ord(s))
+            elif self.ch in string.ascii_letters or self.ch in string.digits:
+                self._advance()
+                assert self.ch_prev is not None
+                return Token(self.n, 2, TokenType.Integer, ord(self.ch_prev))
+            else:
+                raise LexError(start, self.n, "invalid character literal")
         elif self._isalpha() or self.ch == "$":
             name = self._read_name()
-            if name in ("null", "NULL"):
-                return Token(self.n, len(name), TokenType.Integer, ("0", 10))
-            elif name in RESERVED_WORDS:
+            if name in RESERVED_WORDS:
                 return Token(self.n, len(name), TokenType.Reserved, name)
             else:
                 return Token(self.n, len(name), TokenType.Name, name)
