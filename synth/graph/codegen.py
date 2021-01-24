@@ -33,15 +33,20 @@ class CodeGen:
 
     def _gen_program(self, program: Program) -> str:
         parts: List[str] = []
-        parts.extend(f"extern {self._gen_decl(var)};" for var in program.externs)
-        parts.append("")
-        parts.extend(f"{self._gen_decl(var)};" for var in program.globals)
-        parts.append("")
+        if program.externs:
+            parts.extend(f"extern {self._gen_decl(var)};" for var in program.externs)
+            parts.append("")
+        if program.globals:
+            parts.extend(f"{self._gen_decl(var)};" for var in program.globals)
+            parts.append("")
+
         parts.extend(self._gen_func_decl(func) for func in program.functions)
 
-        includes = [f"#include <{include}>" for include in self._includes]
+        if self._includes:
+            includes = [f"#include <{include}>" for include in self._includes]
+            parts = includes + [""] + parts
 
-        return "\n".join(includes + [""] + parts)
+        return "\n".join(parts)
 
     def _gen_decl(self, var: ChunkVariable) -> str:
         for tp in var.basic_types():
