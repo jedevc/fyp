@@ -119,8 +119,7 @@ class Lexer:
                         self._skip(len(target) - 1)
                         return Token(self.n, len(target), ttype[target])
 
-                # FIXME: this isn't *the best* reponse
-                raise LexError(self.n, self.n, "invalid token")
+                return Token(self.n, 1, TokenType.Unknown)
             else:
                 return Token(self.n, 1, ttype)
         elif self.ch == "/":
