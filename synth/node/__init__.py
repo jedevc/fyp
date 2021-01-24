@@ -38,5 +38,6 @@ from .types import (
     PointerTypeNode,
     SimpleTypeNode,
     TypeNode,
+    UnknownTypeNode,
 )
 from .visitor import TraversalVisitor, Visitor

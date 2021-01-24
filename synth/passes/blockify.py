@@ -158,8 +158,10 @@ class BlockifyLvalueVisitor(Visitor[Lvalue]):
 
     def visit_variable(self, node: VariableNode) -> Lvalue:
         var = self.parent.lookup_var(node.name)
-        assert var is not None
-        return Variable(var.chunk, var)
+        if var is None:
+            return Variable(ChunkVariable(node.name, None, None))
+        else:
+            return Variable(var)
 
     def visit_deref(self, node: DerefNode) -> Lvalue:
         return Deref(node.target.accept(self))
@@ -189,7 +191,9 @@ class BlockifyExpressionVisitor(Visitor[Expression]):
         return Ref(node.target.accept(BlockifyLvalueVisitor(self.parent)))
 
     def visit_function(self, node: FunctionNode) -> Expression:
-        return Function(node.target, [expr.accept(self) for expr in node.arguments])
+        var = node.target.accept(BlockifyLvalueVisitor(self.parent))
+        assert isinstance(var, Variable)
+        return Function(var, [expr.accept(self) for expr in node.arguments])
 
     def visit_value(self, node: ValueNode) -> Expression:
         if isinstance(node, StringValueNode):

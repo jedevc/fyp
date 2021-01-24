@@ -11,7 +11,8 @@ from ..node import (
 
 
 class ChunkVariable:
-    def __init__(self, name: str, vtype: TypeNode, chunk: "Chunk"):
+    def __init__(self, name: str, vtype: Optional[TypeNode], chunk: Optional["Chunk"]):
+        # FIXME: types and chunks shouldn't be optional!
         self.name = name
         self.vtype = vtype
         self.chunk = chunk
@@ -45,7 +46,16 @@ class ChunkVariable:
             raise RuntimeError("invalid variable type")
 
     def typename(self) -> str:
+        if self.vtype is None:
+            return f"void {self.name}"
+
         return self._typenamestr(self.name, self.vtype)
+
+    def typestr(self) -> str:
+        if self.vtype is None:
+            return "void"
+
+        return self._typestr(self.vtype)
 
     def _basic_types(self, tp: TypeNode) -> Iterable[str]:
         if isinstance(tp, SimpleTypeNode):
@@ -62,6 +72,9 @@ class ChunkVariable:
             raise RuntimeError("invalid variable type")
 
     def basic_types(self) -> Iterable[str]:
+        if self.vtype is None:
+            return iter(())
+
         return self._basic_types(self.vtype)
 
     def __repr__(self) -> str:

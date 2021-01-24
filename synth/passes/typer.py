@@ -1,20 +1,36 @@
 from ..builtins import functions, types, variables
 from ..node import (
+    ArrayNode,
+    ArrayTypeNode,
+    BinaryOperationNode,
     BlockNode,
     CallNode,
     DeclarationNode,
+    DerefNode,
+    FloatValueNode,
     FunctionNode,
     FuncTypeNode,
+    IfNode,
+    IntValueNode,
+    LiteralNode,
+    Operator,
+    PointerTypeNode,
+    RefNode,
     SimpleTypeNode,
     SpecNode,
     SplitNode,
+    StringValueNode,
     TraversalVisitor,
+    TypeNode,
+    UnknownTypeNode,
+    ValueNode,
     VariableNode,
+    WhileNode,
 )
 from .error import ProcessingError
 
 
-class TypeCheckVisitor(TraversalVisitor):
+class TypeCheckVisitor(TraversalVisitor[TypeNode]):
     def __init__(self):
         super().__init__()
         self.vars = {}
@@ -65,49 +81,145 @@ class TypeCheckVisitor(TraversalVisitor):
             )
 
         self.vars[node.name] = node.vartype
-
         super().visit_declaration(node)
 
-    def visit_type_simple(self, node: SimpleTypeNode):
+    def visit_type_simple(self, node: SimpleTypeNode) -> TypeNode:
         if node.core not in types.TRANSLATIONS:
             raise ProcessingError(node, f"{node.core} is not a valid type")
 
-    # def visit_type_pointer(self, node: PointerTypeNode):
-    #     pass
+        return SimpleTypeNode(node.core)
 
-    # def visit_type_array(self, node: ArrayTypeNode):
-    #     pass
-
-    # def visit_type_func(self, node: FuncTypeNode):
-    #     pass
-
-    def visit_variable(self, node: VariableNode):
+    def visit_variable(self, node: VariableNode) -> TypeNode:
         if node.name in ("argc", "argv"):
             if self.block_current == "main":
                 if self.block_seen_split:
                     raise ProcessingError(
                         node, f"variable {node.name} must appear before split"
                     )
-                else:
-                    super().visit_variable(node)
             else:
                 raise ProcessingError(
                     node, f"variable {node.name} cannot be referenced outside of main"
                 )
+
+            if node.name == "argc":
+                return SimpleTypeNode("int")
+            elif node.name == "argv":
+                return ArrayTypeNode(PointerTypeNode(SimpleTypeNode("char")), None)
+            else:
+                raise RuntimeError()
         elif node.name in self.vars:
-            super().visit_variable(node)
-        elif node.name not in variables.TRANSLATIONS:
-            super().visit_variable(node)
+            return self.vars[node.name]
+        elif node.name in variables.TRANSLATIONS or node.name in functions.TRANSLATIONS:
+            # TODO: implement type derivations here
+            raise NotImplementedError()
         else:
             raise ProcessingError(node, f"variable {node.name} does not exist")
 
-    def visit_function(self, node: FunctionNode):
-        if node.target not in self.vars and node.target not in functions.TRANSLATIONS:
-            raise ProcessingError(node, f"function {node.target} does not exist")
-
-        if node.target in self.vars and not isinstance(
-            self.vars[node.target], FuncTypeNode
+    def visit_if(self, node: IfNode) -> None:
+        condition_type = node.condition.accept(self)
+        if (
+            not isinstance(condition_type, SimpleTypeNode)
+            or not condition_type.core == "bool"
         ):
-            raise ProcessingError(node, f"{node.target} exists, but is not a function")
+            # TODO: this should be better
+            raise ProcessingError(node.condition, "if condition must be bool")
 
-        super().visit_function(node)
+        super().visit_if(node)
+
+    def visit_while(self, node: WhileNode) -> None:
+        condition_type = node.condition.accept(self)
+        if (
+            not isinstance(condition_type, SimpleTypeNode)
+            or not condition_type.core == "bool"
+        ):
+            # TODO: this should be better
+            raise ProcessingError(node.condition, "while condition must be bool")
+
+        super().visit_while(node)
+
+    def visit_ref(self, node: RefNode) -> TypeNode:
+        tp = node.target.accept(self)
+        assert tp is not None
+        return PointerTypeNode(tp)
+
+    def visit_deref(self, node: DerefNode) -> TypeNode:
+        tp = node.target.accept(self)
+        if isinstance(tp, PointerTypeNode):
+            return tp.base
+        else:
+            raise ProcessingError(node, "cannot dereference non-pointer")
+
+    def visit_function(self, node: FunctionNode) -> TypeNode:
+        vtype = node.target.accept(self)
+        if not isinstance(vtype, FuncTypeNode):
+            raise ProcessingError(
+                node, f"{node.target.name} exists, but is not a function"
+            )
+
+        if len(vtype.args) != len(node.arguments):
+            raise ProcessingError(
+                node,
+                f"{node.target.name} expects {len(vtype.args)} arguments, but was given {len(node.arguments)}",
+            )
+
+        for i, arg in enumerate(node.arguments):
+            type_result = arg.accept(self)
+            # TODO: compare type_result and vtype.args[i]
+            print(type_result, "==", vtype.args[i])
+
+        return vtype
+
+    def visit_value(self, node: ValueNode) -> TypeNode:
+        if isinstance(node, IntValueNode):
+            return SimpleTypeNode("int")
+        elif isinstance(node, FloatValueNode):
+            return SimpleTypeNode("float")
+        elif isinstance(node, StringValueNode):
+            return PointerTypeNode(SimpleTypeNode("char"))
+        else:
+            raise RuntimeError()
+
+    def visit_literal(self, node: LiteralNode) -> TypeNode:
+        if node.content == "NULL":
+            return PointerTypeNode(SimpleTypeNode("void"))
+        else:
+            return UnknownTypeNode()
+
+    def visit_array(self, node: ArrayNode) -> TypeNode:
+        index_type = node.index.accept(self)
+        if not isinstance(index_type, SimpleTypeNode) or not index_type.core == "int":
+            # TODO: this should be better
+            raise ProcessingError(
+                node.index, "cannot index with non-integer expressions"
+            )
+
+        target_type = node.target.accept(self)
+        if not isinstance(target_type, ArrayNode):
+            raise ProcessingError(node.index, "cannot index non-array")
+
+        return target_type
+
+    def visit_binary(self, node: BinaryOperationNode) -> TypeNode:
+        # TODO: these are both hacks
+
+        if node.op in (
+            Operator.Add,
+            Operator.Subtract,
+            Operator.Multiply,
+            Operator.Divide,
+        ):
+            tp = node.left.accept(self)
+        elif node.op in (
+            Operator.Eq,
+            Operator.Neq,
+            Operator.Gt,
+            Operator.Gte,
+            Operator.Lt,
+            Operator.Lte,
+        ):
+            tp = SimpleTypeNode("bool")
+        else:
+            raise RuntimeError()
+
+        assert tp is not None
+        return tp

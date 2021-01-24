@@ -140,8 +140,19 @@ class While:
             stmt.traverse(func)
 
 
+class Variable:
+    def __init__(self, variable: ChunkVariable):
+        self.variable = variable
+
+    def traverse(self, func: Callable[[Any], None]):
+        func(self)
+
+    def __repr__(self) -> str:
+        return f"<Variable {self.variable}>"
+
+
 class Function:
-    def __init__(self, func: str, args: Sequence[Expression]):
+    def __init__(self, func: Variable, args: Sequence[Expression]):
         self.func = func
         self.args = args
 
@@ -161,18 +172,6 @@ class Operation:
         func(self)
         self.left.traverse(func)
         self.right.traverse(func)
-
-
-class Variable:
-    def __init__(self, chunk: Chunk, variable: ChunkVariable):
-        self.variable = variable
-        self.chunk = chunk
-
-    def traverse(self, func: Callable[[Any], None]):
-        func(self)
-
-    def __repr__(self) -> str:
-        return f"<Variable {self.variable}>"
 
 
 class Value:

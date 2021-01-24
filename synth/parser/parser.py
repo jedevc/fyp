@@ -323,7 +323,7 @@ class Parser:
 
         self.expect(TokenType.ParenOpen)
         if self.accept(TokenType.ParenClose):
-            return self.node_exit(FunctionNode(name.lexeme, []))
+            return self.node_exit(FunctionNode(VariableNode(name.lexeme), []))
 
         args = [self.expression()]
         while self.accept(TokenType.Comma):
@@ -331,7 +331,7 @@ class Parser:
             args.append(arg)
         self.expect(TokenType.ParenClose)
 
-        return self.node_exit(FunctionNode(name.lexeme, args))
+        return self.node_exit(FunctionNode(VariableNode(name.lexeme), args))
 
     def lvalue(self) -> LvalueNode:
         """
