@@ -13,7 +13,6 @@ from ..node import (
     IfNode,
     IntValueNode,
     LiteralNode,
-    Operator,
     PointerTypeNode,
     RefNode,
     SimpleTypeNode,
@@ -26,6 +25,7 @@ from ..node import (
     ValueNode,
     VariableNode,
     WhileNode,
+    type_check,
 )
 from .error import ProcessingError
 
@@ -117,22 +117,16 @@ class TypeCheckVisitor(TraversalVisitor[TypeNode]):
 
     def visit_if(self, node: IfNode) -> None:
         condition_type = node.condition.accept(self)
-        if (
-            not isinstance(condition_type, SimpleTypeNode)
-            or not condition_type.core == "bool"
-        ):
-            # TODO: this should be better
+        assert condition_type is not None
+        if not type_check(condition_type, SimpleTypeNode("bool")):
             raise ProcessingError(node.condition, "if condition must be bool")
 
         super().visit_if(node)
 
     def visit_while(self, node: WhileNode) -> None:
         condition_type = node.condition.accept(self)
-        if (
-            not isinstance(condition_type, SimpleTypeNode)
-            or not condition_type.core == "bool"
-        ):
-            # TODO: this should be better
+        assert condition_type is not None
+        if not type_check(condition_type, SimpleTypeNode("bool")):
             raise ProcessingError(node.condition, "while condition must be bool")
 
         super().visit_while(node)
@@ -164,10 +158,13 @@ class TypeCheckVisitor(TraversalVisitor[TypeNode]):
 
         for i, arg in enumerate(node.arguments):
             type_result = arg.accept(self)
-            # TODO: compare type_result and vtype.args[i]
+            assert type_result is not None
             print(type_result, "==", vtype.args[i])
+            if not type_check(type_result, vtype.args[i]):
+                # FIXME: better error message needed
+                raise ProcessingError(arg, "argument type mismatch")
 
-        return vtype
+        return vtype.ret
 
     def visit_value(self, node: ValueNode) -> TypeNode:
         if isinstance(node, IntValueNode):
@@ -187,8 +184,8 @@ class TypeCheckVisitor(TraversalVisitor[TypeNode]):
 
     def visit_array(self, node: ArrayNode) -> TypeNode:
         index_type = node.index.accept(self)
-        if not isinstance(index_type, SimpleTypeNode) or not index_type.core == "int":
-            # TODO: this should be better
+        assert index_type is not None
+        if not type_check(index_type, SimpleTypeNode("int")):
             raise ProcessingError(
                 node.index, "cannot index with non-integer expressions"
             )
@@ -200,26 +197,13 @@ class TypeCheckVisitor(TraversalVisitor[TypeNode]):
         return target_type
 
     def visit_binary(self, node: BinaryOperationNode) -> TypeNode:
-        # TODO: these are both hacks
+        # TODO: this is very sloppy
 
-        if node.op in (
-            Operator.Add,
-            Operator.Subtract,
-            Operator.Multiply,
-            Operator.Divide,
-        ):
-            tp = node.left.accept(self)
-        elif node.op in (
-            Operator.Eq,
-            Operator.Neq,
-            Operator.Gt,
-            Operator.Gte,
-            Operator.Lt,
-            Operator.Lte,
-        ):
-            tp = SimpleTypeNode("bool")
-        else:
-            raise RuntimeError()
+        left_type = node.left.accept(self)
+        right_type = node.left.accept(self)
+        assert left_type is not None and right_type is not None
 
-        assert tp is not None
-        return tp
+        if not type_check(left_type, right_type):
+            raise ProcessingError(node, "operands are not the same type")
+
+        return SimpleTypeNode("bool")

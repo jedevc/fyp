@@ -69,3 +69,28 @@ class FuncTypeNode(Node):
     def __repr__(self) -> str:
         args = ", ".join(repr(arg) for arg in self.args)
         return f"<FuncTypeNode ({args}) -> {self.ret}>"
+
+
+def type_check(left: TypeNode, right: TypeNode) -> bool:
+    if isinstance(left, UnknownTypeNode) or isinstance(right, UnknownTypeNode):
+        return True
+    elif isinstance(left, SimpleTypeNode) and isinstance(right, SimpleTypeNode):
+        return left.core == right.core
+    elif isinstance(left, PointerTypeNode) and isinstance(right, PointerTypeNode):
+        return type_check(left.base, right.base)
+    elif isinstance(left, ArrayTypeNode) and isinstance(right, ArrayTypeNode):
+        return type_check(left.base, right.base)
+    elif isinstance(left, FuncTypeNode) and isinstance(right, FuncTypeNode):
+        if len(left.args) != len(right.args):
+            return False
+
+        success = type_check(left.ret, right.ret)
+        for i in range(len(left.args)):
+            success &= type_check(left.args[i], right.args[i])
+            if not success:
+                # early exit
+                break
+
+        return success
+    else:
+        return False

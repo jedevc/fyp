@@ -39,5 +39,6 @@ from .types import (
     SimpleTypeNode,
     TypeNode,
     UnknownTypeNode,
+    type_check,
 )
 from .visitor import TraversalVisitor, Visitor
