@@ -35,7 +35,7 @@ def main():
         TagKind.VARIABLE: {},
     }
 
-    for library, data in config["libraries"].items():
+    for library, data in config.get("libraries", {}).items():
         # TODO: path shouldn't be relative to cwd.
         # would make more sense to be relative to the config.yaml
         lib = Library(library, Path(data["path"]), data["includes"])
@@ -82,26 +82,47 @@ def main():
 def generate_types(output, config, buckets):
     translations = {}
     paths = {}
+    metatypes = {}
+    metatype_connections = {}
     if "core" in config:
         types = config["core"].get("types", {})
         includes = config["core"].get("includes", {})
 
-        for primitive in types.get("signed", []):
-            rewritten = translate_typename(primitive)
-            translations[rewritten] = primitive
-            for prefix in ("signed", "unsigned"):
-                translations[f"{rewritten}_{prefix}"] = f"{prefix} {primitive}"
+        for metatype, primitives in types.items():
+            rewrittens = []
+            if primitives is not None:
+                for primitive in primitives:
+                    rewritten = translate_typename(primitive)
+                    rewrittens.append(rewritten)
+                    translations[rewritten] = primitive
 
-            if primitive in includes:
-                paths[primitive] = includes[primitive]
-                for prefix in ("signed", "unsigned"):
-                    paths[f"{prefix} {primitive}"] = includes[primitive]
+                    if primitive in includes:
+                        paths[rewritten] = includes[primitive]
 
-        for primitive in types.get("other", []):
-            rewritten = translate_typename(primitive)
-            translations[rewritten] = primitive
-            if primitive in includes:
-                paths[primitive] = includes[primitive]
+            metatypes[metatype] = rewrittens
+            metatype_connections[metatype] = (
+                config["core"].get("typemap", {}).get(metatype, [])
+            )
+
+    metatype_class = "class MetaType(Enum):\n"
+    for i, metatype in enumerate(metatypes):
+        metatype_class += f"\t{metatype.capitalize()} = {i}\n"
+
+    metatype_graph = "MetaTypeGraph: Dict[MetaType, List[MetaType]] = {\n"
+    for metatype, children in metatype_connections.items():
+        metatype_children = ", ".join(
+            f"MetaType.{child.capitalize()}" for child in children
+        )
+        metatype_graph += (
+            f"\tMetaType.{metatype.capitalize()}: [{metatype_children}],\n"
+        )
+    metatype_graph += "}\n"
+
+    metas = "{\n"
+    for metatype, primitives in metatypes.items():
+        for primitive in primitives:
+            metas += f'\t"{primitive}": MetaType.{metatype.capitalize()},'
+    metas += "}"
 
     tags = extract(
         buckets,
@@ -122,8 +143,13 @@ def generate_types(output, config, buckets):
             translations[name] = tag.name
 
     contents = ""
-    contents += f"TRANSLATIONS = {translations}\n\n"
-    contents += f"PATHS = {paths}\n\n"
+    contents += "from enum import Enum\n"
+    contents += "from typing import Dict, List\n"
+    contents += metatype_class + "\n"
+    contents += metatype_graph + "\n"
+    contents += f"METAS: Dict[str, MetaType] = {metas}\n"
+    contents += f"TRANSLATIONS: Dict[str, str] = {translations}\n"
+    contents += f"PATHS: Dict[str, str] = {paths}\n"
     output.write(contents)
 
 
@@ -147,9 +173,10 @@ def generate_functions(output, config, buckets):  # pylint: disable=unused-argum
         signatures[name] = (tag.signature, tag.typeref)
 
     contents = ""
-    contents += f"TRANSLATIONS = {translations}\n\n"
-    contents += f"SIGNATURES = {signatures}\n\n"
-    contents += f"PATHS = {paths}\n\n"
+    contents += "from typing import List, Dict, Tuple\n"
+    contents += f"TRANSLATIONS: Dict[str, str] = {translations}\n"
+    contents += f"SIGNATURES: Dict[str, Tuple[List[str], str]] = {signatures}\n"
+    contents += f"PATHS: Dict[str, str] = {paths}\n"
     output.write(contents)
 
 
@@ -173,9 +200,10 @@ def generate_variables(output, config, buckets):  # pylint: disable=unused-argum
         types[name] = tag.typeref
 
     contents = ""
-    contents += f"TRANSLATIONS = {translations}\n\n"
-    contents += f"TYPES = {types}\n\n"
-    contents += f"PATHS = {paths}\n\n"
+    contents += "from typing import Dict\n"
+    contents += f"TRANSLATIONS: Dict[str, str] = {translations}\n"
+    contents += f"TYPES: Dict[str, str] = {types}\n"
+    contents += f"PATHS: Dict[str, str] = {paths}\n"
     output.write(contents)
 
 

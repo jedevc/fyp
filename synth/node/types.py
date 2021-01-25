@@ -1,11 +1,13 @@
 from typing import List, Optional, Union
 
+from ..builtins.types import METAS, MetaType, MetaTypeGraph
 from .base import Node, X
 from .visitor import Visitor
 
 TypeNode = Union[
     "UnknownTypeNode",
     "SimpleTypeNode",
+    "MetaTypeNode",
     "PointerTypeNode",
     "ArrayTypeNode",
     "FuncTypeNode",
@@ -28,8 +30,24 @@ class SimpleTypeNode(Node):
     def accept(self, visitor: Visitor[X]) -> X:
         return visitor.visit_type_simple(self)
 
+    @property
+    def meta(self) -> MetaType:
+        return METAS.get(self.core, MetaType.All)
+
     def __repr__(self) -> str:
         return f"<SimpleTypeNode {self.core}>"
+
+
+class MetaTypeNode(Node):
+    def __init__(self, meta: MetaType):
+        super().__init__()
+        self.meta = meta
+
+    def accept(self, visitor: Visitor[X]) -> X:
+        raise NotImplementedError()
+
+    def __repr__(self) -> str:
+        return f"<MetaTypeNode {self.meta}>"
 
 
 class PointerTypeNode(Node):
@@ -69,6 +87,25 @@ class FuncTypeNode(Node):
     def __repr__(self) -> str:
         args = ", ".join(repr(arg) for arg in self.args)
         return f"<FuncTypeNode ({args}) -> {self.ret}>"
+
+
+def metatype_is_reachable(start: MetaType, destination: MetaType) -> bool:
+    if start == destination:
+        return True
+
+    stack = [start]
+    while len(stack) > 0:
+        expand = stack.pop()
+        for conn in MetaTypeGraph[expand]:
+            if conn == destination:
+                return True
+            elif conn not in stack:
+                # avoid infinite recursion
+                continue
+
+            stack.append(conn)
+
+    return False
 
 
 def type_check(left: TypeNode, right: TypeNode) -> bool:

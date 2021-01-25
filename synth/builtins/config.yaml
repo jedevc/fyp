@@ -1,18 +1,44 @@
 ---
 core:
   types:
-    signed:
-      - char
-      - short
-      - int
-      - long
-      - long long
-    other:
+    all:
+
+    void:
       - void
+
+    boolean:
       - bool
+
+    integral:
+      - char
+      - signed char
+      - unsigned char
+
+      - short
+      - signed short
+      - unsigned short
+
+      - int
+      - signed int
+      - unsigned int
+
+      - long
+      - signed long
+      - unsigned long
+
+      - long long
+      - signed long long
+      - unsigned long long
+
+    floating:
       - float
       - double
       - long double
+
+  typemap:
+    all: [void, boolean, integral, floating]
+    boolean: [integral]
+    integral: [floating]
 
   includes:
     bool: stdbool.h
