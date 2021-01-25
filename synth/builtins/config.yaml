@@ -1,17 +1,21 @@
 ---
-types:
-  signed:
-    - char
-    - short
-    - int
-    - long
-    - long long
+core:
+  types:
+    signed:
+      - char
+      - short
+      - int
+      - long
+      - long long
+    other:
+      - void
+      - bool
+      - float
+      - double
+      - long double
 
-  other:
-    - void
-    - float
-    - double
-    - long double
+  includes:
+    bool: stdbool.h
 
 libraries:
   libc:

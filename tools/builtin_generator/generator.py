@@ -82,16 +82,26 @@ def main():
 def generate_types(output, config, buckets):
     translations = {}
     paths = {}
-    if "types" in config:
-        for primitive in config["types"].get("signed"):
+    if "core" in config:
+        types = config["core"].get("types", {})
+        includes = config["core"].get("includes", {})
+
+        for primitive in types.get("signed", []):
             rewritten = translate_typename(primitive)
             translations[rewritten] = primitive
             for prefix in ("signed", "unsigned"):
                 translations[f"{rewritten}_{prefix}"] = f"{prefix} {primitive}"
 
-        for primitive in config["types"].get("other"):
+            if primitive in includes:
+                paths[primitive] = includes[primitive]
+                for prefix in ("signed", "unsigned"):
+                    paths[f"{prefix} {primitive}"] = includes[primitive]
+
+        for primitive in types.get("other", []):
             rewritten = translate_typename(primitive)
             translations[rewritten] = primitive
+            if primitive in includes:
+                paths[primitive] = includes[primitive]
 
     tags = extract(
         buckets,
