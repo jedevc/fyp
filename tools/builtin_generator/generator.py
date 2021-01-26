@@ -173,7 +173,7 @@ def generate_functions(output, config, buckets):  # pylint: disable=unused-argum
         signatures[name] = (tag.signature, tag.typeref)
 
     contents = ""
-    contents += "from typing import List, Dict, Tuple\n"
+    contents += "from typing import Dict, List, Tuple\n"
     contents += f"TRANSLATIONS: Dict[str, str] = {translations}\n"
     contents += f"SIGNATURES: Dict[str, Tuple[List[str], str]] = {signatures}\n"
     contents += f"PATHS: Dict[str, str] = {paths}\n"
