@@ -37,8 +37,9 @@ core:
 
   typemap:
     any: [void, boolean, integral, floating]
-    boolean: [integral]
-    integral: [floating]
+    boolean: [void, integral]
+    integral: [void, floating]
+    floating: [void]
 
   includes:
     bool: stdbool.h
