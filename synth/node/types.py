@@ -35,6 +35,8 @@ class MetaTypeNode(Node):
         self.core = core
 
     def accept(self, visitor: Visitor[X]) -> X:
+        # This is intentionally not implemented - meta types are a constraint
+        # generted during type checking, so it will never appear in the AST.
         raise NotImplementedError()
 
     def __repr__(self) -> str:

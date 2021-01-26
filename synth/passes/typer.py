@@ -111,8 +111,7 @@ class TypeCheckVisitor(TraversalVisitor[TypeNode]):
         elif node.name in self.vars:
             return self.vars[node.name]
         elif node.name in variables.TRANSLATIONS or node.name in functions.TRANSLATIONS:
-            # TODO: implement type derivations here
-            raise NotImplementedError()
+            return MetaTypeNode(MetaType.Any)
         else:
             raise ProcessingError(node, f"variable {node.name} does not exist")
 
