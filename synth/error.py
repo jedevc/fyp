@@ -61,21 +61,21 @@ class ErrorLocation:
         # before context
         before_ctx = max(0, end_line - CONTEXT - 1)
         for i, line in lines[before_ctx:end_line]:
-            prefix = f"  {str(i).rjust(6)}  |  "
-            parts.append(f"{prefix}{line}")
+            prefix = f"  {str(i).rjust(6)}"
+            parts.append(f"{prefix}  |  {line}")
 
         # indicator
         if start_line == end_line:
             parts.append(
-                f"{len(prefix) * ' '}{(start_column - 1) * ' '}{(end_column - start_column) * '-'}^"
+                f"{len(prefix) * ' '}  |  {(start_column - 1) * ' '}{(end_column - start_column) * '-'}^"
             )
         else:
-            parts.append(f"{len(prefix) * ' '}{(end_column - 1) * '-'}^")
+            parts.append(f"{len(prefix) * ' '}  |  {(end_column - 1) * '-'}^")
 
         # after context
         after_ctx = end_line + CONTEXT
         for i, line in lines[end_line:after_ctx]:
-            prefix = f"  {str(i).rjust(6)}  |  "
-            parts.append(f"{prefix}{line}")
+            prefix = f"  {str(i).rjust(6)}"
+            parts.append(f"{prefix}  |  {line}")
 
         return "\n".join(parts)
