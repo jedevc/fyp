@@ -3,6 +3,7 @@ from ..builtins.types import MetaType
 from ..node import (
     ArrayNode,
     ArrayTypeNode,
+    AssignmentNode,
     BinaryOperationNode,
     BlockNode,
     CallNode,
@@ -136,6 +137,16 @@ class TypeCheckVisitor(TraversalVisitor[TypeNode]):
             raise ProcessingError(node.condition, "while condition must be bool")
 
         super().visit_while(node)
+
+    def visit_assignment(self, node: AssignmentNode) -> None:
+        lhs_type = node.target.accept(self)
+        rhs_type = node.expression.accept(self)
+        assert lhs_type is not None and rhs_type is not None
+
+        if not type_check(lhs_type, rhs_type):
+            raise ProcessingError(node, "incompatible types in assignment")
+
+        super().visit_assignment(node)
 
     def visit_ref(self, node: RefNode) -> TypeNode:
         tp = node.target.accept(self)
