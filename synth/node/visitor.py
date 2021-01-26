@@ -28,13 +28,7 @@ if TYPE_CHECKING:
         SplitNode,
         WhileNode,
     )
-    from .types import (
-        ArrayTypeNode,
-        FuncTypeNode,
-        PointerTypeNode,
-        SimpleTypeNode,
-        UnknownTypeNode,
-    )
+    from .types import ArrayTypeNode, FuncTypeNode, PointerTypeNode, SimpleTypeNode
 
 T = TypeVar("T")
 
@@ -59,9 +53,6 @@ class Visitor(Generic[T]):
         pass
 
     def visit_special_declaration(self, node: "SpecialDeclarationNode") -> T:
-        pass
-
-    def visit_type_unknown(self, node: "UnknownTypeNode") -> T:
         pass
 
     def visit_type_simple(self, node: "SimpleTypeNode") -> T:
@@ -159,9 +150,6 @@ class TraversalVisitor(Visitor[Optional[T]]):
         return None
 
     def visit_special_declaration(self, node: "SpecialDeclarationNode") -> Optional[T]:
-        return None
-
-    def visit_type_unknown(self, node: "UnknownTypeNode") -> Optional[T]:
         return None
 
     def visit_type_simple(self, node: "SimpleTypeNode") -> Optional[T]:

@@ -23,7 +23,6 @@ from ..node import (
     StringValueNode,
     TraversalVisitor,
     TypeNode,
-    UnknownTypeNode,
     ValueNode,
     VariableNode,
     WhileNode,
@@ -181,7 +180,7 @@ class TypeCheckVisitor(TraversalVisitor[TypeNode]):
         if node.content == "NULL":
             return PointerTypeNode(MetaTypeNode(MetaType.Void))
         else:
-            return UnknownTypeNode()
+            return MetaTypeNode(MetaType.Any)
 
     def visit_array(self, node: ArrayNode) -> TypeNode:
         index_type = node.index.accept(self)

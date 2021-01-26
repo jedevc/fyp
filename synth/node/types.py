@@ -5,21 +5,12 @@ from .base import Node, X
 from .visitor import Visitor
 
 TypeNode = Union[
-    "UnknownTypeNode",
     "SimpleTypeNode",
     "MetaTypeNode",
     "PointerTypeNode",
     "ArrayTypeNode",
     "FuncTypeNode",
 ]
-
-
-class UnknownTypeNode(Node):
-    def accept(self, visitor: Visitor[X]) -> X:
-        return visitor.visit_type_unknown(self)
-
-    def __repr__(self) -> str:
-        return "<UnknownTypeNode>"
 
 
 class SimpleTypeNode(Node):
@@ -32,7 +23,7 @@ class SimpleTypeNode(Node):
 
     @property
     def meta(self) -> MetaType:
-        return METAS.get(self.core, MetaType.All)
+        return METAS.get(self.core, MetaType.Any)
 
     def __repr__(self) -> str:
         return f"<SimpleTypeNode {self.core}>"
@@ -109,9 +100,7 @@ def metatype_is_reachable(start: MetaType, destination: MetaType) -> bool:
 
 
 def type_check(left: TypeNode, right: TypeNode, strict: bool = False) -> bool:
-    if isinstance(left, UnknownTypeNode) or isinstance(right, UnknownTypeNode):
-        return True
-    elif isinstance(left, SimpleTypeNode) and isinstance(right, SimpleTypeNode):
+    if isinstance(left, SimpleTypeNode) and isinstance(right, SimpleTypeNode):
         if strict:
             return left.core == right.core
         else:
