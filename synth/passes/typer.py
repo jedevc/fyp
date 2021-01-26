@@ -26,6 +26,7 @@ from ..node import (
     ValueNode,
     VariableNode,
     WhileNode,
+    from_typestring,
     type_check,
 )
 from .error import ProcessingError
@@ -110,8 +111,13 @@ class TypeCheckVisitor(TraversalVisitor[TypeNode]):
                 raise RuntimeError()
         elif node.name in self.vars:
             return self.vars[node.name]
-        elif node.name in variables.TRANSLATIONS or node.name in functions.TRANSLATIONS:
-            return MetaTypeNode(MetaType.Any)
+        elif node.name in variables.TYPES:
+            return from_typestring(variables.TYPES[node.name])
+        elif node.name in functions.SIGNATURES:
+            args, ret = functions.SIGNATURES[node.name]
+            return FuncTypeNode(
+                from_typestring(ret), [from_typestring(arg) for arg in args]
+            )
         else:
             raise ProcessingError(node, f"variable {node.name} does not exist")
 
@@ -190,7 +196,9 @@ class TypeCheckVisitor(TraversalVisitor[TypeNode]):
             )
 
         target_type = node.target.accept(self)
-        if not isinstance(target_type, ArrayNode):
+        if not isinstance(target_type, ArrayTypeNode) and not isinstance(
+            target_type, PointerTypeNode
+        ):
             raise ProcessingError(node.index, "cannot index non-array")
 
         return target_type

@@ -36,7 +36,7 @@ core:
       - long double
 
   typemap:
-    any: [boolean, integral, floating]
+    any: [void, boolean, integral, floating]
     boolean: [integral]
     integral: [floating]
 
