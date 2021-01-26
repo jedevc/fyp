@@ -1,4 +1,5 @@
 from ..builtins import functions, types, variables
+from ..builtins.types import MetaType
 from ..node import (
     ArrayNode,
     ArrayTypeNode,
@@ -13,6 +14,7 @@ from ..node import (
     IfNode,
     IntValueNode,
     LiteralNode,
+    MetaTypeNode,
     PointerTypeNode,
     RefNode,
     SimpleTypeNode,
@@ -118,7 +120,7 @@ class TypeCheckVisitor(TraversalVisitor[TypeNode]):
     def visit_if(self, node: IfNode) -> None:
         condition_type = node.condition.accept(self)
         assert condition_type is not None
-        if not type_check(condition_type, SimpleTypeNode("bool")):
+        if not type_check(MetaTypeNode(MetaType.Boolean), condition_type):
             raise ProcessingError(node.condition, "if condition must be bool")
 
         super().visit_if(node)
@@ -126,7 +128,7 @@ class TypeCheckVisitor(TraversalVisitor[TypeNode]):
     def visit_while(self, node: WhileNode) -> None:
         condition_type = node.condition.accept(self)
         assert condition_type is not None
-        if not type_check(condition_type, SimpleTypeNode("bool")):
+        if not type_check(MetaTypeNode(MetaType.Boolean), condition_type):
             raise ProcessingError(node.condition, "while condition must be bool")
 
         super().visit_while(node)
@@ -159,8 +161,7 @@ class TypeCheckVisitor(TraversalVisitor[TypeNode]):
         for i, arg in enumerate(node.arguments):
             type_result = arg.accept(self)
             assert type_result is not None
-            print(type_result, "==", vtype.args[i])
-            if not type_check(type_result, vtype.args[i]):
+            if not type_check(vtype.args[i], type_result):
                 # FIXME: better error message needed
                 raise ProcessingError(arg, "argument type mismatch")
 
@@ -168,9 +169,9 @@ class TypeCheckVisitor(TraversalVisitor[TypeNode]):
 
     def visit_value(self, node: ValueNode) -> TypeNode:
         if isinstance(node, IntValueNode):
-            return SimpleTypeNode("int")
+            return MetaTypeNode(MetaType.Integral)
         elif isinstance(node, FloatValueNode):
-            return SimpleTypeNode("float")
+            return MetaTypeNode(MetaType.Floating)
         elif isinstance(node, StringValueNode):
             return PointerTypeNode(SimpleTypeNode("char"))
         else:
@@ -178,14 +179,14 @@ class TypeCheckVisitor(TraversalVisitor[TypeNode]):
 
     def visit_literal(self, node: LiteralNode) -> TypeNode:
         if node.content == "NULL":
-            return PointerTypeNode(SimpleTypeNode("void"))
+            return PointerTypeNode(MetaTypeNode(MetaType.Void))
         else:
             return UnknownTypeNode()
 
     def visit_array(self, node: ArrayNode) -> TypeNode:
         index_type = node.index.accept(self)
         assert index_type is not None
-        if not type_check(index_type, SimpleTypeNode("int")):
+        if not type_check(MetaTypeNode(MetaType.Integral), index_type):
             raise ProcessingError(
                 node.index, "cannot index with non-integer expressions"
             )
@@ -200,10 +201,12 @@ class TypeCheckVisitor(TraversalVisitor[TypeNode]):
         # TODO: this is very sloppy
 
         left_type = node.left.accept(self)
-        right_type = node.left.accept(self)
+        right_type = node.right.accept(self)
         assert left_type is not None and right_type is not None
 
-        if not type_check(left_type, right_type):
+        if not type_check(left_type, right_type) and not type_check(
+            right_type, left_type
+        ):
             raise ProcessingError(node, "operands are not the same type")
 
-        return SimpleTypeNode("bool")
+        return MetaTypeNode(MetaType.Boolean)

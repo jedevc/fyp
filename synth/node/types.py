@@ -39,15 +39,15 @@ class SimpleTypeNode(Node):
 
 
 class MetaTypeNode(Node):
-    def __init__(self, meta: MetaType):
+    def __init__(self, core: MetaType):
         super().__init__()
-        self.meta = meta
+        self.core = core
 
     def accept(self, visitor: Visitor[X]) -> X:
         raise NotImplementedError()
 
     def __repr__(self) -> str:
-        return f"<MetaTypeNode {self.meta}>"
+        return f"<MetaTypeNode {self.core}>"
 
 
 class PointerTypeNode(Node):
@@ -108,22 +108,31 @@ def metatype_is_reachable(start: MetaType, destination: MetaType) -> bool:
     return False
 
 
-def type_check(left: TypeNode, right: TypeNode) -> bool:
+def type_check(left: TypeNode, right: TypeNode, strict: bool = False) -> bool:
     if isinstance(left, UnknownTypeNode) or isinstance(right, UnknownTypeNode):
         return True
     elif isinstance(left, SimpleTypeNode) and isinstance(right, SimpleTypeNode):
-        return left.core == right.core
+        if strict:
+            return left.core == right.core
+        else:
+            return metatype_is_reachable(right.meta, left.meta)
+    elif isinstance(left, MetaTypeNode) and isinstance(right, MetaTypeNode):
+        return metatype_is_reachable(right.core, left.core)
+    elif isinstance(left, MetaTypeNode) and isinstance(right, SimpleTypeNode):
+        return metatype_is_reachable(right.meta, left.core)
+    elif isinstance(left, SimpleTypeNode) and isinstance(right, MetaTypeNode):
+        return metatype_is_reachable(right.core, left.meta)
     elif isinstance(left, PointerTypeNode) and isinstance(right, PointerTypeNode):
-        return type_check(left.base, right.base)
+        return type_check(left.base, right.base, strict=True)
     elif isinstance(left, ArrayTypeNode) and isinstance(right, ArrayTypeNode):
-        return type_check(left.base, right.base)
+        return type_check(left.base, right.base, strict=True)
     elif isinstance(left, FuncTypeNode) and isinstance(right, FuncTypeNode):
         if len(left.args) != len(right.args):
             return False
 
-        success = type_check(left.ret, right.ret)
+        success = type_check(left.ret, right.ret, strict=True)
         for i in range(len(left.args)):
-            success &= type_check(left.args[i], right.args[i])
+            success &= type_check(left.args[i], right.args[i], strict=True)
             if not success:
                 # early exit
                 break
