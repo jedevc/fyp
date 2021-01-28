@@ -1,7 +1,8 @@
 import argparse
+import re
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Collection, Dict, TextIO, Tuple
+from typing import Any, Collection, Dict, List, TextIO, Tuple
 
 import black
 import yaml
@@ -53,6 +54,33 @@ def main():
             bucket = buckets[tag.kind]
             bucket[tag.name] = (tag, lib)
 
+    type_table: Dict[str, str] = {}
+    if "core" in config:
+        types = config["core"].get("types", {})
+        for primitives in types.values():
+            if primitives:
+                for primitive in primitives:
+                    rewritten = translate_typename(primitive)
+                    type_table[primitive] = rewritten
+
+    type_tags = extract(
+        buckets,
+        [
+            TagKind.UNION,
+            TagKind.STRUCT,
+            TagKind.ENUM,
+            TagKind.TYPEDEF,
+        ],
+    )
+    for (tag, lib) in type_tags.values():
+        if tag.kind in (TagKind.UNION, TagKind.STRUCT, TagKind.ENUM):
+            original = f"{tag.kind.value} {tag.name}"
+        else:
+            original = tag.name
+
+        new = f"{tag.name}@{lib.name}"
+        type_table[original] = new
+
     header = (
         "\n".join(
             [
@@ -76,14 +104,16 @@ def main():
         path = Path(args.directory, target)
         with path.open("w") as f:
             f.write(header)
-            generator(f, config, buckets)
+            generator(f, config, buckets, type_table)
 
         black.format_file_in_place(
             path, fast=True, mode=black.Mode(()), write_back=black.WriteBack.YES
         )
 
 
-def generate_types(output: TextIO, config: Dict[str, Any], buckets: Buckets):
+def generate_types(
+    output: TextIO, config: Dict[str, Any], buckets: Buckets, type_table: Dict[str, str]
+):  # pylint: disable=unused-argument
     translations = {}
     paths = {}
     metatypes = {}
@@ -158,7 +188,7 @@ def generate_types(output: TextIO, config: Dict[str, Any], buckets: Buckets):
 
 
 def generate_functions(
-    output: TextIO, config: Dict[str, Any], buckets: Buckets
+    output: TextIO, config: Dict[str, Any], buckets: Buckets, type_table: Dict[str, str]
 ):  # pylint: disable=unused-argument
     paths = {}
     translations = {}
@@ -176,7 +206,10 @@ def generate_functions(
 
         name = f"{tag.name}@{lib.name}"
         translations[name] = tag.name
-        signatures[name] = (tag.signature, tag.typeref)
+        signatures[name] = (
+            translate_types(tokenize_type(tag.signature), type_table),
+            translate_type(tokenize_type(tag.typeref), type_table),
+        )
 
     contents = ""
     contents += "from typing import Dict, List, Tuple\n"
@@ -187,7 +220,7 @@ def generate_functions(
 
 
 def generate_variables(
-    output: TextIO, config: Dict[str, Any], buckets: Buckets
+    output: TextIO, config: Dict[str, Any], buckets: Buckets, type_table: Dict[str, str]
 ):  # pylint: disable=unused-argument
     paths = {}
     translations = {}
@@ -205,7 +238,7 @@ def generate_variables(
 
         name = f"{tag.name}@{lib.name}"
         translations[name] = tag.name
-        types[name] = tag.typeref
+        types[name] = translate_type(tokenize_type(tag.typeref), type_table)
 
     contents = ""
     contents += "from typing import Dict\n"
@@ -219,6 +252,81 @@ def translate_typename(name: str) -> str:
     parts = name.split()
     parts.reverse()
     return "_".join(parts)
+
+
+def tokenize_type(typestr: str) -> List[str]:
+    parts = re.split(r"\s|([,*()\[\]])", typestr)
+    parts = [p for p in parts if p]
+    return parts
+
+
+def translate_types(tokens: List[str], type_table: Dict[str, str]) -> List[str]:
+    results: List[str] = []
+    result: List[str] = []
+    while tokens:
+        part, tokens = tokens[0], tokens[1:]
+        if part in ("const", "volatile", "_Noreturn", "__restrict"):
+            continue
+
+        if part == "*":
+            result.insert(0, "*")
+        elif part == ",":
+            results.append(" ".join(result))
+            result = []
+        elif part.startswith("["):
+            array = ["["]
+            while part != "]":
+                part, tokens = tokens[0], tokens[1:]
+                array.append(part)
+            result.insert(0, "".join(array))
+        elif part == "(":
+            rest, tokens = tokens[:3], tokens[3:]
+            assert rest == ["*", ")", "("]
+
+            inner = []
+            count = 1
+            while count > 0 and tokens:
+                part, tokens = tokens[0], tokens[1:]
+                if part == "(":
+                    count += 1
+                elif part == ")":
+                    count -= 1
+                else:
+                    inner.append(part)
+
+            ret_type = result.pop()
+            arg_types = translate_types(inner, type_table)
+            result.append(f"fn ({', '.join(arg_types)}) {ret_type}")
+        else:
+            key = part
+            for i, key_piece in enumerate(reversed(result)):
+                key = key_piece + " " + key
+                if key in type_table:
+                    result = result[: -i - 1]
+                    break
+
+            if key in type_table:
+                result.append(type_table[key])
+            elif part in type_table:
+                result.append(type_table[part])
+            else:
+                result.append(part)
+
+    if result:
+        results.append(" ".join(result))
+
+    if results == ["void"]:
+        results = []
+
+    return results
+
+
+def translate_type(tokens: List[str], type_table: Dict[str, str]) -> str:
+    tps = translate_types(tokens, type_table)
+    if tps:
+        return tps[0]
+    else:
+        return "void"
 
 
 def extract(buckets: Buckets, kinds: Collection[TagKind]):

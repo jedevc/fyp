@@ -50,4 +50,5 @@ libraries:
     includes:
       - ./include/
       - ./obj/include/
+      - ./arch/generic/
       - ./arch/x86_64/

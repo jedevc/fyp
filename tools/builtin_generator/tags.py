@@ -10,9 +10,13 @@ class Tag:
         self.path = spec.get("path")
 
         if "signature" in spec:
-            self.signature = spec["signature"].lstrip("(").rstrip(")").split(",")
+            sig = spec["signature"]
+            if sig.startswith("("):
+                sig = sig.removeprefix("(")
+                sig = sig.removesuffix(")")
+            self.signature = sig
         else:
-            self.signature = []
+            self.signature = ""
 
         self.typeref = spec.get("typeref", "void").removeprefix("typename:")
         if ":" in self.typeref:
