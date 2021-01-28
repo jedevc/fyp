@@ -1,5 +1,5 @@
 import sys
-from typing import List, Union
+from typing import List, TextIO, Union
 
 from ..node import (
     ArrayNode,
@@ -45,7 +45,7 @@ class PrinterVisitor(Visitor[None]):
     and parser are interpreting the provided code.
     """
 
-    def __init__(self, output=sys.stdout):
+    def __init__(self, output: TextIO = sys.stdout):
         super().__init__()
         self.output = output
 

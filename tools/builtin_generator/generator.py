@@ -1,12 +1,16 @@
 import argparse
 from datetime import datetime
 from pathlib import Path
+from typing import Any, Collection, Dict, TextIO, Tuple
 
 import black
 import yaml
 
 from .library import Library
-from .tags import TagKind
+from .tags import Tag, TagKind
+
+Bucket = Dict[str, Tuple[Tag, Library]]
+Buckets = Dict[TagKind, Bucket]
 
 
 def main():
@@ -21,7 +25,7 @@ def main():
     with config_path.open() as config_file:
         config = yaml.load(config_file, Loader=yaml.SafeLoader)
 
-    buckets = {
+    buckets: Buckets = {
         TagKind.MACRO: {},
         TagKind.EXTERN: {},
         TagKind.PROTOTYPE: {},
@@ -79,7 +83,7 @@ def main():
         )
 
 
-def generate_types(output, config, buckets):
+def generate_types(output: TextIO, config: Dict[str, Any], buckets: Buckets):
     translations = {}
     paths = {}
     metatypes = {}
@@ -138,7 +142,7 @@ def generate_types(output, config, buckets):
 
         name = f"{tag.name}@{lib.name}"
         if tag.kind in (TagKind.UNION, TagKind.STRUCT, TagKind.ENUM):
-            translations[name] = f"{tag.kind} {tag.name}"
+            translations[name] = f"{tag.kind.value} {tag.name}"
         else:
             translations[name] = tag.name
 
@@ -153,7 +157,9 @@ def generate_types(output, config, buckets):
     output.write(contents)
 
 
-def generate_functions(output, config, buckets):  # pylint: disable=unused-argument
+def generate_functions(
+    output: TextIO, config: Dict[str, Any], buckets: Buckets
+):  # pylint: disable=unused-argument
     paths = {}
     translations = {}
     signatures = {}
@@ -180,7 +186,9 @@ def generate_functions(output, config, buckets):  # pylint: disable=unused-argum
     output.write(contents)
 
 
-def generate_variables(output, config, buckets):  # pylint: disable=unused-argument
+def generate_variables(
+    output: TextIO, config: Dict[str, Any], buckets: Buckets
+):  # pylint: disable=unused-argument
     paths = {}
     translations = {}
     types = {}
@@ -213,7 +221,7 @@ def translate_typename(name: str) -> str:
     return "_".join(parts)
 
 
-def extract(buckets, kinds):
+def extract(buckets: Buckets, kinds: Collection[TagKind]):
     if kinds is None:
         return {}
 
