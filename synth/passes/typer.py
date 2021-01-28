@@ -27,10 +27,20 @@ from ..node import (
     ValueNode,
     VariableNode,
     WhileNode,
-    from_typestring,
     type_check,
 )
+from ..parser import Lexer, Parser
 from .error import ProcessingError
+
+
+def parse_typestring(typestr: str) -> TypeNode:
+    lex = Lexer(typestr)
+    tokens = lex.tokens_list()
+
+    parser = Parser(tokens)
+    parser.advance()
+    tp = parser.declaration_type()
+    return tp
 
 
 class TypeCheckVisitor(TraversalVisitor[TypeNode]):
@@ -113,11 +123,11 @@ class TypeCheckVisitor(TraversalVisitor[TypeNode]):
         elif node.name in self.vars:
             return self.vars[node.name]
         elif node.name in variables.TYPES:
-            return from_typestring(variables.TYPES[node.name])
+            return parse_typestring(variables.TYPES[node.name])
         elif node.name in functions.SIGNATURES:
             args, ret = functions.SIGNATURES[node.name]
             return FuncTypeNode(
-                from_typestring(ret), [from_typestring(arg) for arg in args]
+                parse_typestring(ret), [parse_typestring(arg) for arg in args]
             )
         else:
             raise ProcessingError(node, f"variable {node.name} does not exist")

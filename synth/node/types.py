@@ -1,12 +1,11 @@
 from typing import List, Optional, Union
 
-from ..builtins.types import METAS, TRANSLATIONS, MetaType, MetaTypeGraph
+from ..builtins.types import METAS, MetaType, MetaTypeGraph
 from .base import Node, X
 from .visitor import Visitor
 
 TypeNode = Union[
     "SimpleTypeNode",
-    "LiteralTypeNode",
     "MetaTypeNode",
     "PointerTypeNode",
     "ArrayTypeNode",
@@ -28,20 +27,6 @@ class SimpleTypeNode(Node):
 
     def __repr__(self) -> str:
         return f"<SimpleTypeNode {self.core}>"
-
-
-class LiteralTypeNode(Node):
-    def __init__(self, core: str):
-        super().__init__()
-        self.core = core
-
-    def accept(self, visitor: Visitor[X]) -> X:
-        # This is intentionally not implemented - literal types are only
-        # generated as annotations.
-        raise NotImplementedError()
-
-    def __repr__(self) -> str:
-        return f"<LiteralTypeNode {self.core}>"
 
 
 class MetaTypeNode(Node):
@@ -97,45 +82,6 @@ class FuncTypeNode(Node):
         return f"<FuncTypeNode ({args}) -> {self.ret}>"
 
 
-def from_typestring(typestr: str) -> TypeNode:
-    parts = []
-    for part in typestr.split():
-        if part in ("const", "_Noreturn", "__restrict"):
-            # these aren't neccessary, and confuse everything, so we skip them
-            continue
-
-        if part.endswith("[]"):
-            parts.append(part.removesuffix("[]"))
-            parts.append("[]")
-        else:
-            parts.append(part)
-
-    current: Optional[TypeNode] = None
-    n = 0
-    while n < len(parts):
-        if parts[n] == "*":
-            assert current is not None
-            current = PointerTypeNode(current)
-            n += 1
-        elif parts[n] == "[]":
-            assert current is not None
-            current = ArrayTypeNode(current, None)
-            n += 1
-        elif parts[n] == "...":
-            raise NotImplementedError()
-        elif parts[n] in ("struct", "union"):
-            assert current is None
-            current = LiteralTypeNode(parts[n] + " " + parts[n + 1])
-            n += 2
-        else:
-            assert current is None
-            current = LiteralTypeNode(parts[n])
-            n += 1
-
-    assert current is not None
-    return current
-
-
 def metatype_is_reachable(start: MetaType, destination: MetaType) -> bool:
     if start == destination:
         return True
@@ -163,13 +109,6 @@ def type_check(left: TypeNode, right: TypeNode, strict: bool = False) -> bool:
             return left.core == right.core
         else:
             return metatype_is_reachable(right.meta, left.meta)
-    elif isinstance(left, LiteralTypeNode) and isinstance(right, LiteralTypeNode):
-        return left.core == right.core
-    elif isinstance(left, LiteralTypeNode) and isinstance(right, SimpleTypeNode):
-        return left.core == TRANSLATIONS[right.core]
-    elif isinstance(left, SimpleTypeNode) and isinstance(right, LiteralTypeNode):
-        return TRANSLATIONS[left.core] == right.core
-
     elif isinstance(left, MetaTypeNode) and isinstance(right, MetaTypeNode):
         return metatype_is_reachable(right.core, left.core)
     elif isinstance(left, MetaTypeNode) and isinstance(right, SimpleTypeNode):
