@@ -1,3 +1,5 @@
+import functools
+
 from ..builtins import functions, types, variables
 from ..builtins.types import MetaType
 from ..node import (
@@ -33,6 +35,7 @@ from ..parser import Lexer, Parser
 from .error import ProcessingError
 
 
+@functools.cache
 def parse_typestring(typestr: str) -> TypeNode:
     lex = Lexer(typestr)
     tokens = lex.tokens_list()

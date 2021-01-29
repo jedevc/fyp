@@ -4,10 +4,10 @@ from typing import Any, Dict
 
 class Tag:
     def __init__(self, spec: Dict[str, str]):
-        self.name = spec.get("name")
-        self.pattern = spec.get("pattern")
-        self.kind = TagKind(spec.get("kind"))
-        self.path = spec.get("path")
+        self.name = spec["name"]
+        self.pattern = spec["pattern"]
+        self.kind = TagKind(spec["kind"])
+        self.path = spec["path"]
 
         if "signature" in spec:
             sig = spec["signature"]

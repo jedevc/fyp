@@ -1,14 +1,14 @@
 import argparse
-import re
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Collection, Dict, List, TextIO, Tuple
+from typing import Any, Collection, Dict, TextIO, Tuple
 
 import black
 import yaml
 
 from .library import Library
 from .tags import Tag, TagKind
+from .translate import translate_type, translate_types
 
 Bucket = Dict[str, Tuple[Tag, Library]]
 Buckets = Dict[TagKind, Bucket]
@@ -26,61 +26,6 @@ def main():
     with config_path.open() as config_file:
         config = yaml.load(config_file, Loader=yaml.SafeLoader)
 
-    buckets: Buckets = {
-        TagKind.MACRO: {},
-        TagKind.EXTERN: {},
-        TagKind.PROTOTYPE: {},
-        TagKind.FUNCTION: {},
-        TagKind.TYPEDEF: {},
-        TagKind.UNION: {},
-        TagKind.STRUCT: {},
-        TagKind.MEMBER: {},
-        TagKind.ENUM: {},
-        TagKind.ENUMERATOR: {},
-        TagKind.VARIABLE: {},
-    }
-
-    for library, data in config.get("libraries", {}).items():
-        # TODO: path shouldn't be relative to cwd.
-        # would make more sense to be relative to the config.yaml
-        lib = Library(library, Path(data["path"]), data["includes"])
-        if args.build:
-            lib.build()
-        tags = lib.tags()
-
-        for tag in tags:
-            if tag.name.startswith("__"):
-                continue
-            bucket = buckets[tag.kind]
-            bucket[tag.name] = (tag, lib)
-
-    type_table: Dict[str, str] = {}
-    if "core" in config:
-        types = config["core"].get("types", {})
-        for primitives in types.values():
-            if primitives:
-                for primitive in primitives:
-                    rewritten = translate_typename(primitive)
-                    type_table[primitive] = rewritten
-
-    type_tags = extract(
-        buckets,
-        [
-            TagKind.UNION,
-            TagKind.STRUCT,
-            TagKind.ENUM,
-            TagKind.TYPEDEF,
-        ],
-    )
-    for (tag, lib) in type_tags.values():
-        if tag.kind in (TagKind.UNION, TagKind.STRUCT, TagKind.ENUM):
-            original = f"{tag.kind.value} {tag.name}"
-        else:
-            original = tag.name
-
-        new = f"{tag.name}@{lib.name}"
-        type_table[original] = new
-
     header = (
         "\n".join(
             [
@@ -94,248 +39,213 @@ def main():
         + "\n\n"
     )
 
+    gen = Generator(config, build=args.build)
     targets = {
-        "types.py": generate_types,
-        "functions.py": generate_functions,
-        "variables.py": generate_variables,
+        "types.py": gen.generate_types,
+        "functions.py": gen.generate_functions,
+        "variables.py": gen.generate_variables,
     }
     Path(args.directory, "__init__.py").touch()
     for target, generator in targets.items():
         path = Path(args.directory, target)
         with path.open("w") as f:
             f.write(header)
-            generator(f, config, buckets, type_table)
+            generator(f)
 
         black.format_file_in_place(
             path, fast=True, mode=black.Mode(()), write_back=black.WriteBack.YES
         )
 
 
-def generate_types(
-    output: TextIO, config: Dict[str, Any], buckets: Buckets, type_table: Dict[str, str]
-):  # pylint: disable=unused-argument
-    translations = {}
-    paths = {}
-    metatypes = {}
-    metatype_connections = {}
-    if "core" in config:
-        types = config["core"].get("types", {})
-        includes = config["core"].get("includes", {})
+class Generator:
+    def __init__(self, config: Dict[str, Any], build=True):
+        self.libraries = config.get("libraries", {})
 
-        for metatype, primitives in types.items():
+        core = config.get("core", {})
+        self.core_types = core.get("types", {})
+        self.core_includes = core.get("includes", {})
+        self.core_typemap = core.get("typemap", {})
+
+        self.buckets = self._generate_buckets(build=build)
+        self.type_table = self._generate_type_table()
+
+    def generate_types(self, output: TextIO):
+        translations = {}
+        paths = {}
+        metatypes = {}
+        metatype_connections = {}
+
+        # Find core types
+        for metatype, primitives in self.core_types.items():
             rewrittens = []
             if primitives is not None:
                 for primitive in primitives:
-                    rewritten = translate_typename(primitive)
+                    rewritten = convert_basetype(primitive)
                     rewrittens.append(rewritten)
                     translations[rewritten] = primitive
 
-                    if primitive in includes:
-                        paths[primitive] = includes[primitive]
+                    if primitive in self.core_includes:
+                        paths[primitive] = self.core_includes[primitive]
 
             metatypes[metatype] = rewrittens
-            metatype_connections[metatype] = (
-                config["core"].get("typemap", {}).get(metatype, [])
+            metatype_connections[metatype] = self.core_typemap.get(metatype, [])
+
+        # Generate meta-type code
+        metatype_class = "class MetaType(Enum):\n"
+        for i, metatype in enumerate(metatypes):
+            metatype_class += f"\t{metatype.capitalize()} = {i}\n"
+
+        metatype_graph = "MetaTypeGraph: Dict[MetaType, List[MetaType]] = {\n"
+        for metatype, children in metatype_connections.items():
+            metatype_children = ", ".join(
+                f"MetaType.{child.capitalize()}" for child in children
+            )
+            metatype_graph += (
+                f"\tMetaType.{metatype.capitalize()}: [{metatype_children}],\n"
+            )
+        metatype_graph += "}\n"
+
+        metas = "{\n"
+        for metatype, primitives in metatypes.items():
+            for primitive in primitives:
+                metas += f'\t"{primitive}": MetaType.{metatype.capitalize()},'
+        metas += "}"
+
+        # Extract types from libc
+        tags = self._extract_tags(
+            (TagKind.UNION, TagKind.STRUCT, TagKind.ENUM, TagKind.TYPEDEF)
+        )
+        for (tag, lib) in tags.values():
+            paths[tag.name] = tag.path
+
+            name = f"{tag.name}@{lib.name}"
+            if tag.kind in (TagKind.UNION, TagKind.STRUCT, TagKind.ENUM):
+                translations[name] = f"{tag.kind.value} {tag.name}"
+            else:
+                translations[name] = tag.name
+
+        contents = ""
+        contents += "from enum import Enum\n"
+        contents += "from typing import Dict, List\n"
+        contents += metatype_class + "\n"
+        contents += metatype_graph + "\n"
+        contents += f"METAS: Dict[str, MetaType] = {metas}\n"
+        contents += f"TRANSLATIONS: Dict[str, str] = {translations}\n"
+        contents += f"PATHS: Dict[str, str] = {paths}\n"
+        output.write(contents)
+
+    def generate_functions(self, output: TextIO):
+        paths = {}
+        translations = {}
+        signatures = {}
+
+        tags = self._extract_tags((TagKind.FUNCTION, TagKind.PROTOTYPE))
+        for (tag, lib) in tags.values():
+            paths[tag.name] = tag.path
+
+            name = f"{tag.name}@{lib.name}"
+            translations[name] = tag.name
+            signatures[name] = (
+                translate_types(tag.signature, self.type_table),
+                translate_type(tag.typeref, self.type_table),
             )
 
-    metatype_class = "class MetaType(Enum):\n"
-    for i, metatype in enumerate(metatypes):
-        metatype_class += f"\t{metatype.capitalize()} = {i}\n"
+        contents = ""
+        contents += "from typing import Dict, List, Tuple\n"
+        contents += f"TRANSLATIONS: Dict[str, str] = {translations}\n"
+        contents += f"SIGNATURES: Dict[str, Tuple[List[str], str]] = {signatures}\n"
+        contents += f"PATHS: Dict[str, str] = {paths}\n"
+        output.write(contents)
 
-    metatype_graph = "MetaTypeGraph: Dict[MetaType, List[MetaType]] = {\n"
-    for metatype, children in metatype_connections.items():
-        metatype_children = ", ".join(
-            f"MetaType.{child.capitalize()}" for child in children
-        )
-        metatype_graph += (
-            f"\tMetaType.{metatype.capitalize()}: [{metatype_children}],\n"
-        )
-    metatype_graph += "}\n"
+    def generate_variables(self, output: TextIO):
+        paths = {}
+        translations = {}
+        types = {}
 
-    metas = "{\n"
-    for metatype, primitives in metatypes.items():
-        for primitive in primitives:
-            metas += f'\t"{primitive}": MetaType.{metatype.capitalize()},'
-    metas += "}"
+        tags = self._extract_tags((TagKind.VARIABLE, TagKind.EXTERN))
+        for (tag, lib) in tags.values():
+            paths[tag.name] = tag.path
 
-    tags = extract(
-        buckets,
-        [
-            TagKind.UNION,
-            TagKind.STRUCT,
-            TagKind.ENUM,
-            TagKind.TYPEDEF,
-        ],
-    )
-    for (tag, lib) in tags.values():
-        paths[tag.name] = tag.path
-
-        name = f"{tag.name}@{lib.name}"
-        if tag.kind in (TagKind.UNION, TagKind.STRUCT, TagKind.ENUM):
-            translations[name] = f"{tag.kind.value} {tag.name}"
-        else:
+            name = f"{tag.name}@{lib.name}"
             translations[name] = tag.name
+            types[name] = translate_type(tag.typeref, self.type_table)
 
-    contents = ""
-    contents += "from enum import Enum\n"
-    contents += "from typing import Dict, List\n"
-    contents += metatype_class + "\n"
-    contents += metatype_graph + "\n"
-    contents += f"METAS: Dict[str, MetaType] = {metas}\n"
-    contents += f"TRANSLATIONS: Dict[str, str] = {translations}\n"
-    contents += f"PATHS: Dict[str, str] = {paths}\n"
-    output.write(contents)
+        contents = ""
+        contents += "from typing import Dict\n"
+        contents += f"TRANSLATIONS: Dict[str, str] = {translations}\n"
+        contents += f"TYPES: Dict[str, str] = {types}\n"
+        contents += f"PATHS: Dict[str, str] = {paths}\n"
+        output.write(contents)
 
+    def _generate_type_table(self) -> Dict[str, str]:
+        type_table: Dict[str, str] = {}
 
-def generate_functions(
-    output: TextIO, config: Dict[str, Any], buckets: Buckets, type_table: Dict[str, str]
-):  # pylint: disable=unused-argument
-    paths = {}
-    translations = {}
-    signatures = {}
+        for primitives in self.core_types.values():
+            if primitives:
+                for primitive in primitives:
+                    rewritten = convert_basetype(primitive)
+                    type_table[primitive] = rewritten
 
-    tags = extract(
-        buckets,
-        [
-            TagKind.FUNCTION,
-            TagKind.PROTOTYPE,
-        ],
-    )
-    for (tag, lib) in tags.values():
-        paths[tag.name] = tag.path
-
-        name = f"{tag.name}@{lib.name}"
-        translations[name] = tag.name
-        signatures[name] = (
-            translate_types(tokenize_type(tag.signature), type_table),
-            translate_type(tokenize_type(tag.typeref), type_table),
+        type_tags = self._extract_tags(
+            (TagKind.UNION, TagKind.STRUCT, TagKind.ENUM, TagKind.TYPEDEF)
         )
+        for (tag, lib) in type_tags.values():
+            if tag.kind in (TagKind.UNION, TagKind.STRUCT, TagKind.ENUM):
+                original = f"{tag.kind.value} {tag.name}"
+            else:
+                original = tag.name
 
-    contents = ""
-    contents += "from typing import Dict, List, Tuple\n"
-    contents += f"TRANSLATIONS: Dict[str, str] = {translations}\n"
-    contents += f"SIGNATURES: Dict[str, Tuple[List[str], str]] = {signatures}\n"
-    contents += f"PATHS: Dict[str, str] = {paths}\n"
-    output.write(contents)
+            new = f"{tag.name}@{lib.name}"
+            type_table[original] = new
+
+        return type_table
+
+    def _generate_buckets(self, build=True) -> Buckets:
+        buckets: Buckets = {
+            TagKind.MACRO: {},
+            TagKind.EXTERN: {},
+            TagKind.PROTOTYPE: {},
+            TagKind.FUNCTION: {},
+            TagKind.TYPEDEF: {},
+            TagKind.UNION: {},
+            TagKind.STRUCT: {},
+            TagKind.MEMBER: {},
+            TagKind.ENUM: {},
+            TagKind.ENUMERATOR: {},
+            TagKind.VARIABLE: {},
+        }
+
+        for library, data in self.libraries.items():
+            # TODO: path shouldn't be relative to cwd.
+            # would make more sense to be relative to the config.yaml
+            lib = Library(library, Path(data["path"]), data["includes"])
+            if build:
+                lib.build()
+            tags = lib.tags()
+
+            for tag in tags:
+                if tag.name.startswith("__"):
+                    continue
+                bucket = buckets[tag.kind]
+                bucket[tag.name] = (tag, lib)
+
+        return buckets
+
+    def _extract_tags(
+        self, kinds: Collection[TagKind]
+    ) -> Dict[str, Tuple[Tag, Library]]:
+        if kinds is None:
+            return {}
+
+        types = {}
+        for kind in kinds:
+            for (tag, lib) in self.buckets[kind].values():
+                types[tag.name] = (tag, lib)
+
+        return types
 
 
-def generate_variables(
-    output: TextIO, config: Dict[str, Any], buckets: Buckets, type_table: Dict[str, str]
-):  # pylint: disable=unused-argument
-    paths = {}
-    translations = {}
-    types = {}
-
-    tags = extract(
-        buckets,
-        [
-            TagKind.VARIABLE,
-            TagKind.EXTERN,
-        ],
-    )
-    for (tag, lib) in tags.values():
-        paths[tag.name] = tag.path
-
-        name = f"{tag.name}@{lib.name}"
-        translations[name] = tag.name
-        types[name] = translate_type(tokenize_type(tag.typeref), type_table)
-
-    contents = ""
-    contents += "from typing import Dict\n"
-    contents += f"TRANSLATIONS: Dict[str, str] = {translations}\n"
-    contents += f"TYPES: Dict[str, str] = {types}\n"
-    contents += f"PATHS: Dict[str, str] = {paths}\n"
-    output.write(contents)
-
-
-def translate_typename(name: str) -> str:
+def convert_basetype(name: str) -> str:
     parts = name.split()
     parts.reverse()
     return "_".join(parts)
-
-
-def tokenize_type(typestr: str) -> List[str]:
-    parts = re.split(r"\s|([,*()\[\]])", typestr)
-    parts = [p for p in parts if p]
-    return parts
-
-
-def translate_types(tokens: List[str], type_table: Dict[str, str]) -> List[str]:
-    results: List[str] = []
-    result: List[str] = []
-    while tokens:
-        part, tokens = tokens[0], tokens[1:]
-        if part in ("const", "volatile", "_Noreturn", "__restrict"):
-            continue
-
-        if part == "*":
-            result.insert(0, "*")
-        elif part == ",":
-            results.append(" ".join(result))
-            result = []
-        elif part.startswith("["):
-            array = ["["]
-            while part != "]":
-                part, tokens = tokens[0], tokens[1:]
-                array.append(part)
-            result.insert(0, "".join(array))
-        elif part == "(":
-            rest, tokens = tokens[:3], tokens[3:]
-            assert rest == ["*", ")", "("]
-
-            inner = []
-            count = 1
-            while count > 0 and tokens:
-                part, tokens = tokens[0], tokens[1:]
-                if part == "(":
-                    count += 1
-                elif part == ")":
-                    count -= 1
-                else:
-                    inner.append(part)
-
-            ret_type = result.pop()
-            arg_types = translate_types(inner, type_table)
-            result.append(f"fn ({', '.join(arg_types)}) {ret_type}")
-        else:
-            key = part
-            for i, key_piece in enumerate(reversed(result)):
-                key = key_piece + " " + key
-                if key in type_table:
-                    result = result[: -i - 1]
-                    break
-
-            if key in type_table:
-                result.append(type_table[key])
-            elif part in type_table:
-                result.append(type_table[part])
-            else:
-                result.append(part)
-
-    if result:
-        results.append(" ".join(result))
-
-    if results == ["void"]:
-        results = []
-
-    return results
-
-
-def translate_type(tokens: List[str], type_table: Dict[str, str]) -> str:
-    tps = translate_types(tokens, type_table)
-    if tps:
-        return tps[0]
-    else:
-        return "void"
-
-
-def extract(buckets: Buckets, kinds: Collection[TagKind]):
-    if kinds is None:
-        return {}
-
-    types = {}
-    for kind in kinds:
-        for (tag, lib) in buckets[kind].values():
-            types[tag.name] = (tag, lib)
-
-    return types
