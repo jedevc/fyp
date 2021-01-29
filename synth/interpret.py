@@ -101,13 +101,12 @@ class Interpreter:
             if isinstance(stmt, Call):
                 if stmt.block in self.func_blocks:
                     if stmt.block in self.block_patches:
-                        args = [
-                            Variable(var.chunk, var)
-                            for var in self.block_patches[stmt.block]
-                        ]
+                        args = [Variable(var) for var in self.block_patches[stmt.block]]
                     else:
                         args = []
-                    new_stmt = ExpressionStatement(Function(stmt.block.name, args))
+
+                    cvar = ChunkVariable(stmt.block.name, None, None)
+                    new_stmt = ExpressionStatement(Function(Variable(cvar), args))
                     yield new_stmt
                 elif stmt.block in self.inline_blocks:
                     yield from self._transform(self.blocks[stmt.block.name].statements)
@@ -188,8 +187,11 @@ class Tracer:
             nonlocal chunks
 
             if isinstance(part, Variable):
-                chunks.add(part.chunk)
+                chunks.add(part.variable.chunk)
                 variables.add(part.variable)
+            elif isinstance(part, Function):
+                chunks.add(part.func.variable.chunk)
+                variables.add(part.func.variable)
             elif isinstance(part, Call):
                 self._trace(part.block, prefix + [part])
 

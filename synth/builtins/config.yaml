@@ -1,17 +1,58 @@
 ---
-types:
-  signed:
-    - char
-    - short
-    - int
-    - long
-    - long long
+core:
+  types:
+    any:
 
-  other:
-    - void
-    - float
-    - double
-    - long double
+    void:
+      - void
+
+    boolean:
+      - bool
+
+    integral:
+      - char
+      - signed char
+      - unsigned char
+
+      - short
+      - signed short
+      - unsigned short
+
+      - int
+      - signed int
+      - unsigned int
+
+      - long
+      - signed long
+      - unsigned long
+
+      - long long
+      - signed long long
+      - unsigned long long
+
+    floating:
+      - float
+      - double
+      - long double
+
+    complex:
+      - float complex
+      - double complex
+      - long double complex
+
+  typemap:
+    any: [void, boolean, integral, floating]
+    boolean: [void, integral]
+    integral: [void, floating]
+    floating: [void, complex]
+    complex: [void]
+
+  includes:
+    bool: stdbool.h
+
+    "float complex": complex.h
+    "double complex": complex.h
+    "long double complex": complex.h
 
 libraries:
   libc:
@@ -19,4 +60,5 @@ libraries:
     includes:
       - ./include/
       - ./obj/include/
+      - ./arch/generic/
       - ./arch/x86_64/

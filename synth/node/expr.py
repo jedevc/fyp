@@ -108,7 +108,7 @@ class BinaryOperationNode(Node):
 
 
 class FunctionNode(Node):
-    def __init__(self, target: str, arguments: List[ExpressionNode]):
+    def __init__(self, target: VariableNode, arguments: List[ExpressionNode]):
         super().__init__()
         self.target = target
         self.arguments = arguments

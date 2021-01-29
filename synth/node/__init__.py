@@ -35,8 +35,10 @@ from .stmt import (
 from .types import (
     ArrayTypeNode,
     FuncTypeNode,
+    MetaTypeNode,
     PointerTypeNode,
     SimpleTypeNode,
     TypeNode,
+    type_check,
 )
 from .visitor import TraversalVisitor, Visitor

@@ -1,4 +1,4 @@
-from typing import TYPE_CHECKING, Generic, TypeVar
+from typing import TYPE_CHECKING, Generic, Optional, TypeVar
 
 if TYPE_CHECKING:
     from .base import Node
@@ -110,7 +110,7 @@ class Visitor(Generic[T]):
         pass
 
 
-class TraversalVisitor(Visitor[None]):
+class TraversalVisitor(Visitor[Optional[T]]):
     """
     A basic visitor to traverse all the nodes in the AST.
 
@@ -118,79 +118,108 @@ class TraversalVisitor(Visitor[None]):
     nodes of interest.
     """
 
-    def visit_spec(self, node: "SpecNode"):
+    def visit_spec(self, node: "SpecNode") -> Optional[T]:
         for chunk in node.chunks:
             chunk.accept(self)
         for block in node.blocks:
             block.accept(self)
 
-    def visit_chunk(self, node: "ChunkNode"):
+        return None
+
+    def visit_chunk(self, node: "ChunkNode") -> Optional[T]:
         for var in node.variables:
             var.accept(self)
 
-    def visit_extern(self, node: "ExternChunkNode"):
+        return None
+
+    def visit_extern(self, node: "ExternChunkNode") -> Optional[T]:
         for var in node.variables:
             var.accept(self)
 
-    def visit_block(self, node: "BlockNode"):
+        return None
+
+    def visit_block(self, node: "BlockNode") -> Optional[T]:
         for stmt in node.statements:
             stmt.accept(self)
 
-    def visit_declaration(self, node: "DeclarationNode"):
+        return None
+
+    def visit_declaration(self, node: "DeclarationNode") -> Optional[T]:
         node.vartype.accept(self)
 
-    def visit_special_declaration(self, node: "SpecialDeclarationNode"):
-        pass
+        return None
 
-    def visit_type_simple(self, node: "SimpleTypeNode"):
-        pass
+    def visit_special_declaration(self, node: "SpecialDeclarationNode") -> Optional[T]:
+        return None
 
-    def visit_type_pointer(self, node: "PointerTypeNode"):
+    def visit_type_simple(self, node: "SimpleTypeNode") -> Optional[T]:
+        return None
+
+    def visit_type_pointer(self, node: "PointerTypeNode") -> Optional[T]:
         node.base.accept(self)
 
-    def visit_type_array(self, node: "ArrayTypeNode"):
+        return None
+
+    def visit_type_array(self, node: "ArrayTypeNode") -> Optional[T]:
         node.base.accept(self)
 
-    def visit_type_func(self, node: "FuncTypeNode"):
+        return None
+
+    def visit_type_func(self, node: "FuncTypeNode") -> Optional[T]:
         for arg in node.args:
             arg.accept(self)
         node.ret.accept(self)
 
-    def visit_assignment(self, node: "AssignmentNode"):
+        return None
+
+    def visit_assignment(self, node: "AssignmentNode") -> Optional[T]:
         node.target.accept(self)
         node.expression.accept(self)
 
-    def visit_ref(self, node: "RefNode"):
+        return None
+
+    def visit_ref(self, node: "RefNode") -> Optional[T]:
         node.target.accept(self)
 
-    def visit_deref(self, node: "DerefNode"):
+        return None
+
+    def visit_deref(self, node: "DerefNode") -> Optional[T]:
         node.target.accept(self)
 
-    def visit_array(self, node: "ArrayNode"):
+        return None
+
+    def visit_array(self, node: "ArrayNode") -> Optional[T]:
         node.target.accept(self)
         node.index.accept(self)
 
-    def visit_binary(self, node: "BinaryOperationNode"):
+        return None
+
+    def visit_binary(self, node: "BinaryOperationNode") -> Optional[T]:
         node.left.accept(self)
         node.right.accept(self)
 
-    def visit_variable(self, node: "VariableNode"):
-        pass
+        return None
 
-    def visit_function(self, node: "FunctionNode"):
+    def visit_variable(self, node: "VariableNode") -> Optional[T]:
+        return None
+
+    def visit_function(self, node: "FunctionNode") -> Optional[T]:
+        node.target.accept(self)
         for arg in node.arguments:
             arg.accept(self)
 
-    def visit_value(self, node: "ValueNode"):
-        pass
+        return None
 
-    def visit_call(self, node: "CallNode"):
-        pass
+    def visit_value(self, node: "ValueNode") -> Optional[T]:
+        return None
 
-    def visit_split(self, node: "SplitNode"):
-        pass
+    def visit_call(self, node: "CallNode") -> Optional[T]:
+        return None
 
-    def visit_if(self, node: "IfNode"):
+    def visit_split(self, node: "SplitNode") -> Optional[T]:
+        return None
+
+    def visit_if(self, node: "IfNode") -> Optional[T]:
         node.condition.accept(self)
         for statement in node.statements:
             statement.accept(self)
@@ -201,10 +230,16 @@ class TraversalVisitor(Visitor[None]):
             for statement in node.else_statements:
                 statement.accept(self)
 
-    def visit_while(self, node: "WhileNode"):
+        return None
+
+    def visit_while(self, node: "WhileNode") -> Optional[T]:
         node.condition.accept(self)
         for statement in node.statements:
             statement.accept(self)
 
-    def visit_exprstmt(self, node: "ExpressionStatementNode"):
+        return None
+
+    def visit_exprstmt(self, node: "ExpressionStatementNode") -> Optional[T]:
         node.expression.accept(self)
+
+        return None

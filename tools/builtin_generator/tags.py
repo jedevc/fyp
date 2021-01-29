@@ -1,23 +1,28 @@
-from typing import Dict
+from enum import Enum, unique
+from typing import Any, Dict
 
 
 class Tag:
     def __init__(self, spec: Dict[str, str]):
-        self.name = spec.get("name")
-        self.pattern = spec.get("pattern")
-        self.kind = spec.get("kind")
-        self.path = spec.get("path")
+        self.name = spec["name"]
+        self.pattern = spec["pattern"]
+        self.kind = TagKind(spec["kind"])
+        self.path = spec["path"]
 
         if "signature" in spec:
-            self.signature = spec["signature"].lstrip("(").rstrip(")").split(",")
+            sig = spec["signature"]
+            if sig.startswith("("):
+                sig = sig.removeprefix("(")
+                sig = sig.removesuffix(")")
+            self.signature = sig
         else:
-            self.signature = []
+            self.signature = ""
 
         self.typeref = spec.get("typeref", "void").removeprefix("typename:")
         if ":" in self.typeref:
             self.typeref = " ".join(self.typeref.split(":"))
 
-    def asdict(self):
+    def asdict(self) -> Dict[str, Any]:
         return {
             "name": self.name,
             "kind": self.kind,
@@ -28,7 +33,8 @@ class Tag:
         }
 
 
-class TagKind:
+@unique
+class TagKind(Enum):
     MACRO = "macro"
     EXTERN = "externvar"
     PROTOTYPE = "prototype"

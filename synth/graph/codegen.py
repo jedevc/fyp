@@ -33,15 +33,20 @@ class CodeGen:
 
     def _gen_program(self, program: Program) -> str:
         parts: List[str] = []
-        parts.extend(f"extern {self._gen_decl(var)};" for var in program.externs)
-        parts.append("")
-        parts.extend(f"{self._gen_decl(var)};" for var in program.globals)
-        parts.append("")
+        if program.externs:
+            parts.extend(f"extern {self._gen_decl(var)};" for var in program.externs)
+            parts.append("")
+        if program.globals:
+            parts.extend(f"{self._gen_decl(var)};" for var in program.globals)
+            parts.append("")
+
         parts.extend(self._gen_func_decl(func) for func in program.functions)
 
-        includes = [f"#include <{include}>" for include in self._includes]
+        if self._includes:
+            includes = [f"#include <{include}>" for include in self._includes]
+            parts = includes + [""] + parts
 
-        return "\n".join(includes + [""] + parts)
+        return "\n".join(parts)
 
     def _gen_decl(self, var: ChunkVariable) -> str:
         for tp in var.basic_types():
@@ -102,18 +107,22 @@ class CodeGen:
 
     def _gen_expr(self, expr: Expression) -> str:
         if isinstance(expr, Variable):
-            if expr.variable in variables.TRANSLATIONS:
+            if expr.variable.name in variables.TRANSLATIONS:
                 vname = variables.TRANSLATIONS[expr.variable.name]
+                self._includes.add(variables.PATHS[vname])
+            elif expr.variable.name in functions.TRANSLATIONS:
+                vname = functions.TRANSLATIONS[expr.variable.name]
                 self._includes.add(variables.PATHS[vname])
             else:
                 vname = expr.variable.name
             return vname
         elif isinstance(expr, Function):
-            if expr.func in functions.TRANSLATIONS:
-                fname = functions.TRANSLATIONS[expr.func]
+            name = expr.func.variable.name
+            if name in functions.TRANSLATIONS:
+                fname = functions.TRANSLATIONS[name]
                 self._includes.add(functions.PATHS[fname])
             else:
-                fname = expr.func
+                fname = name
             return f"{fname}({', '.join(self._gen_expr(arg) for arg in expr.args)})"
         elif isinstance(expr, Array):
             return f"{self._gen_expr(expr.target)}[{self._gen_expr(expr.index)}]"
