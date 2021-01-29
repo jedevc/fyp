@@ -131,7 +131,7 @@ def generate_types(
                     translations[rewritten] = primitive
 
                     if primitive in includes:
-                        paths[rewritten] = includes[primitive]
+                        paths[primitive] = includes[primitive]
 
             metatypes[metatype] = rewrittens
             metatype_connections[metatype] = (

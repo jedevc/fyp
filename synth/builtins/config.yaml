@@ -35,14 +35,24 @@ core:
       - double
       - long double
 
+    complex:
+      - float complex
+      - double complex
+      - long double complex
+
   typemap:
     any: [void, boolean, integral, floating]
     boolean: [void, integral]
     integral: [void, floating]
-    floating: [void]
+    floating: [void, complex]
+    complex: [void]
 
   includes:
     bool: stdbool.h
+
+    "float complex": complex.h
+    "double complex": complex.h
+    "long double complex": complex.h
 
 libraries:
   libc:
