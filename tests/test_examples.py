@@ -34,4 +34,6 @@ def test_synth(example):
     c_code = output.getvalue()
     output.close()
 
-    subprocess.run(["gcc", "-x", "c", "-"], input=c_code.encode(), check=True)
+    subprocess.run(
+        ["gcc", "-x", "c", "-o", "/dev/null", "-"], input=c_code.encode(), check=True
+    )
