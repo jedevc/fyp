@@ -5,10 +5,10 @@ chunk buffer: [64]char,
       fp: fn () void
 
 block main {
-    fp = 0
+    fp = null
     gets@libc(buffer)
 
-    if fp {
+    if fp != null {
         fp()
     }
 }

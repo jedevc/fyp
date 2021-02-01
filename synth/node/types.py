@@ -135,5 +135,8 @@ def type_check(left: TypeNode, right: TypeNode, strict: bool = False) -> bool:
                 break
 
         return success
+    elif isinstance(left, FuncTypeNode) and isinstance(right, PointerTypeNode):
+        null = PointerTypeNode(MetaTypeNode(MetaType.Void))
+        return type_check(right, null, strict=True)
     else:
         return False

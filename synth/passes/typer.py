@@ -225,7 +225,7 @@ class TypeCheckVisitor(TraversalVisitor[TypeNode]):
         ):
             raise ProcessingError(node.index, "cannot index non-array")
 
-        return target_type
+        return target_type.base
 
     def visit_binary(self, node: BinaryOperationNode) -> TypeNode:
         # TODO: this is very sloppy
