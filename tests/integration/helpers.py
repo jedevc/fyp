@@ -1,6 +1,22 @@
 import subprocess
+from pathlib import Path
 
 import pytest
+
+
+class Toolchain:
+    @staticmethod
+    def compile(output: Path, code: str):
+        subprocess.run(
+            ["gcc", "-c", "-x", "c", "-o", str(output), "-"],
+            input=code.encode(),
+            check=True,
+        )
+
+    @staticmethod
+    def link(output: Path, *objects: Path):
+        targets = [str(obj) for obj in objects]
+        subprocess.run(["gcc", *targets, "-o", str(output)], check=True)
 
 
 class FunctionGenerator:

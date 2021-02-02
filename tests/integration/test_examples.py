@@ -1,12 +1,11 @@
 import io
-import subprocess
 from pathlib import Path
 
 import pytest
 
 import synth
 
-from .helpers import FunctionGenerator
+from .helpers import FunctionGenerator, Toolchain
 
 PROTOSTAR_HELPERS = [
     (FunctionGenerator.print, "flag", "FLAG{}"),
@@ -25,7 +24,7 @@ PROTOSTAR_HELPERS = [
         ("protostar/stack/stack5.txt", PROTOSTAR_HELPERS),
     ],
 )
-def test_synth(example, functions):
+def test_synth(example, functions, tmp_path):
     path = Path("examples") / example
     with open(path) as f:
         source_code = f.read()
@@ -41,14 +40,9 @@ def test_synth(example, functions):
         func(gen, *args)
     helper_code = gen.code()
 
-    subprocess.run(
-        ["gcc", "-c", "-x", "c", "-o", "/tmp/one.o", "-"],
-        input=helper_code.encode(),
-        check=True,
-    )
-    subprocess.run(
-        ["gcc", "-c", "-x", "c", "-o", "/tmp/two.o", "-"],
-        input=program_code.encode(),
-        check=True,
-    )
-    subprocess.run(["gcc", "/tmp/one.o", "/tmp/two.o", "-o", "/dev/null"], check=True)
+    helper_path = tmp_path / "helpers.o"
+    program_path = tmp_path / "program.o"
+
+    Toolchain.compile(helper_path, helper_code)
+    Toolchain.compile(program_path, program_code)
+    Toolchain.link(Path("/dev/null"), helper_path, program_path)
