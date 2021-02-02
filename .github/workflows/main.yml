@@ -34,7 +34,7 @@ jobs:
           
       - name: Check typing with mypy
         run: |
-          mypy synth tools
+          mypy synth tools tests
 
       - name: Check linting with pylint
         run: |

@@ -9,7 +9,7 @@ isort --multi-line=3 --trailing-comma --force-grid-wrap=0 --use-parentheses --li
 black --check synth tools tests
 
 # type checking
-mypy synth tools
+mypy synth tools tests
 
 # linting
 pylint synth tools tests
