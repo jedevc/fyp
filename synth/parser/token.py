@@ -96,6 +96,8 @@ class ReservedWord:
     Else = "else"
     While = "while"
 
+    As = "as"
+
 
 RESERVED_WORDS = {
     ReservedWord.Block,
@@ -106,6 +108,7 @@ RESERVED_WORDS = {
     ReservedWord.If,
     ReservedWord.Else,
     ReservedWord.While,
+    ReservedWord.As,
 }
 
 

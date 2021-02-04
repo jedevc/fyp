@@ -5,6 +5,7 @@ if TYPE_CHECKING:
     from .expr import (
         ArrayNode,
         BinaryOperationNode,
+        CastNode,
         DerefNode,
         FunctionNode,
         LiteralNode,
@@ -71,6 +72,9 @@ class Visitor(Generic[T]):
         pass
 
     def visit_literal(self, node: "LiteralNode") -> T:
+        pass
+
+    def visit_cast(self, node: "CastNode") -> T:
         pass
 
     def visit_variable(self, node: "VariableNode") -> T:
@@ -178,6 +182,9 @@ class TraversalVisitor(Visitor[Optional[T]]):
 
         return None
 
+    def visit_literal(self, node: "LiteralNode") -> Optional[T]:
+        return None
+
     def visit_ref(self, node: "RefNode") -> Optional[T]:
         node.target.accept(self)
 
@@ -197,6 +204,12 @@ class TraversalVisitor(Visitor[Optional[T]]):
     def visit_binary(self, node: "BinaryOperationNode") -> Optional[T]:
         node.left.accept(self)
         node.right.accept(self)
+
+        return None
+
+    def visit_cast(self, node: "CastNode") -> Optional[T]:
+        node.cast.accept(self)
+        node.expr.accept(self)
 
         return None
 

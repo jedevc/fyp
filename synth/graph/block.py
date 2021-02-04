@@ -1,10 +1,11 @@
 from typing import Any, Callable, List, Optional, Sequence, Tuple, Union
 
 from ..node import Operator as OperatorType
+from ..node import TypeNode
 from .chunk import Chunk, ChunkVariable, merge_chunks
 
 Lvalue = Union["Variable", "Array", "Deref"]
-Expression = Union["Operation", "Function", "Value", "Ref", Lvalue]
+Expression = Union["Operation", "Function", "Value", "Ref", "Cast", Lvalue]
 Statement = Union["Assignment", "Call", "If", "While", "ExpressionStatement"]
 
 
@@ -180,3 +181,13 @@ class Value:
 
     def traverse(self, func: Callable[[Any], None]):
         func(self)
+
+
+class Cast:
+    def __init__(self, expr: Expression, tp: TypeNode):
+        self.expr = expr
+        self.cast = tp
+
+    def traverse(self, func: Callable[[Any], None]):
+        func(self)
+        self.expr.traverse(func)

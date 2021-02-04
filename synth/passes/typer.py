@@ -9,6 +9,7 @@ from ..node import (
     BinaryOperationNode,
     BlockNode,
     CallNode,
+    CastNode,
     DeclarationNode,
     DerefNode,
     FloatValueNode,
@@ -204,6 +205,9 @@ class TypeCheckVisitor(TraversalVisitor[TypeNode]):
             return PointerTypeNode(SimpleTypeNode("char"))
         else:
             raise RuntimeError()
+
+    def visit_cast(self, node: CastNode) -> TypeNode:
+        return node.cast
 
     def visit_literal(self, node: LiteralNode) -> TypeNode:
         if node.content == "NULL":

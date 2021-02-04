@@ -2,12 +2,33 @@ from enum import Enum, unique
 from typing import List, Union
 
 from .base import Node, X
+from .types import TypeNode
 from .visitor import Visitor
 
 LvalueNode = Union["VariableNode", "ArrayNode", "DerefNode", "LiteralNode"]
 ExpressionNode = Union[
-    "BinaryOperationNode", "FunctionNode", "ValueNode", "RefNode", LvalueNode
+    "BinaryOperationNode",
+    "CastNode",
+    "FunctionNode",
+    "ValueNode",
+    "RefNode",
+    LvalueNode,
 ]
+
+
+@unique
+class Operator(Enum):
+    Add = 1
+    Subtract = 2
+    Multiply = 3
+    Divide = 4
+
+    Eq = 5
+    Neq = 6
+    Gt = 7
+    Gte = 8
+    Lt = 9
+    Lte = 10
 
 
 class ValueNode(Node):
@@ -42,6 +63,16 @@ class LiteralNode(Node):
 
     def accept(self, visitor: Visitor[X]) -> X:
         return visitor.visit_literal(self)
+
+
+class CastNode(Node):
+    def __init__(self, expr: ExpressionNode, tp: TypeNode):
+        super().__init__()
+        self.expr = expr
+        self.cast = tp
+
+    def accept(self, visitor: Visitor[X]) -> X:
+        return visitor.visit_cast(self)
 
 
 class VariableNode(Node):
@@ -79,21 +110,6 @@ class RefNode(Node):
 
     def accept(self, visitor: Visitor[X]) -> X:
         return visitor.visit_ref(self)
-
-
-@unique
-class Operator(Enum):
-    Add = 1
-    Subtract = 2
-    Multiply = 3
-    Divide = 4
-
-    Eq = 5
-    Neq = 6
-    Gt = 7
-    Gte = 8
-    Lt = 9
-    Lte = 10
 
 
 class BinaryOperationNode(Node):

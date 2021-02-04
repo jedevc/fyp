@@ -8,11 +8,13 @@ from ..node import (
     BinaryOperationNode,
     BlockNode,
     CallNode,
+    CastNode,
     ChunkNode,
     DeclarationNode,
     DerefNode,
     ExpressionStatementNode,
     ExternChunkNode,
+    FloatValueNode,
     FunctionNode,
     FuncTypeNode,
     IfNode,
@@ -121,6 +123,12 @@ class PrinterVisitor(Visitor[None]):
         self._print("call ")
         self._print(node.target)
 
+    def visit_cast(self, node: CastNode):
+        node.expr.accept(self)
+        self._print(" as (")
+        node.cast.accept(self)
+        self._print(")")
+
     def visit_variable(self, node: VariableNode):
         self._print(node.name)
 
@@ -153,7 +161,10 @@ class PrinterVisitor(Visitor[None]):
             self._print(quote(node.value))
         elif isinstance(node, IntValueNode):
             self._print(str(node.value))
+        elif isinstance(node, FloatValueNode):
+            self._print(f"{node.left}.{node.right}")
         else:
+            print(node)
             raise RuntimeError()
 
     def visit_binary(self, node: BinaryOperationNode):

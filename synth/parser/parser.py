@@ -7,6 +7,7 @@ from ..node import (
     BinaryOperationNode,
     BlockNode,
     CallNode,
+    CastNode,
     ChunkNode,
     DeclarationNode,
     DerefNode,
@@ -280,37 +281,51 @@ class Parser:
 
         self.node_enter()
 
+        # Parse an expression
         if self.accept(TokenType.ParenOpen):
             self.node_cancel()
 
             node = self.expression()
             self.expect(TokenType.ParenClose)
-            return node
         elif self.accept(TokenType.AddressOf):
             target = self.lvalue()
-            return self.node_exit(RefNode(target))
+            node = self.node_exit(RefNode(target))
         elif self.accept(TokenType.String):
             assert self.last is not None
-            return self.node_exit(StringValueNode(self.last.lexeme))
+            node = self.node_exit(StringValueNode(self.last.lexeme))
         elif self.accept(TokenType.Integer):
             assert self.last is not None
             try:
                 value, base = self.last.lexeme
-                return self.node_exit(IntValueNode(int(value, base), base))
+                node = self.node_exit(IntValueNode(int(value, base), base))
             except TypeError:
-                return self.node_exit(IntValueNode(self.last.lexeme, 10))
+                node = self.node_exit(IntValueNode(self.last.lexeme, 10))
         elif self.accept(TokenType.Float):
             assert self.last is not None
             lhs, rhs = self.last.lexeme
-            return self.node_exit(FloatValueNode(int(lhs), int(rhs)))
+            node = self.node_exit(FloatValueNode(int(lhs), int(rhs)))
         elif (
             peek := self.peek()
         ) and peek.ttype == TokenType.ParenOpen:  # pylint: disable=used-before-assignment
             self.node_cancel()
-            return self.function()
+            node = self.function()
         else:
             self.node_cancel()
-            return self.lvalue()
+            node = self.lvalue()
+
+        # Parse a cast (if it exists)
+        if self.accept(TokenType.Reserved, ReservedWord.As):
+            paren = False
+            if self.accept(TokenType.ParenOpen):
+                paren = True
+
+            tp = self.declaration_type()
+            node = CastNode(node, tp)
+
+            if paren:
+                self.expect(TokenType.ParenClose)
+
+        return node
 
     def function(self) -> FunctionNode:
         """

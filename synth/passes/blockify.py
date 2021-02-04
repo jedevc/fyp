@@ -5,6 +5,7 @@ from ..graph import (
     Assignment,
     Block,
     Call,
+    Cast,
     Chunk,
     ChunkVariable,
     Deref,
@@ -26,6 +27,7 @@ from ..node import (
     BinaryOperationNode,
     BlockNode,
     CallNode,
+    CastNode,
     DerefNode,
     ExpressionStatementNode,
     FloatValueNode,
@@ -213,6 +215,9 @@ class BlockifyExpressionVisitor(Visitor[Expression]):
             return Value(f"{node.left}.{node.right}")
         else:
             raise RuntimeError()
+
+    def visit_cast(self, node: CastNode) -> Expression:
+        return Cast(node.expr.accept(self), node.cast)
 
     def visit_literal(self, node: LiteralNode) -> Expression:
         return Value(node.content)

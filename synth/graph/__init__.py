@@ -3,6 +3,7 @@ from .block import (
     Assignment,
     Block,
     Call,
+    Cast,
     Deref,
     Expression,
     ExpressionStatement,

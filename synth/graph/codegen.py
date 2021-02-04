@@ -4,6 +4,7 @@ from ..builtins import functions, types, variables
 from .block import (
     Array,
     Assignment,
+    Cast,
     Deref,
     Expression,
     ExpressionStatement,
@@ -144,6 +145,10 @@ class CodeGen:
             )
         elif isinstance(expr, Value):
             return expr.value
+        elif isinstance(expr, Cast):
+            # FIXME: this is a bit hacky
+            typestr = ChunkVariable("", expr.cast, None).typestr()
+            return f"({typestr}) {self._gen_expr(expr.expr)}"
         elif isinstance(expr, Deref):
             return "*" + self._gen_expr(expr.target)
         elif isinstance(expr, Ref):

@@ -2,6 +2,7 @@ from .base import Node
 from .expr import (
     ArrayNode,
     BinaryOperationNode,
+    CastNode,
     DerefNode,
     ExpressionNode,
     FloatValueNode,
