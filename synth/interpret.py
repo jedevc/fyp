@@ -53,6 +53,9 @@ class Interpreter:
         self.block_locals: Dict[Block, List[Chunk]] = {}
         for chunk in self.local_chunks:
             root = traces.root(chunk, lambda bl: bl in self.func_blocks)
+            if root is None:
+                root = self.blocks["main"]
+
             if root not in self.block_locals:
                 self.block_locals[root] = []
             self.block_locals[root].append(chunk)
@@ -162,11 +165,14 @@ class Tracer:
 
     def root(
         self, chunk: Chunk, predicate: Optional[Callable[[Block], bool]] = None
-    ) -> Block:
+    ) -> Optional[Block]:
         """
         Find the deepest block node that contains all references to a chunk,
         such that no siblings of the result reference the chunk.
         """
+
+        if chunk not in self.prefixes:
+            return None
 
         prefix = self.prefixes[chunk]
 
