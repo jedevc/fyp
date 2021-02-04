@@ -357,7 +357,11 @@ class Parser:
 
         self.node_enter()
 
-        if self.accept(TokenType.ParenOpen):
+        node: LvalueNode
+        if self.accept(TokenType.Literal):
+            assert self.last is not None
+            node = self.node_exit(LiteralNode(self.last.lexeme))
+        elif self.accept(TokenType.ParenOpen):
             self.node_cancel()
 
             node = self.lvalue()
@@ -368,7 +372,7 @@ class Parser:
         else:
             name = self.expect(TokenType.Name)
             if name.lexeme in ("null", "NULL"):
-                return self.node_exit(LiteralNode("NULL"))
+                node = self.node_exit(LiteralNode("NULL"))
             else:
                 node = self.node_exit(VariableNode(name.lexeme))
 

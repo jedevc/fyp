@@ -122,6 +122,31 @@ class Lexer:
                 return Token(self.n, 1, TokenType.Unknown)
             else:
                 return Token(self.n, 1, ttype)
+        elif self.ch == "$":
+            self._advance()
+            if self.ch == "(":
+                self._advance()
+
+                start = self.n
+                opened = 1
+                while opened != 0:
+                    if self.ch is None:
+                        raise LexError(start, self.n, "unfinished comment")
+                    elif self.ch == "(":
+                        opened += 1
+                    elif self.ch == ")":
+                        opened -= 1
+                    self._advance()
+
+                return Token(
+                    start - 2,
+                    self.n,
+                    TokenType.Literal,
+                    self.stream[start : self.n - 1].strip(),
+                )
+            else:
+                name = self._read_name()
+                return Token(self.n, len(name), TokenType.Name, "$" + name)
         elif self.ch == "/":
             self._advance()
             if self.ch == "/":
@@ -162,7 +187,7 @@ class Lexer:
                 return Token(self.n, 2, TokenType.Integer, ord(self.ch_prev))
             else:
                 raise LexError(start, self.n, "invalid character literal")
-        elif self._isalpha() or self.ch == "$":
+        elif self._isalpha():
             name = self._read_name()
             if name in RESERVED_WORDS:
                 return Token(self.n, len(name), TokenType.Reserved, name)

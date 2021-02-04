@@ -220,7 +220,7 @@ class BlockifyExpressionVisitor(Visitor[Expression]):
         return Cast(node.expr.accept(self), node.cast)
 
     def visit_literal(self, node: LiteralNode) -> Expression:
-        return Value(node.content)
+        return Value(node.content.rstrip(";"))
 
     def visit_binary(self, node: BinaryOperationNode) -> Expression:
         return Operation(node.op, node.left.accept(self), node.right.accept(self))
