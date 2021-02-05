@@ -22,30 +22,33 @@ class TokenType(Enum):
     BraceOpen = 11
     BraceClose = 12
 
-    Name = 15
-    Reserved = 16
-    String = 17
-    Integer = 18
-    Float = 19
+    Name = 13
+    Reserved = 14
+    String = 15
+    Integer = 16
+    Float = 17
 
-    AddressOf = 20
+    Plus = 18
+    Minus = 19
+    Times = 20
+    Divide = 21
 
-    Plus = 21
-    Minus = 22
-    Times = 23
-    Divide = 24
+    CompareEQ = 22
+    CompareNE = 23
+    CompareLT = 24
+    CompareGT = 25
+    CompareLE = 26
+    CompareGE = 27
 
-    CompareEQ = 25
-    CompareNE = 26
-    CompareLT = 27
-    CompareGT = 28
-    CompareLE = 29
-    CompareGE = 30
+    Negate = 28
 
-    Negate = 31
+    Ellipsis = 29
+    Literal = 30
 
-    Ellipsis = 32
-    Literal = 33
+    And = 31
+    BooleanAnd = 32
+    Or = 33
+    BooleanOr = 34
 
 
 PRINTABLE_NAMES = {
@@ -68,7 +71,6 @@ PRINTABLE_NAMES = {
     TokenType.String: "string",
     TokenType.Integer: "integer",
     TokenType.Float: "float",
-    TokenType.AddressOf: "address",
     TokenType.Plus: "plus",
     TokenType.Minus: "minus",
     TokenType.Times: "times",
@@ -82,6 +84,10 @@ PRINTABLE_NAMES = {
     TokenType.CompareGE: "greater than or equal to",
     TokenType.Ellipsis: "ellipsis",
     TokenType.Literal: "literal",
+    TokenType.And: "and",
+    TokenType.BooleanAnd: "boolean and",
+    TokenType.Or: "or",
+    TokenType.BooleanOr: "boolean or",
 }
 
 

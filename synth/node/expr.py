@@ -30,6 +30,9 @@ class Operator(Enum):
     Lt = 9
     Lte = 10
 
+    And = 11
+    Or = 12
+
 
 class ValueNode(Node):
     def accept(self, visitor: Visitor[X]) -> X:

@@ -214,6 +214,31 @@ class Parser:
         Parse an expression.
         """
 
+        return self.disjunction()
+
+    def disjunction(self) -> ExpressionNode:
+        """
+        Parse a boolean disjunction.
+        """
+
+        return self.binary(
+            self.conjunction, self.conjunction, {TokenType.BooleanOr: Operator.Or}
+        )
+
+    def conjunction(self) -> ExpressionNode:
+        """
+        Parse a boolean conjunction.
+        """
+
+        return self.binary(
+            self.comparison, self.comparison, {TokenType.BooleanAnd: Operator.And}
+        )
+
+    def comparison(self) -> ExpressionNode:
+        """
+        Parse a comparison.
+        """
+
         return self.binary(
             self.sum,
             self.sum,
@@ -287,7 +312,7 @@ class Parser:
 
             node = self.expression()
             self.expect(TokenType.ParenClose)
-        elif self.accept(TokenType.AddressOf):
+        elif self.accept(TokenType.And):
             target = self.lvalue()
             node = self.node_exit(RefNode(target))
         elif self.accept(TokenType.String):

@@ -181,6 +181,8 @@ class PrinterVisitor(Visitor[None]):
             Operator.Gte: ">=",
             Operator.Lt: "<",
             Operator.Lte: "<=",
+            Operator.And: "&&",
+            Operator.Or: "||",
         }[node.op]
         self._print(f" {op} ")
         node.right.accept(self)

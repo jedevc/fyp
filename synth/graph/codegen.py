@@ -139,6 +139,8 @@ class CodeGen:
                 OperatorType.Gte: ">=",
                 OperatorType.Lt: "<",
                 OperatorType.Lte: "<=",
+                OperatorType.And: "&&",
+                OperatorType.Or: "||",
             }[expr.op]
             return (
                 "(" + self._gen_expr(expr.left) + op + self._gen_expr(expr.right) + ")"
