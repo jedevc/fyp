@@ -61,12 +61,12 @@ class Interpreter:
             self.block_locals[root].append(chunk)
 
         # determine patches to make for function blocks
-        self.block_patches = {}
+        self.function_args: Dict[Block, List[ChunkVariable]] = {}
         for block, patches in traces.patches.items():
             if block not in self.func_blocks:
                 continue
 
-            self.block_patches[block] = [
+            self.function_args[block] = [
                 patch for patch in patches if patch.chunk in self.local_chunks
             ]
 
@@ -77,8 +77,8 @@ class Interpreter:
             if blname != "main" and block not in self.func_blocks:
                 continue
 
-            if block in self.block_patches:
-                func = FunctionDefinition(blname, self.block_patches[block])
+            if block in self.function_args:
+                func = FunctionDefinition(blname, self.function_args[block])
             else:
                 func = FunctionDefinition(blname, [])
 
@@ -103,8 +103,8 @@ class Interpreter:
         for stmt in stmts:
             if isinstance(stmt, Call):
                 if stmt.block in self.func_blocks:
-                    if stmt.block in self.block_patches:
-                        args = [Variable(var) for var in self.block_patches[stmt.block]]
+                    if stmt.block in self.function_args:
+                        args = [Variable(var) for var in self.function_args[stmt.block]]
                     else:
                         args = []
 
