@@ -78,6 +78,9 @@ class Deref:
         func(self)
         self.target.traverse(func)
 
+    def __repr__(self) -> str:
+        return f"<Deref {self.target}>"
+
 
 class Ref:
     def __init__(self, target: Lvalue):
@@ -86,6 +89,9 @@ class Ref:
     def traverse(self, func: Callable[[Any], None]):
         func(self)
         self.target.traverse(func)
+
+    def __repr__(self) -> str:
+        return f"<Ref {self.target}>"
 
 
 class Array:
@@ -97,6 +103,9 @@ class Array:
         func(self)
         self.target.traverse(func)
         self.index.traverse(func)
+
+    def __repr__(self) -> str:
+        return f"<Array {self.index} {self.target}>"
 
 
 class Call:
@@ -181,6 +190,9 @@ class Value:
 
     def traverse(self, func: Callable[[Any], None]):
         func(self)
+
+    def __repr__(self) -> str:
+        return f"<Value {self.value}>"
 
 
 class Cast:
