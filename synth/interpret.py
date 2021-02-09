@@ -19,6 +19,7 @@ from .graph import (
     Program,
     Ref,
     Statement,
+    Value,
     Variable,
     While,
 )
@@ -82,8 +83,7 @@ class Interpreter:
         for func, args in self.function_args.items():
             print(func)
             for arg in args:
-                use = lift.lift(func, arg)
-                print(use, lift._type(use))
+                lift.lift(func, arg)
             print("-----------")
 
     def program(self) -> Program:
@@ -226,13 +226,24 @@ class Tracer:
         self.variables[base] = variables
 
 
+class VRef(Ref):
+    pass
+
+
 class Lifter:
     def __init___(self):
         pass
 
     def lift(self, base: Block, var: ChunkVariable) -> Expression:
         uses = self._detect(base, var)
-        return reduce(self._common, uses)
+        root = reduce(self._common, uses)
+        root_var = self._var(root)
+        root_inv = self._invert(root, Variable(root_var))
+        print(root, root_var, root_inv)
+        print(uses)
+        print([self._simplify(self._replace(use, root_inv)) for use in uses])
+
+        return None
 
     def _detect(self, base: Block, var: ChunkVariable) -> List[Union[Lvalue, Ref]]:
         uses: List[Union[Lvalue, Ref]] = []
@@ -250,13 +261,15 @@ class Lifter:
                     elif isinstance(item, Ref):
                         use = Ref(use)
                     elif isinstance(item, Assignment):
-                        use = Ref(use)
+                        use = VRef(use)
                     elif isinstance(item, Array):
                         use = Array(use, item.index)
                     else:
                         break
 
                 uses.append(use)
+
+                stack.append(part)
             else:
                 stack.append(part)
                 if isinstance(part, Call):
@@ -289,7 +302,11 @@ class Lifter:
         elif isinstance(first, Array) and isinstance(second, Array):
             # HACK: this check won't be neccessary after allowing indexing into
             # expressions of expressions
-            if first.index == second.index:
+            if (
+                isinstance(first.index, Value)
+                and isinstance(second.index, Value)
+                and first.index.value == second.index.value
+            ):
                 common = self._common(first.target, second.target)
                 assert not isinstance(common, Ref)
                 return Array(common, first.index)
@@ -302,18 +319,65 @@ class Lifter:
         else:
             raise RuntimeError()
 
-    def _type(self, thing: Expression) -> ChunkVariable:
+    def _var(self, thing: Expression) -> ChunkVariable:
         if isinstance(thing, Variable):
             return thing.variable
         elif isinstance(thing, Ref):
-            var = self._type(thing.target)
+            var = self._var(thing.target)
             if var.vtype is None:
                 return ChunkVariable(var.name, None, var.chunk)
             else:
                 return ChunkVariable(var.name, PointerTypeNode(var.vtype), var.chunk)
         elif isinstance(thing, (Array, Deref)):
-            var = self._type(thing.target)
+            var = self._var(thing.target)
             assert isinstance(var.vtype, (ArrayTypeNode, PointerTypeNode))
             return ChunkVariable(var.name, var.vtype.base, var.chunk)
+        else:
+            raise RuntimeError()
+
+    def _invert(self, thing: Expression, replacement: Expression) -> Expression:
+        if isinstance(thing, Variable):
+            return replacement
+        elif isinstance(thing, Ref):
+            return self._invert(thing.target, Deref(replacement))
+        elif isinstance(thing, (Array, Deref)):
+            return self._invert(thing.target, Ref(replacement))
+        else:
+            raise RuntimeError()
+
+    def _replace(self, target: Expression, replace: Expression) -> Expression:
+        if isinstance(target, Variable):
+            return replace
+        elif isinstance(target, VRef):
+            return self._replace(target.target, replace)
+        elif isinstance(target, Ref):
+            return Ref(self._replace(target.target, replace))
+        elif isinstance(target, Deref):
+            return Deref(self._replace(target.target, replace))
+        elif isinstance(target, Array):
+            return Array(self._replace(target.target, replace), target.index)
+        else:
+            raise RuntimeError()
+
+    def _simplify(self, target: Lvalue) -> Lvalue:
+        if isinstance(target, Variable):
+            return target
+        elif isinstance(target, Ref):
+            if isinstance(target.target, Deref):
+                return self._simplify(target.target.target)
+            elif isinstance(target.target, Array):
+                return self._simplify(target.target.target)
+            else:
+                return Ref(self._simplify(target.target))
+        elif isinstance(target, Deref):
+            if isinstance(target.target, Ref):
+                return self._simplify(target.target.target)
+            else:
+                return Deref(self._simplify(target.target))
+        elif isinstance(target, Array):
+            if isinstance(target.target, Ref):
+                return self._simplify(target.target.target)
+            else:
+                return Array(self._simplify(target.target), target.index)
         else:
             raise RuntimeError()
