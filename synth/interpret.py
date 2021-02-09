@@ -1,6 +1,6 @@
 import random
 from functools import reduce
-from typing import Any, Callable, Dict, Iterable, List, Optional, Set, Union
+from typing import Any, Callable, Dict, Iterable, List, Optional, Set
 
 from .graph import (
     Array,
@@ -15,7 +15,6 @@ from .graph import (
     Function,
     FunctionDefinition,
     If,
-    Lvalue,
     Program,
     Ref,
     Statement,
@@ -230,23 +229,24 @@ class VRef(Ref):
     pass
 
 
+VarContext = Expression
+
+
 class Lifter:
     def __init___(self):
         pass
 
-    def lift(self, base: Block, var: ChunkVariable) -> Expression:
-        uses = self._detect(base, var)
-        root = reduce(self._common, uses)
-        root_var = self._var(root)
-        root_inv = self._invert(root, Variable(root_var))
+    def lift(self, base: Block, var: ChunkVariable):
+        uses = self._capture(base, var)
+        root = reduce(self._find_maximal, uses)
+        root_var = self._derive_type(root)
+        root_inv = self._invert_ctx(root, Variable(root_var))
         print(root, root_var, root_inv)
         print(uses)
-        print([self._simplify(self._replace(use, root_inv)) for use in uses])
+        print([self._simplify_ctx(self._replace_ctx(use, root_inv)) for use in uses])
 
-        return None
-
-    def _detect(self, base: Block, var: ChunkVariable) -> List[Union[Lvalue, Ref]]:
-        uses: List[Union[Lvalue, Ref]] = []
+    def _capture(self, base: Block, var: ChunkVariable) -> List[VarContext]:
+        uses: List[VarContext] = []
         stack: List[Any] = []
 
         def finder(part):
@@ -273,17 +273,15 @@ class Lifter:
             else:
                 stack.append(part)
                 if isinstance(part, Call):
-                    uses.extend(self._detect(part.block, var))
+                    uses.extend(self._capture(part.block, var))
 
         base.traverse(finder)
         return uses
 
-    def _common(
-        self, first: Union[Lvalue, Ref], second: Union[Lvalue, Ref]
-    ) -> Union[Lvalue, Ref]:
+    def _find_maximal(self, first: VarContext, second: VarContext) -> VarContext:
         if isinstance(first, Ref) and isinstance(second, Ref):
-            common = self._common(first.target, second.target)
-            assert not isinstance(common, Ref)
+            common = self._find_maximal(first.target, second.target)
+            assert isinstance(common, (Variable, Array, Deref))
             return Ref(common)
         elif isinstance(first, Ref):
             return first
@@ -294,90 +292,89 @@ class Lifter:
         elif isinstance(second, Variable):
             return second
         elif isinstance(first, Deref) and isinstance(second, Deref):
-            # HACK: this check won't be neccessary after allowing dereference
-            # of expressions
-            common = self._common(first.target, second.target)
-            assert not isinstance(common, Ref)
+            common = self._find_maximal(first.target, second.target)
             return Deref(common)
         elif isinstance(first, Array) and isinstance(second, Array):
-            # HACK: this check won't be neccessary after allowing indexing into
-            # expressions of expressions
             if (
                 isinstance(first.index, Value)
                 and isinstance(second.index, Value)
                 and first.index.value == second.index.value
             ):
-                common = self._common(first.target, second.target)
-                assert not isinstance(common, Ref)
+                common = self._find_maximal(first.target, second.target)
                 return Array(common, first.index)
             else:
-                return self._common(first.target, second.target)
+                return self._find_maximal(first.target, second.target)
         elif isinstance(first, Deref) and isinstance(second, Array):
-            return self._common(first.target, second.target)
+            return self._find_maximal(first.target, second.target)
         elif isinstance(first, Array) and isinstance(second, Deref):
-            return self._common(first.target, second.target)
+            return self._find_maximal(first.target, second.target)
         else:
             raise RuntimeError()
 
-    def _var(self, thing: Expression) -> ChunkVariable:
-        if isinstance(thing, Variable):
-            return thing.variable
-        elif isinstance(thing, Ref):
-            var = self._var(thing.target)
+    def _derive_type(self, ctx: VarContext) -> ChunkVariable:
+        if isinstance(ctx, Variable):
+            return ctx.variable
+        elif isinstance(ctx, Ref):
+            var = self._derive_type(ctx.target)
             if var.vtype is None:
                 return ChunkVariable(var.name, None, var.chunk)
             else:
                 return ChunkVariable(var.name, PointerTypeNode(var.vtype), var.chunk)
-        elif isinstance(thing, (Array, Deref)):
-            var = self._var(thing.target)
+        elif isinstance(ctx, (Array, Deref)):
+            var = self._derive_type(ctx.target)
             assert isinstance(var.vtype, (ArrayTypeNode, PointerTypeNode))
             return ChunkVariable(var.name, var.vtype.base, var.chunk)
         else:
             raise RuntimeError()
 
-    def _invert(self, thing: Expression, replacement: Expression) -> Expression:
-        if isinstance(thing, Variable):
-            return replacement
-        elif isinstance(thing, Ref):
-            return self._invert(thing.target, Deref(replacement))
-        elif isinstance(thing, (Array, Deref)):
-            return self._invert(thing.target, Ref(replacement))
+    def _invert_ctx(self, ctx: VarContext, initial: Any) -> VarContext:
+        if isinstance(ctx, Variable):
+            return initial
+        elif isinstance(ctx, Ref):
+            return self._invert_ctx(ctx.target, Deref(initial))
+        elif isinstance(ctx, (Array, Deref)):
+            return self._invert_ctx(ctx.target, Ref(initial))
         else:
             raise RuntimeError()
 
-    def _replace(self, target: Expression, replace: Expression) -> Expression:
+    def _replace_ctx(self, target: VarContext, replace: VarContext) -> VarContext:
         if isinstance(target, Variable):
             return replace
         elif isinstance(target, VRef):
-            return self._replace(target.target, replace)
+            return self._replace_ctx(target.target, replace)
         elif isinstance(target, Ref):
-            return Ref(self._replace(target.target, replace))
+            result = self._replace_ctx(target.target, replace)
+            assert isinstance(result, (Variable, Array, Deref))
+            return Ref(result)
         elif isinstance(target, Deref):
-            return Deref(self._replace(target.target, replace))
+            return Deref(self._replace_ctx(target.target, replace))
         elif isinstance(target, Array):
-            return Array(self._replace(target.target, replace), target.index)
+            return Array(self._replace_ctx(target.target, replace), target.index)
         else:
             raise RuntimeError()
 
-    def _simplify(self, target: Lvalue) -> Lvalue:
+    def _simplify_ctx(self, target: Any) -> Any:
         if isinstance(target, Variable):
             return target
         elif isinstance(target, Ref):
-            if isinstance(target.target, Deref):
-                return self._simplify(target.target.target)
-            elif isinstance(target.target, Array):
-                return self._simplify(target.target.target)
+            result = self._simplify_ctx(target.target)
+            if isinstance(result, Deref):
+                return self._simplify_ctx(result.target)
+            elif isinstance(result, Array):
+                return self._simplify_ctx(result.target)
             else:
-                return Ref(self._simplify(target.target))
+                return Ref(result)
         elif isinstance(target, Deref):
-            if isinstance(target.target, Ref):
-                return self._simplify(target.target.target)
+            result = self._simplify_ctx(target.target)
+            if isinstance(result, Ref):
+                return self._simplify_ctx(result.target)
             else:
-                return Deref(self._simplify(target.target))
+                return Deref(result)
         elif isinstance(target, Array):
-            if isinstance(target.target, Ref):
-                return self._simplify(target.target.target)
+            result = self._simplify_ctx(target.target)
+            if isinstance(result, Ref):
+                return self._simplify_ctx(result.target)
             else:
-                return Array(self._simplify(target.target), target.index)
+                return Array(result, target.index)
         else:
             raise RuntimeError()

@@ -71,7 +71,7 @@ class Assignment:
 
 
 class Deref:
-    def __init__(self, target: Lvalue):
+    def __init__(self, target: Expression):
         self.target = target
 
     def traverse(self, func: Callable[[Any], None]):
@@ -95,7 +95,7 @@ class Ref:
 
 
 class Array:
-    def __init__(self, target: Lvalue, index: Expression):
+    def __init__(self, target: Expression, index: Expression):
         self.target = target
         self.index = index
 
