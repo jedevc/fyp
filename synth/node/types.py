@@ -26,7 +26,7 @@ class SimpleTypeNode(Node):
         return METAS.get(self.core, MetaType.Any)
 
     def __repr__(self) -> str:
-        return f"<SimpleTypeNode {self.core}>"
+        return f"<{self.__class__.__name__} {self.core}>"
 
 
 class MetaTypeNode(Node):
@@ -40,7 +40,7 @@ class MetaTypeNode(Node):
         raise NotImplementedError()
 
     def __repr__(self) -> str:
-        return f"<MetaTypeNode {self.core}>"
+        return f"<{self.__class__.__name__} {self.core}>"
 
 
 class PointerTypeNode(Node):
@@ -52,7 +52,7 @@ class PointerTypeNode(Node):
         return visitor.visit_type_pointer(self)
 
     def __repr__(self) -> str:
-        return f"<PointerTypeNode {self.base}>"
+        return f"<{self.__class__.__name__} {self.base}>"
 
 
 class ArrayTypeNode(Node):
@@ -65,7 +65,7 @@ class ArrayTypeNode(Node):
         return visitor.visit_type_array(self)
 
     def __repr__(self) -> str:
-        return f"<ArrayTypeNode {self.base}>"
+        return f"<{self.__class__.__name__} {self.base}>"
 
 
 class FuncTypeNode(Node):
@@ -79,7 +79,7 @@ class FuncTypeNode(Node):
 
     def __repr__(self) -> str:
         args = ", ".join(repr(arg) for arg in self.args)
-        return f"<FuncTypeNode ({args}) -> {self.ret}>"
+        return f"<{self.__class__.__name__} ({args}) -> {self.ret}>"
 
 
 def metatype_is_reachable(start: MetaType, destination: MetaType) -> bool:

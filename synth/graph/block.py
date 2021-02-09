@@ -35,7 +35,7 @@ class Block:
         self.statements.extend(statements)
 
     def __repr__(self) -> str:
-        return f"<Block {self.name}>"
+        return f"<{self.__class__.__name__} {self.name}>"
 
 
 class FunctionDefinition:
@@ -79,7 +79,7 @@ class Deref:
         self.target.traverse(func)
 
     def __repr__(self) -> str:
-        return f"<Deref {self.target}>"
+        return f"<{self.__class__.__name__} {self.target}>"
 
 
 class Ref:
@@ -91,7 +91,7 @@ class Ref:
         self.target.traverse(func)
 
     def __repr__(self) -> str:
-        return f"<Ref {self.target}>"
+        return f"<{self.__class__.__name__} {self.target}>"
 
 
 class Array:
@@ -105,7 +105,7 @@ class Array:
         self.index.traverse(func)
 
     def __repr__(self) -> str:
-        return f"<Array {self.index} {self.target}>"
+        return f"<{self.__class__.__name__} {self.index} {self.target}>"
 
 
 class Call:
@@ -119,7 +119,7 @@ class Call:
         # should be up to the caller to handle appropriately
 
     def __repr__(self) -> str:
-        return f"<Call to {self.block.name}>"
+        return f"<{self.__class__.__name__} {self.block.name}>"
 
 
 class If:
@@ -158,7 +158,7 @@ class Variable:
         func(self)
 
     def __repr__(self) -> str:
-        return f"<Variable {self.variable}>"
+        return f"<{self.__class__.__name__} {self.variable}>"
 
 
 class Function:
@@ -192,7 +192,7 @@ class Value:
         func(self)
 
     def __repr__(self) -> str:
-        return f"<Value {self.value}>"
+        return f"<{self.__class__.__name__} {self.value}>"
 
 
 class Cast:

@@ -78,7 +78,7 @@ class ChunkVariable:
         return self._basic_types(self.vtype)
 
     def __repr__(self) -> str:
-        return f"<ChunkVariable {self.typename()}>"
+        return f"<{self.__class__.__name__} {self.typename()}>"
 
 
 class ChunkConstraint:
@@ -95,7 +95,7 @@ class ChunkConstraint:
         return not self.eof
 
     def __repr__(self) -> str:
-        return f"<ChunkConstraint eof={self.eof}>"
+        return f"<{self.__class__.__name__} eof={self.eof}>"
 
 
 class Chunk:
