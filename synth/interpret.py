@@ -37,13 +37,17 @@ class Interpreter:
     """
 
     def __init__(self, blocks: List[Block], chunks: List[Chunk], extern: Chunk):
-        self.blocks = {block.name: block for block in blocks}
+        self.blocks: Dict[str, Block] = {block.name: block for block in blocks}
 
         self.chunks = chunks
         self.extern = extern
 
         # assign each block an interpretation
-        self.func_blocks = {block.name for block in blocks if block.name == "main" or random.random() > 0}
+        self.func_blocks = {
+            block.name
+            for block in blocks
+            if block.name == "main" or random.random() > 0
+        }
         self.inline_blocks = {
             block.name for block in blocks if block.name not in self.func_blocks
         }
@@ -82,18 +86,15 @@ class Interpreter:
 
         lift = Lifter()
         self.lifts: Dict[int, Expression] = {}
-        self.roots: Dict[str, Dict[str, Variable]] = {}
+        self.maximals: Dict[str, Dict[str, Variable]] = {}
         for func, args in self.function_signature.items():
-            self.roots[func] = {}
+            self.maximals[func] = {}
             for i, arg in enumerate(args):
-                root, narg, subs = lift.lift(self.blocks[func], arg)
+                maximal, narg, subs = lift.lift(self.blocks[func], arg)
 
                 self.function_signature[func][i] = narg
-                self.roots[func][arg.name] = root
+                self.maximals[func][arg.name] = maximal
                 self.lifts = {**self.lifts, **subs}
-
-        print(self.roots)
-        print(self.function_signature)
 
         for blname, block in self.blocks.items():
             self.blocks[blname] = block.map(self._apply_lifts)
@@ -133,7 +134,9 @@ class Interpreter:
 
         return final
 
-    def _transform(self, block: Block, stmts: Iterable[Statement]) -> Iterable[Statement]:
+    def _transform(
+        self, block: Block, stmts: Iterable[Statement]
+    ) -> Iterable[Statement]:
         for stmt in stmts:
             if isinstance(stmt, Call):
                 if stmt.block.name in self.func_blocks:
@@ -142,18 +145,16 @@ class Interpreter:
 
                         args = []
                         for arg in self.function_signature[stmt.block.name]:
-                            target = self.roots[stmt.block.name][arg.name]
+                            target = self.maximals[stmt.block.name][arg.name]
                             try:
-                                current = self.roots[block.name][arg.name]
+                                current = self.maximals[block.name][arg.name]
                             except KeyError:
                                 for chunk in self.chunks:
-                                    if (var := chunk.lookup(arg.name)):
+                                    if (var := chunk.lookup(arg.name)) :
                                         current = Variable(var)
                                         break
 
                             narg = lifter.dothing(target, current)
-                            print('1>', target, current)
-                            print('2>', narg)
                             args.append(narg)
                     else:
                         args = []
@@ -162,7 +163,10 @@ class Interpreter:
                     new_stmt = ExpressionStatement(Function(Variable(cvar), args))
                     yield new_stmt
                 elif stmt.block.name in self.inline_blocks:
-                    yield from self._transform(self.blocks[stmt.block.name], self.blocks[stmt.block.name].statements)
+                    yield from self._transform(
+                        self.blocks[stmt.block.name],
+                        self.blocks[stmt.block.name].statements,
+                    )
                 else:
                     raise RuntimeError()
             elif isinstance(stmt, If):
@@ -173,7 +177,9 @@ class Interpreter:
                     ]
                 )
             elif isinstance(stmt, While):
-                yield While(stmt.condition, list(self._transform(block, stmt.statements)))
+                yield While(
+                    stmt.condition, list(self._transform(block, stmt.statements))
+                )
             else:
                 yield stmt
 
@@ -285,11 +291,13 @@ class Lifter:
         return root, root_var, translations
 
     def dothing(self, use: VarContext, root: VarContext):
-        # root = reduce(self._find_maximal, [use, root])
-        print('======================')
-        print(root)
+        # mainly strip down virtual-references into normal references
+        # virtual references are only useful for code generating different code
+        # for assignments
+        use = self._simplify_ctx(use)
+        root = self._simplify_ctx(root)
+
         root_var = self._derive_type(root)
-        print('RV', root_var)
         root_inv = self._invert_ctx(root, Variable(root_var))
         return self._simplify_ctx(self._replace_ctx(use, root_inv))
 
@@ -406,6 +414,9 @@ class Lifter:
             raise RuntimeError()
 
     def _simplify_ctx(self, target: Any) -> Any:
+        if isinstance(target, VRef):
+            return self._simplify_ctx(Ref(target.target))
+
         if isinstance(target, Variable):
             return target
         elif isinstance(target, Ref):
@@ -445,4 +456,3 @@ class Lifter:
                 return Array(result, target.index)
         else:
             raise RuntimeError()
-
