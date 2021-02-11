@@ -43,7 +43,7 @@ class Interpreter:
         self.extern = extern
 
         # assign each block an interpretation
-        self.func_blocks = {block.name for block in blocks if random.random() > 0}
+        self.func_blocks = {block.name for block in blocks if block.name == "main" or random.random() > 0}
         self.inline_blocks = {
             block.name for block in blocks if block.name not in self.func_blocks
         }
@@ -70,35 +70,36 @@ class Interpreter:
             self.block_locals[root.name].append(chunk)
 
         # determine patches to make for function blocks
-        self.function_args: Dict[str, List[ChunkVariable]] = {}
+        self.function_signature: Dict[str, List[ChunkVariable]] = {}
         for block, patches in traces.patches.items():
             if block.name not in self.func_blocks:
+                self.function_signature[block.name] = []
                 continue
 
-            self.function_args[block.name] = [
+            self.function_signature[block.name] = [
                 patch for patch in patches if patch.chunk in self.local_chunks
             ]
 
         lift = Lifter()
         self.lifts: Dict[int, Expression] = {}
-        for func, args in self.function_args.items():
-            print(func)
+        self.roots: Dict[str, Dict[str, Variable]] = {}
+        for func, args in self.function_signature.items():
+            self.roots[func] = {}
             for i, arg in enumerate(args):
                 root, narg, subs = lift.lift(self.blocks[func], arg)
 
-                args[i] = narg
+                self.function_signature[func][i] = narg
+                self.roots[func][arg.name] = root
                 self.lifts = {**self.lifts, **subs}
-                print("subs", subs)
-            print("*****************")
-        print(self.lifts)
+
+        print(self.roots)
+        print(self.function_signature)
 
         for blname, block in self.blocks.items():
-            print(f"----------- {blname}")
             self.blocks[blname] = block.map(self._apply_lifts)
 
     def _apply_lifts(self, item: BlockItem) -> BlockItem:
         if item.id in self.lifts:
-            print(item, "->", self.lifts[item.id])
             return self.lifts[item.id]
         else:
             return item
@@ -110,12 +111,12 @@ class Interpreter:
             if blname != "main" and blname not in self.func_blocks:
                 continue
 
-            if blname in self.function_args:
-                func = FunctionDefinition(blname, self.function_args[blname])
+            if blname in self.function_signature:
+                func = FunctionDefinition(blname, self.function_signature[blname])
             else:
                 func = FunctionDefinition(blname, [])
 
-            for stmt in self._transform(block.statements):
+            for stmt in self._transform(block, block.statements):
                 func.add_statement(stmt)
             if blname in self.block_locals:
                 for chunk in self.block_locals[blname]:
@@ -132,14 +133,28 @@ class Interpreter:
 
         return final
 
-    def _transform(self, stmts: Iterable[Statement]) -> Iterable[Statement]:
+    def _transform(self, block: Block, stmts: Iterable[Statement]) -> Iterable[Statement]:
         for stmt in stmts:
             if isinstance(stmt, Call):
                 if stmt.block.name in self.func_blocks:
-                    if stmt.block.name in self.function_args:
-                        args = [
-                            Variable(var) for var in self.function_args[stmt.block.name]
-                        ]
+                    if stmt.block.name in self.function_signature:
+                        lifter = Lifter()
+
+                        args = []
+                        for arg in self.function_signature[stmt.block.name]:
+                            target = self.roots[stmt.block.name][arg.name]
+                            try:
+                                current = self.roots[block.name][arg.name]
+                            except KeyError:
+                                for chunk in self.chunks:
+                                    if (var := chunk.lookup(arg.name)):
+                                        current = Variable(var)
+                                        break
+
+                            narg = lifter.dothing(target, current)
+                            print('1>', target, current)
+                            print('2>', narg)
+                            args.append(narg)
                     else:
                         args = []
 
@@ -147,18 +162,18 @@ class Interpreter:
                     new_stmt = ExpressionStatement(Function(Variable(cvar), args))
                     yield new_stmt
                 elif stmt.block.name in self.inline_blocks:
-                    yield from self._transform(self.blocks[stmt.block.name].statements)
+                    yield from self._transform(self.blocks[stmt.block.name], self.blocks[stmt.block.name].statements)
                 else:
                     raise RuntimeError()
             elif isinstance(stmt, If):
                 yield If(
                     [
-                        (condition, list(self._transform(stmts)))
+                        (condition, list(self._transform(block, stmts)))
                         for condition, stmts in stmt.groups
                     ]
                 )
             elif isinstance(stmt, While):
-                yield While(stmt.condition, list(self._transform(stmt.statements)))
+                yield While(stmt.condition, list(self._transform(block, stmt.statements)))
             else:
                 yield stmt
 
@@ -185,6 +200,7 @@ class Tracer:
         }
 
         self.patches: Dict[Block, List[ChunkVariable]] = {}
+        self.patches[base] = []
 
         for chunk, paths in self.paths.items():
             prefix = self.prefixes[chunk]
@@ -263,10 +279,19 @@ class Lifter:
         root_inv = self._invert_ctx(root, Variable(root_var))
 
         translations = {}
-        for use in self._capture(base, var):
+        for use in self._capture(base, var, False):
             translations[use.id] = self._simplify_ctx(self._replace_ctx(use, root_inv))
 
         return root, root_var, translations
+
+    def dothing(self, use: VarContext, root: VarContext):
+        # root = reduce(self._find_maximal, [use, root])
+        print('======================')
+        print(root)
+        root_var = self._derive_type(root)
+        print('RV', root_var)
+        root_inv = self._invert_ctx(root, Variable(root_var))
+        return self._simplify_ctx(self._replace_ctx(use, root_inv))
 
     def _capture(
         self, base: Block, var: ChunkVariable, recursive: bool = True
@@ -384,24 +409,40 @@ class Lifter:
         if isinstance(target, Variable):
             return target
         elif isinstance(target, Ref):
-            result = self._simplify_ctx(target.target)
-            if isinstance(result, Deref):
-                return self._simplify_ctx(result.target)
-            elif isinstance(result, Array):
-                return self._simplify_ctx(result.target)
-            else:
-                return Ref(result, target.id)
+            if isinstance(target.target, Deref):
+                return self._simplify_ctx(target.target.target)
+            elif isinstance(target.target, Array):
+                return self._simplify_ctx(target.target.target)
         elif isinstance(target, Deref):
-            result = self._simplify_ctx(target.target)
-            if isinstance(result, Ref):
-                return self._simplify_ctx(result.target)
-            else:
-                return Deref(result, target.id)
+            if isinstance(target.target, Ref):
+                return self._simplify_ctx(target.target.target)
         elif isinstance(target, Array):
-            result = self._simplify_ctx(target.target)
-            if isinstance(result, Ref):
-                return self._simplify_ctx(result.target)
-            else:
-                return Array(result, target.index, target.id)
+            if isinstance(target.target, Ref):
+                return self._simplify_ctx(target.target.target)
         else:
             raise RuntimeError()
+
+        result = self._simplify_ctx(target.target)
+
+        if isinstance(target, Variable):
+            return target
+        elif isinstance(target, Ref):
+            if isinstance(result, Deref):
+                return result.target
+            elif isinstance(result, Array):
+                return result.target
+            else:
+                return Ref(result)
+        elif isinstance(target, Deref):
+            if isinstance(result, Ref):
+                return result.target
+            else:
+                return Deref(result)
+        elif isinstance(target, Array):
+            if isinstance(result, Ref):
+                return result.target
+            else:
+                return Array(result, target.index)
+        else:
+            raise RuntimeError()
+
