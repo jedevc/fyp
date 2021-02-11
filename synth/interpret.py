@@ -6,6 +6,7 @@ from .graph import (
     Array,
     Assignment,
     Block,
+    BlockItem,
     Call,
     Chunk,
     ChunkVariable,
@@ -42,9 +43,9 @@ class Interpreter:
         self.extern = extern
 
         # assign each block an interpretation
-        self.func_blocks = {block for block in blocks if random.random() > 0}
+        self.func_blocks = {block.name for block in blocks if random.random() > 0}
         self.inline_blocks = {
-            block for block in blocks if block not in self.func_blocks
+            block.name for block in blocks if block.name not in self.func_blocks
         }
 
         # assign each chunk an interpretation
@@ -58,49 +59,66 @@ class Interpreter:
         traces = Tracer(self.blocks["main"])
 
         # determine functions that local chunks should be allocated on
-        self.block_locals: Dict[Block, List[Chunk]] = {}
+        self.block_locals: Dict[str, List[Chunk]] = {}
         for chunk in self.local_chunks:
-            root = traces.root(chunk, lambda bl: bl in self.func_blocks)
+            root = traces.root(chunk, lambda bl: bl.name in self.func_blocks)
             if root is None:
                 root = self.blocks["main"]
 
-            if root not in self.block_locals:
-                self.block_locals[root] = []
-            self.block_locals[root].append(chunk)
+            if root.name not in self.block_locals:
+                self.block_locals[root.name] = []
+            self.block_locals[root.name].append(chunk)
 
         # determine patches to make for function blocks
-        self.function_args: Dict[Block, List[ChunkVariable]] = {}
+        self.function_args: Dict[str, List[ChunkVariable]] = {}
         for block, patches in traces.patches.items():
-            if block not in self.func_blocks:
+            if block.name not in self.func_blocks:
                 continue
 
-            self.function_args[block] = [
+            self.function_args[block.name] = [
                 patch for patch in patches if patch.chunk in self.local_chunks
             ]
 
         lift = Lifter()
+        self.lifts: Dict[int, Expression] = {}
         for func, args in self.function_args.items():
             print(func)
-            for arg in args:
-                lift.lift(func, arg)
-            print("-----------")
+            for i, arg in enumerate(args):
+                root, narg, subs = lift.lift(self.blocks[func], arg)
+
+                args[i] = narg
+                self.lifts = {**self.lifts, **subs}
+                print("subs", subs)
+            print("*****************")
+        print(self.lifts)
+
+        for blname, block in self.blocks.items():
+            print(f"----------- {blname}")
+            self.blocks[blname] = block.map(self._apply_lifts)
+
+    def _apply_lifts(self, item: BlockItem) -> BlockItem:
+        if item.id in self.lifts:
+            print(item, "->", self.lifts[item.id])
+            return self.lifts[item.id]
+        else:
+            return item
 
     def program(self) -> Program:
         final = Program()
 
         for blname, block in self.blocks.items():
-            if blname != "main" and block not in self.func_blocks:
+            if blname != "main" and blname not in self.func_blocks:
                 continue
 
-            if block in self.function_args:
-                func = FunctionDefinition(blname, self.function_args[block])
+            if blname in self.function_args:
+                func = FunctionDefinition(blname, self.function_args[blname])
             else:
                 func = FunctionDefinition(blname, [])
 
             for stmt in self._transform(block.statements):
                 func.add_statement(stmt)
-            if block in self.block_locals:
-                for chunk in self.block_locals[block]:
+            if blname in self.block_locals:
+                for chunk in self.block_locals[blname]:
                     func.add_locals(chunk)
 
             final.add_function(func)
@@ -117,16 +135,18 @@ class Interpreter:
     def _transform(self, stmts: Iterable[Statement]) -> Iterable[Statement]:
         for stmt in stmts:
             if isinstance(stmt, Call):
-                if stmt.block in self.func_blocks:
-                    if stmt.block in self.function_args:
-                        args = [Variable(var) for var in self.function_args[stmt.block]]
+                if stmt.block.name in self.func_blocks:
+                    if stmt.block.name in self.function_args:
+                        args = [
+                            Variable(var) for var in self.function_args[stmt.block.name]
+                        ]
                     else:
                         args = []
 
                     cvar = ChunkVariable(stmt.block.name, None, None)
                     new_stmt = ExpressionStatement(Function(Variable(cvar), args))
                     yield new_stmt
-                elif stmt.block in self.inline_blocks:
+                elif stmt.block.name in self.inline_blocks:
                     yield from self._transform(self.blocks[stmt.block.name].statements)
                 else:
                     raise RuntimeError()
@@ -237,15 +257,20 @@ class Lifter:
         pass
 
     def lift(self, base: Block, var: ChunkVariable):
-        uses = self._capture(base, var)
-        root = reduce(self._find_maximal, uses)
+        captures = self._capture(base, var)
+        root = reduce(self._find_maximal, captures)
         root_var = self._derive_type(root)
         root_inv = self._invert_ctx(root, Variable(root_var))
-        print(root, root_var, root_inv)
-        print(uses)
-        print([self._simplify_ctx(self._replace_ctx(use, root_inv)) for use in uses])
 
-    def _capture(self, base: Block, var: ChunkVariable) -> List[VarContext]:
+        translations = {}
+        for use in self._capture(base, var):
+            translations[use.id] = self._simplify_ctx(self._replace_ctx(use, root_inv))
+
+        return root, root_var, translations
+
+    def _capture(
+        self, base: Block, var: ChunkVariable, recursive: bool = True
+    ) -> List[VarContext]:
         uses: List[VarContext] = []
         stack: List[Any] = []
 
@@ -257,13 +282,13 @@ class Lifter:
                 while True:
                     item = work.pop()
                     if isinstance(item, Deref):
-                        use = Deref(use)
+                        use = Deref(use, item.id)
                     elif isinstance(item, Ref):
-                        use = Ref(use)
+                        use = Ref(use, item.id)
                     elif isinstance(item, Assignment):
-                        use = VRef(use)
+                        use = VRef(use, use.id)
                     elif isinstance(item, Array):
-                        use = Array(use, item.index)
+                        use = Array(use, item.index, item.id)
                     else:
                         break
 
@@ -272,8 +297,8 @@ class Lifter:
                 stack.append(part)
             else:
                 stack.append(part)
-                if isinstance(part, Call):
-                    uses.extend(self._capture(part.block, var))
+                if recursive and isinstance(part, Call):
+                    uses.extend(self._capture(part.block, var, True))
 
         base.traverse(finder)
         return uses
@@ -331,9 +356,9 @@ class Lifter:
         if isinstance(ctx, Variable):
             return initial
         elif isinstance(ctx, Ref):
-            return self._invert_ctx(ctx.target, Deref(initial))
+            return self._invert_ctx(ctx.target, Deref(initial, ctx.id))
         elif isinstance(ctx, (Array, Deref)):
-            return self._invert_ctx(ctx.target, Ref(initial))
+            return self._invert_ctx(ctx.target, Ref(initial, ctx.id))
         else:
             raise RuntimeError()
 
@@ -345,11 +370,13 @@ class Lifter:
         elif isinstance(target, Ref):
             result = self._replace_ctx(target.target, replace)
             assert isinstance(result, (Variable, Array, Deref))
-            return Ref(result)
+            return Ref(result, target.id)
         elif isinstance(target, Deref):
-            return Deref(self._replace_ctx(target.target, replace))
+            return Deref(self._replace_ctx(target.target, replace), target.id)
         elif isinstance(target, Array):
-            return Array(self._replace_ctx(target.target, replace), target.index)
+            return Array(
+                self._replace_ctx(target.target, replace), target.index, target.id
+            )
         else:
             raise RuntimeError()
 
@@ -363,18 +390,18 @@ class Lifter:
             elif isinstance(result, Array):
                 return self._simplify_ctx(result.target)
             else:
-                return Ref(result)
+                return Ref(result, target.id)
         elif isinstance(target, Deref):
             result = self._simplify_ctx(target.target)
             if isinstance(result, Ref):
                 return self._simplify_ctx(result.target)
             else:
-                return Deref(result)
+                return Deref(result, target.id)
         elif isinstance(target, Array):
             result = self._simplify_ctx(target.target)
             if isinstance(result, Ref):
                 return self._simplify_ctx(result.target)
             else:
-                return Array(result, target.index)
+                return Array(result, target.index, target.id)
         else:
             raise RuntimeError()

@@ -104,6 +104,7 @@ class CodeGen:
         elif isinstance(stmt, ExpressionStatement):
             return self._gen_expr(stmt.expr) + ";\n"
         else:
+            print(stmt)
             raise RuntimeError("cannot be translated into code")
 
     def _gen_expr(self, expr: Expression) -> str:
