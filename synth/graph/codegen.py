@@ -15,6 +15,7 @@ from .block import (
     OperatorType,
     Ref,
     Statement,
+    StatementGroup,
     Value,
     Variable,
     While,
@@ -103,6 +104,8 @@ class CodeGen:
             return f"while ({self._gen_expr(stmt.condition)}) {block}\n"
         elif isinstance(stmt, ExpressionStatement):
             return self._gen_expr(stmt.expr) + ";\n"
+        elif isinstance(stmt, StatementGroup):
+            return "\n".join(self._gen_stmt(stmt) for stmt in stmt.statements)
         else:
             print(stmt)
             raise RuntimeError("cannot be translated into code")

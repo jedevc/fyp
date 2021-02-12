@@ -1,6 +1,6 @@
 import random
 from functools import reduce
-from typing import Any, Callable, Dict, Iterable, List, Optional, Set
+from typing import Any, Callable, Dict, List, Optional, Set
 
 from .graph import (
     Array,
@@ -15,13 +15,11 @@ from .graph import (
     ExpressionStatement,
     Function,
     FunctionDefinition,
-    If,
     Program,
     Ref,
-    Statement,
+    StatementGroup,
     Value,
     Variable,
-    While,
 )
 from .node import ArrayTypeNode, PointerTypeNode
 from .utils import find_common_prefix
@@ -96,20 +94,62 @@ class Interpreter:
                 self.maximals[func][arg.name] = maximal
                 self.lifts = {**self.lifts, **subs}
 
+        # perform transformations to each block
         for blname, block in self.blocks.items():
-            self.blocks[blname] = block.map(self._apply_lifts)
+            block = self._apply_lifts(block)
+            block = self._apply_calls(block)
+            self.blocks[blname] = block
 
-    def _apply_lifts(self, item: BlockItem) -> BlockItem:
-        if item.id in self.lifts:
-            return self.lifts[item.id]
-        else:
-            return item
+    def _apply_lifts(self, block: Block) -> Block:
+        def mapper(item: BlockItem) -> BlockItem:
+            if item.id in self.lifts:
+                return self.lifts[item.id]
+            else:
+                return item
+
+        return block.map(mapper)
+
+    def _apply_calls(self, block: Block) -> Block:
+        def mapper(item: BlockItem) -> BlockItem:
+            if not isinstance(item, Call):
+                return item
+
+            if item.block.name in self.func_blocks:
+                if item.block.name in self.function_signature:
+                    lifter = Lifter()
+
+                    args = []
+                    for arg in self.function_signature[item.block.name]:
+                        target = self.maximals[item.block.name][arg.name]
+                        try:
+                            current = self.maximals[block.name][arg.name]
+                        except KeyError:
+                            for chunk in self.chunks:
+                                if (var := chunk.lookup(arg.name)) :
+                                    current = Variable(var)
+                                    break
+
+                        narg = lifter.dothing(target, current)
+                        args.append(narg)
+                else:
+                    args = []
+
+                cvar = ChunkVariable(item.block.name, None, None)
+                new_stmt = ExpressionStatement(Function(Variable(cvar), args))
+                return new_stmt
+            elif item.block.name in self.inline_blocks:
+                return StatementGroup(self.blocks[item.block.name].statements)
+            else:
+                raise RuntimeError()
+
+        return block.map(mapper)
 
     def program(self) -> Program:
-        final = Program()
+        program = Program()
 
+        # create functions
         for blname, block in self.blocks.items():
-            if blname != "main" and blname not in self.func_blocks:
+            if blname not in self.func_blocks:
                 continue
 
             if blname in self.function_signature:
@@ -117,71 +157,24 @@ class Interpreter:
             else:
                 func = FunctionDefinition(blname, [])
 
-            for stmt in self._transform(block, block.statements):
+            for stmt in block.statements:
                 func.add_statement(stmt)
             if blname in self.block_locals:
                 for chunk in self.block_locals[blname]:
                     func.add_locals(chunk)
 
-            final.add_function(func)
+            program.add_function(func)
 
+        # create global variables
         for chunk in self.chunks:
             if chunk in self.global_chunks:
                 for var in chunk.variables:
-                    final.add_global(var)
+                    program.add_global(var)
+        # create extern variables
         for var in self.extern.variables:
-            final.add_extern(var)
+            program.add_extern(var)
 
-        return final
-
-    def _transform(
-        self, block: Block, stmts: Iterable[Statement]
-    ) -> Iterable[Statement]:
-        for stmt in stmts:
-            if isinstance(stmt, Call):
-                if stmt.block.name in self.func_blocks:
-                    if stmt.block.name in self.function_signature:
-                        lifter = Lifter()
-
-                        args = []
-                        for arg in self.function_signature[stmt.block.name]:
-                            target = self.maximals[stmt.block.name][arg.name]
-                            try:
-                                current = self.maximals[block.name][arg.name]
-                            except KeyError:
-                                for chunk in self.chunks:
-                                    if (var := chunk.lookup(arg.name)) :
-                                        current = Variable(var)
-                                        break
-
-                            narg = lifter.dothing(target, current)
-                            args.append(narg)
-                    else:
-                        args = []
-
-                    cvar = ChunkVariable(stmt.block.name, None, None)
-                    new_stmt = ExpressionStatement(Function(Variable(cvar), args))
-                    yield new_stmt
-                elif stmt.block.name in self.inline_blocks:
-                    yield from self._transform(
-                        self.blocks[stmt.block.name],
-                        self.blocks[stmt.block.name].statements,
-                    )
-                else:
-                    raise RuntimeError()
-            elif isinstance(stmt, If):
-                yield If(
-                    [
-                        (condition, list(self._transform(block, stmts)))
-                        for condition, stmts in stmt.groups
-                    ]
-                )
-            elif isinstance(stmt, While):
-                yield While(
-                    stmt.condition, list(self._transform(block, stmt.statements))
-                )
-            else:
-                yield stmt
+        return program
 
 
 class Tracer:

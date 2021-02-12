@@ -15,6 +15,7 @@ from .block import (
     Operation,
     Ref,
     Statement,
+    StatementGroup,
     Value,
     Variable,
     While,

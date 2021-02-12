@@ -6,22 +6,23 @@ from .chunk import Chunk, ChunkVariable, merge_chunks
 
 Lvalue = Union["Variable", "Array", "Deref"]
 Expression = Union["Operation", "Function", "Value", "Ref", "Cast", Lvalue]
-Statement = Union["Assignment", "Call", "If", "While", "ExpressionStatement"]
+Statement = Union[
+    "Assignment", "Call", "If", "While", "ExpressionStatement", "StatementGroup"
+]
 
-_counter = 0
 
-B = TypeVar("B", bound="BlockItem")
-
-TraversalFunc = Callable[["BlockItem"], None]
-MappingFunc = Callable[[B], B]
+BI = TypeVar("BI", bound="BlockItem")
+TraversalFunc = Callable[[BI], None]
+MappingFunc = Callable[[BI], BI]
 
 
 class BlockItem:
+    _counter = 0
+
     def __init__(self, known_id: Optional[int] = None):
         if known_id is None:
-            global _counter  # pylint: disable=global-statement
-            self.id = _counter
-            _counter += 1
+            self.id = BlockItem._counter
+            BlockItem._counter += 1
         else:
             self.id = known_id
 
@@ -30,19 +31,6 @@ class BlockItem:
 
     def map(self, func: MappingFunc) -> "BlockItem":
         return func(self)
-
-
-class ExpressionStatement(BlockItem):
-    def __init__(self, expr: Expression, known_id: Optional[int] = None):
-        super().__init__(known_id)
-        self.expr = expr
-
-    def traverse(self, func: TraversalFunc) -> None:
-        func(self)
-        self.expr.traverse(func)
-
-    def map(self, func: MappingFunc) -> "ExpressionStatement":
-        return func(ExpressionStatement(self.expr.map(func), self.id))
 
 
 class Block(BlockItem):
@@ -172,13 +160,15 @@ class Call(BlockItem):
         self.block = block
 
     def traverse(self, func: TraversalFunc) -> None:
-        func(self)
-
         # NOTE: do *not* traverse here, as infinite loops can occur, instead it
         # should be up to the caller to handle appropriately
 
+        func(self)
+
     def map(self, func: MappingFunc) -> "Call":
-        return self
+        # NOTE: same as above!
+
+        return func(self)
 
     def __repr__(self) -> str:
         return f"<{self.__class__.__name__} {self.block.name}>"
@@ -234,6 +224,35 @@ class While(BlockItem):
                 [stmt.map(func) for stmt in self.statements],
                 self.id,
             )
+        )
+
+
+class ExpressionStatement(BlockItem):
+    def __init__(self, expr: Expression, known_id: Optional[int] = None):
+        super().__init__(known_id)
+        self.expr = expr
+
+    def traverse(self, func: TraversalFunc) -> None:
+        func(self)
+        self.expr.traverse(func)
+
+    def map(self, func: MappingFunc) -> "ExpressionStatement":
+        return func(ExpressionStatement(self.expr.map(func), self.id))
+
+
+class StatementGroup(BlockItem):
+    def __init__(self, stmts: List[Statement], known_id: Optional[int] = None):
+        super().__init__(known_id)
+        self.statements = stmts
+
+    def traverse(self, func: TraversalFunc) -> None:
+        func(self)
+        for stmt in self.statements:
+            stmt.traverse(func)
+
+    def map(self, func: MappingFunc) -> "StatementGroup":
+        return func(
+            StatementGroup([stmt.map(func) for stmt in self.statements], self.id)
         )
 
 
