@@ -274,6 +274,13 @@ class Tracer:
 
 
 class Lifter:
+    """
+    Utility methods for lifting variables to their most common usages.
+
+    These functions provide primitives for the interpreter to replace function
+    calls, function signatures and variable usages with the lifted paramter.
+    """
+
     class VRef(Ref):
         pass
 
@@ -281,6 +288,11 @@ class Lifter:
     def capture_usages(
         base: Block, var: ChunkVariable, recursive: bool = True
     ) -> List["UsageCapture"]:
+        """
+        Find and capture all the usages (and their contexts) of a variable in a
+        block.
+        """
+
         captures: List[UsageCapture] = []
         stack: List[Any] = []
 
@@ -291,14 +303,11 @@ class Lifter:
                 work = list(stack)
                 while True:
                     item = work.pop()
-                    if isinstance(item, Deref):
-                        use = Deref(use, item.id)
-                    elif isinstance(item, Ref):
-                        use = Ref(use, item.id)
+                    if isinstance(item, (Ref, Deref, Array)):
+                        use = item
                     elif isinstance(item, Assignment):
                         use = Lifter.VRef(use, use.id)
-                    elif isinstance(item, Array):
-                        use = Array(use, item.index, item.id)
+                        break
                     else:
                         break
 
@@ -317,6 +326,11 @@ class Lifter:
     def lift(
         base: Block, var: ChunkVariable
     ) -> Tuple["UsageCapture", ChunkVariable, Dict[int, Expression]]:
+        """
+        Return all the helpful primitives we can use in constructing the exact
+        substitutions to perform to help left parameters.
+        """
+
         captures = Lifter.capture_usages(base, var)
         root = reduce(UsageCapture.maximal, captures)
         root_var = root.nvar()
@@ -330,6 +344,13 @@ class Lifter:
 
     @staticmethod
     def rewrite(use: "UsageCapture", ctx: "UsageCapture") -> "UsageCapture":
+        """
+        Rewrite how a usage would appear in the context of another capture.
+
+        Note that both the usage and the context must both be in the same
+        global context.
+        """
+
         use = use.simplify()
         ctx = ctx.simplify()
 
@@ -338,6 +359,12 @@ class Lifter:
 
 
 class UsageCapture:
+    """
+    Representation and utility methods for capturing the context around a
+    variable reference. We use these to detect how variables are used, and
+    combine them in different ways.
+    """
+
     def __init__(self, var: ChunkVariable, capture: Expression):
         self.var = var
         self.capture = capture
