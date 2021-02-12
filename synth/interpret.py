@@ -37,73 +37,121 @@ class Interpreter:
     def __init__(self, blocks: List[Block], chunks: List[Chunk], extern: Chunk):
         self.blocks: Dict[str, Block] = {block.name: block for block in blocks}
 
-        self.chunks = chunks
-        self.extern = extern
+        self.chunks: List[Chunk] = chunks
+        self.extern: Chunk = extern
 
-        # assign each block an interpretation
-        self.func_blocks = {
-            block.name
-            for block in blocks
-            if block.name == "main" or random.random() > 0
-        }
-        self.inline_blocks = {
-            block.name for block in blocks if block.name not in self.func_blocks
-        }
+        self.func_blocks: Set[str] = set()
+        self.inline_blocks: Set[str] = set()
+        self.local_chunks: Set[Chunk] = set()
+        self.global_chunks: Set[Chunk] = set()
 
-        # assign each chunk an interpretation
-        self.local_chunks = {
-            chunk for chunk in chunks if chunk.constraint.eof or random.random() > 0.5
-        }
-        self.global_chunks = {
-            chunk for chunk in chunks if chunk not in self.local_chunks
-        }
-
-        traces = Tracer(self.blocks["main"])
-
-        # determine functions that local chunks should be allocated on
         self.block_locals: Dict[str, List[Chunk]] = {}
-        for chunk in self.local_chunks:
-            root = traces.root(chunk, lambda bl: bl.name in self.func_blocks)
-            if root is None:
-                root = self.blocks["main"]
-
-            if root.name not in self.block_locals:
-                self.block_locals[root.name] = []
-            self.block_locals[root.name].append(chunk)
-
-        # determine patches to make for function blocks
         self.function_signature: Dict[str, List[ChunkVariable]] = {}
-        for block, patches in traces.patches.items():
-            if block.name not in self.func_blocks:
-                self.function_signature[block.name] = []
-                continue
 
-            self.function_signature[block.name] = [
-                patch for patch in patches if patch.chunk in self.local_chunks
-            ]
-
-        lift = Lifter()
-        self.lifts: Dict[int, Expression] = {}
+        self.substitutions: Dict[int, Expression] = {}
         self.maximals: Dict[str, Dict[str, Variable]] = {}
-        for func, args in self.function_signature.items():
-            self.maximals[func] = {}
-            for i, arg in enumerate(args):
-                maximal, narg, subs = lift.lift(self.blocks[func], arg)
 
-                self.function_signature[func][i] = narg
-                self.maximals[func][arg.name] = maximal
-                self.lifts = {**self.lifts, **subs}
+        self._randomize()
+        self._trace()
 
-        # perform transformations to each block
         for blname, block in self.blocks.items():
             block = self._apply_lifts(block)
             block = self._apply_calls(block)
             self.blocks[blname] = block
 
+    def program(self) -> Program:
+        program = Program()
+
+        # create functions
+        for blname, block in self.blocks.items():
+            if blname not in self.func_blocks:
+                continue
+
+            if blname in self.function_signature:
+                func = FunctionDefinition(blname, self.function_signature[blname])
+            else:
+                func = FunctionDefinition(blname, [])
+
+            for stmt in block.statements:
+                func.add_statement(stmt)
+            if blname in self.block_locals:
+                for chunk in self.block_locals[blname]:
+                    func.add_locals(chunk)
+
+            program.add_function(func)
+
+        # create global variables
+        for chunk in self.chunks:
+            if chunk in self.global_chunks:
+                for var in chunk.variables:
+                    program.add_global(var)
+        # create extern variables
+        for var in self.extern.variables:
+            program.add_extern(var)
+
+        return program
+
+    def _randomize(self):
+        # TODO: accept a seed here
+
+        # assign each block an interpretation
+        self.func_blocks = {
+            blname for blname in self.blocks if blname == "main" or random.random() > 0
+        }
+        self.inline_blocks = {
+            blname for blname in self.blocks if blname not in self.func_blocks
+        }
+
+        # assign each chunk an interpretation
+        self.local_chunks = {
+            chunk
+            for chunk in self.chunks
+            if chunk.constraint.eof or random.random() > 0.5
+        }
+        self.global_chunks = {
+            chunk for chunk in self.chunks if chunk not in self.local_chunks
+        }
+
+    def _trace(self):
+        traces = Tracer(self.blocks["main"])
+
+        # determine functions that local chunks should be allocated on
+        for chunk in self.local_chunks:
+            root = traces.root(chunk, lambda bl: bl.name in self.func_blocks)
+            if root is None:
+                root = self.blocks["main"]
+
+            if root.name in self.block_locals:
+                self.block_locals[root.name].append(chunk)
+            else:
+                self.block_locals[root.name] = [chunk]
+
+        # determine signatures of functions
+        for block, patches in traces.patches.items():
+            if block.name in self.func_blocks:
+                patches = [
+                    patch for patch in patches if patch.chunk in self.local_chunks
+                ]
+            else:
+                patches = []
+
+            self.function_signature[block.name] = patches
+
+        # patch function signatures
+        lifter = Lifter()
+        for func, args in self.function_signature.items():
+            self.maximals[func] = {}
+            for i, arg in enumerate(args):
+                maximal, narg, subs = lifter.lift(self.blocks[func], arg)
+
+                self.function_signature[func][i] = narg
+                self.maximals[func][arg.name] = maximal
+                self.substitutions = {**self.substitutions, **subs}
+
     def _apply_lifts(self, block: Block) -> Block:
         def mapper(item: BlockItem) -> BlockItem:
-            if item.id in self.lifts:
-                return self.lifts[item.id]
+            if item.id in self.substitutions:
+                return self.substitutions[item.id]
             else:
                 return item
 
@@ -143,38 +191,6 @@ class Interpreter:
                 raise RuntimeError()
 
         return block.map(mapper)
-
-    def program(self) -> Program:
-        program = Program()
-
-        # create functions
-        for blname, block in self.blocks.items():
-            if blname not in self.func_blocks:
-                continue
-
-            if blname in self.function_signature:
-                func = FunctionDefinition(blname, self.function_signature[blname])
-            else:
-                func = FunctionDefinition(blname, [])
-
-            for stmt in block.statements:
-                func.add_statement(stmt)
-            if blname in self.block_locals:
-                for chunk in self.block_locals[blname]:
-                    func.add_locals(chunk)
-
-            program.add_function(func)
-
-        # create global variables
-        for chunk in self.chunks:
-            if chunk in self.global_chunks:
-                for var in chunk.variables:
-                    program.add_global(var)
-        # create extern variables
-        for var in self.extern.variables:
-            program.add_extern(var)
-
-        return program
 
 
 class Tracer:
