@@ -12,7 +12,6 @@ from ..node import (
 
 class ChunkVariable:
     def __init__(self, name: str, vtype: Optional[TypeNode], chunk: Optional["Chunk"]):
-        # FIXME: types and chunks shouldn't be optional!
         self.name = name
         self.vtype = vtype
         self.chunk = chunk
