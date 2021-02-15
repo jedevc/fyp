@@ -3,6 +3,8 @@ core:
   types:
     any:
 
+    pointer:
+
     void:
       - void
 
@@ -41,10 +43,11 @@ core:
       - long double complex
 
   typemap:
-    any: [void, boolean, integral, floating]
+    any: [void, boolean, integral, pointer, floating]
     boolean: [void, integral]
-    integral: [void, floating]
+    integral: [void, floating, pointer]
     floating: [void, complex]
+    pointer: [void]
     complex: [void]
 
   includes:

@@ -148,7 +148,13 @@ class PrinterVisitor(Visitor[None]):
         self._print("]")
 
     def visit_function(self, node: FunctionNode):
-        self._print(node.target.name)
+        if isinstance(node.target, VariableNode):
+            self._print(node.target.name)
+        else:
+            self._print("(")
+            node.target.accept(self)
+            self._print(")")
+
         self._print("(")
         for i, arg in enumerate(node.arguments):
             arg.accept(self)

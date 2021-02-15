@@ -39,6 +39,10 @@ class MetaTypeNode(Node):
         # generted during type checking, so it will never appear in the AST.
         raise NotImplementedError()
 
+    @property
+    def meta(self) -> MetaType:
+        return self.core
+
     def __repr__(self) -> str:
         return f"<{self.__class__.__name__} {self.core}>"
 
@@ -50,6 +54,10 @@ class PointerTypeNode(Node):
 
     def accept(self, visitor: Visitor[X]) -> X:
         return visitor.visit_type_pointer(self)
+
+    @property
+    def meta(self) -> MetaType:
+        return MetaType.Pointer
 
     def __repr__(self) -> str:
         return f"<{self.__class__.__name__} {self.base}>"
@@ -64,6 +72,10 @@ class ArrayTypeNode(Node):
     def accept(self, visitor: Visitor[X]) -> X:
         return visitor.visit_type_array(self)
 
+    @property
+    def meta(self) -> MetaType:
+        return MetaType.Pointer
+
     def __repr__(self) -> str:
         return f"<{self.__class__.__name__} {self.base}>"
 
@@ -76,6 +88,10 @@ class FuncTypeNode(Node):
 
     def accept(self, visitor: Visitor[X]) -> X:
         return visitor.visit_type_func(self)
+
+    @property
+    def meta(self) -> MetaType:
+        return MetaType.Pointer
 
     def __repr__(self) -> str:
         args = ", ".join(repr(arg) for arg in self.args)
@@ -102,24 +118,19 @@ def metatype_is_reachable(start: MetaType, destination: MetaType) -> bool:
 
 
 def type_check(left: TypeNode, right: TypeNode, strict: bool = False) -> bool:
-    # FIXME: these conditions are becoming a little long
-
     if isinstance(left, SimpleTypeNode) and isinstance(right, SimpleTypeNode):
         if strict:
             return left.core == right.core
         else:
             return metatype_is_reachable(right.meta, left.meta)
-    elif isinstance(left, MetaTypeNode) and isinstance(right, MetaTypeNode):
-        return metatype_is_reachable(right.core, left.core)
-    elif isinstance(left, MetaTypeNode) and isinstance(right, SimpleTypeNode):
-        return metatype_is_reachable(right.meta, left.core)
-    elif isinstance(left, SimpleTypeNode) and isinstance(right, MetaTypeNode):
-        return metatype_is_reachable(right.core, left.meta)
 
     elif isinstance(left, PointerTypeNode) and isinstance(right, PointerTypeNode):
         return type_check(left.base, right.base, strict=True)
-    elif isinstance(left, ArrayTypeNode) and isinstance(right, ArrayTypeNode):
-        return type_check(left.base, right.base, strict=True)
+    elif isinstance(left, ArrayTypeNode):
+        if isinstance(right, ArrayTypeNode):
+            return type_check(left.base, right.base, strict=True)
+        else:
+            return False
     elif isinstance(left, PointerTypeNode) and isinstance(right, ArrayTypeNode):
         return type_check(left.base, right.base, strict=True)
 
@@ -135,8 +146,8 @@ def type_check(left: TypeNode, right: TypeNode, strict: bool = False) -> bool:
                 break
 
         return success
-    elif isinstance(left, FuncTypeNode) and isinstance(right, PointerTypeNode):
-        null = PointerTypeNode(MetaTypeNode(MetaType.Void))
-        return type_check(right, null, strict=True)
+
+    elif not strict:
+        return metatype_is_reachable(right.meta, left.meta)
     else:
         return False

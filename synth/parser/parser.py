@@ -184,7 +184,6 @@ class Parser:
 
             stmt = self.node_exit(IfNode(condition, statements, else_action))
         else:
-            # FIXME: backtracking is sad :(
             state = (self.pos, self.current, self.last)
             try:
                 lvalue = self.lvalue()
@@ -306,12 +305,20 @@ class Parser:
 
         self.node_enter()
 
-        # Parse an expression
-        if self.accept(TokenType.ParenOpen):
+        node: ExpressionNode
+        if self.match(TokenType.ParenOpen):
             self.node_cancel()
 
-            node = self.expression()
-            self.expect(TokenType.ParenClose)
+            state = (self.pos, self.current, self.last)
+            try:
+                # we try this way first, since lvalues may use parenthesis to
+                # parse more complex array indexing
+                node = self.lvalue()
+            except ParseError:
+                self.pos, self.current, self.last = state
+                self.expect(TokenType.ParenOpen)
+                node = self.expression()
+                self.expect(TokenType.ParenClose)
         elif self.accept(TokenType.And):
             target = self.lvalue()
             node = self.node_exit(RefNode(target))
@@ -329,14 +336,13 @@ class Parser:
             assert self.last is not None
             lhs, rhs = self.last.lexeme
             node = self.node_exit(FloatValueNode(int(lhs), int(rhs)))
-        elif (
-            peek := self.peek()
-        ) and peek.ttype == TokenType.ParenOpen:  # pylint: disable=used-before-assignment
-            self.node_cancel()
-            node = self.function()
         else:
             self.node_cancel()
             node = self.lvalue()
+
+        # Parse a function call (if it exists)
+        if self.match(TokenType.ParenOpen):
+            node = self.function(node)
 
         # Parse a cast (if it exists)
         if self.accept(TokenType.Reserved, ReservedWord.As):
@@ -352,20 +358,16 @@ class Parser:
 
         return node
 
-    def function(self) -> FunctionNode:
+    def function(self, func: ExpressionNode) -> FunctionNode:
         """
         Parse a function call.
         """
 
         self.node_enter()
 
-        self.node_enter()
-        name = self.expect(TokenType.Name)
-        var = self.node_exit(VariableNode(name.lexeme))
-
         self.expect(TokenType.ParenOpen)
         if self.accept(TokenType.ParenClose):
-            return self.node_exit(FunctionNode(var, []))
+            return self.node_exit(FunctionNode(func, []))
 
         args = [self.expression()]
         while self.accept(TokenType.Comma):
@@ -373,12 +375,42 @@ class Parser:
             args.append(arg)
         self.expect(TokenType.ParenClose)
 
-        return self.node_exit(FunctionNode(var, args))
+        return self.node_exit(FunctionNode(func, args))
+
+    def array(self, target: ExpressionNode) -> ArrayNode:
+        if not self.match(TokenType.BracketOpen):
+            assert self.current is not None
+            raise ParseError(self.current, "expected opening bracket")
+
+        node: Any = target
+        while self.accept(TokenType.BracketOpen):
+            index = self.expression()
+            self.expect(TokenType.BracketClose)
+            result = ArrayNode(node, index)
+            result.token_start = node.token_start
+            result.token_end = self.last
+            node = result
+
+        return node
 
     def lvalue(self) -> LvalueNode:
         """
         Parse a left-hand side value.
         """
+
+        if self.accept(TokenType.ParenOpen):
+            expr = self.expression()
+            self.expect(TokenType.ParenClose)
+            try:
+                expr = self.array(expr)
+            except ParseError:
+                pass
+
+            if isinstance(expr, (LiteralNode, DerefNode, ArrayNode, VariableNode)):
+                return expr
+            else:
+                assert self.current is not None
+                raise ParseError(self.current, "expression is not a valid lvalue")
 
         self.node_enter()
 
@@ -386,13 +418,8 @@ class Parser:
         if self.accept(TokenType.Literal):
             assert self.last is not None
             node = self.node_exit(LiteralNode(self.last.lexeme))
-        elif self.accept(TokenType.ParenOpen):
-            self.node_cancel()
-
-            node = self.lvalue()
-            self.expect(TokenType.ParenClose)
         elif self.accept(TokenType.Times):
-            target = self.lvalue()
+            target = self.atom()
             node = self.node_exit(DerefNode(target))
         else:
             name = self.expect(TokenType.Name)
@@ -401,14 +428,10 @@ class Parser:
             else:
                 node = self.node_exit(VariableNode(name.lexeme))
 
-        while self.accept(TokenType.BracketOpen):
-            # try to read optional array indexes at end
-            index = self.expression()
-            self.expect(TokenType.BracketClose)
-            result = ArrayNode(node, index)
-            result.token_start = node.token_start
-            result.token_end = self.last
-            node = result
+        try:
+            node = self.array(node)
+        except ParseError:
+            pass
 
         return node
 

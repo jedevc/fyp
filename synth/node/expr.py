@@ -34,6 +34,23 @@ class Operator(Enum):
     Or = 12
 
 
+BOOLEAN_OPERATORS = (Operator.And, Operator.Or)
+COMPARISON_OPERATORS = (
+    Operator.Eq,
+    Operator.Neq,
+    Operator.Gt,
+    Operator.Gte,
+    Operator.Lt,
+    Operator.Lte,
+)
+ARITHMETIC_OPERATORS = (
+    Operator.Add,
+    Operator.Subtract,
+    Operator.Multiply,
+    Operator.Divide,
+)
+
+
 class ValueNode(Node):
     def accept(self, visitor: Visitor[X]) -> X:
         return visitor.visit_value(self)
@@ -127,7 +144,7 @@ class BinaryOperationNode(Node):
 
 
 class FunctionNode(Node):
-    def __init__(self, target: VariableNode, arguments: List[ExpressionNode]):
+    def __init__(self, target: ExpressionNode, arguments: List[ExpressionNode]):
         super().__init__()
         self.target = target
         self.arguments = arguments

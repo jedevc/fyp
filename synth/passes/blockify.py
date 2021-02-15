@@ -170,7 +170,7 @@ class BlockifyLvalueVisitor(Visitor[Lvalue]):
 
     def visit_array(self, node: ArrayNode) -> Lvalue:
         return Array(
-            node.target.accept(self),
+            node.target.accept(BlockifyExpressionVisitor(self.parent)),
             node.index.accept(BlockifyExpressionVisitor(self.parent)),
         )
 

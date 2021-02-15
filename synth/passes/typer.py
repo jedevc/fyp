@@ -3,6 +3,9 @@ import functools
 from ..builtins import functions, types, variables
 from ..builtins.types import MetaType
 from ..node import (
+    ARITHMETIC_OPERATORS,
+    BOOLEAN_OPERATORS,
+    COMPARISON_OPERATORS,
     ArrayNode,
     ArrayTypeNode,
     AssignmentNode,
@@ -176,15 +179,16 @@ class TypeCheckVisitor(TraversalVisitor[TypeNode]):
 
     def visit_function(self, node: FunctionNode) -> TypeNode:
         vtype = node.target.accept(self)
+        funcname = (
+            node.target.name if isinstance(node.target, VariableNode) else "function"
+        )
         if not isinstance(vtype, FuncTypeNode):
-            raise ProcessingError(
-                node, f"{node.target.name} exists, but is not a function"
-            )
+            raise ProcessingError(node, f"{funcname} exists, but is not a function")
 
         if len(vtype.args) != len(node.arguments):
             raise ProcessingError(
                 node,
-                f"{node.target.name} expects {len(vtype.args)} arguments, but was given {len(node.arguments)}",
+                f"{funcname} expects {len(vtype.args)} arguments, but was given {len(node.arguments)}",
             )
 
         for i, arg in enumerate(node.arguments):
@@ -211,7 +215,7 @@ class TypeCheckVisitor(TraversalVisitor[TypeNode]):
 
     def visit_literal(self, node: LiteralNode) -> TypeNode:
         if node.content == "NULL":
-            return PointerTypeNode(MetaTypeNode(MetaType.Void))
+            return MetaTypeNode(MetaType.Integral)
         else:
             return MetaTypeNode(MetaType.Any)
 
@@ -232,15 +236,28 @@ class TypeCheckVisitor(TraversalVisitor[TypeNode]):
         return target_type.base
 
     def visit_binary(self, node: BinaryOperationNode) -> TypeNode:
-        # TODO: this is very sloppy
-
         left_type = node.left.accept(self)
         right_type = node.right.accept(self)
         assert left_type is not None and right_type is not None
 
-        if not type_check(left_type, right_type) and not type_check(
-            right_type, left_type
-        ):
-            raise ProcessingError(node, "operands are not the same type")
-
-        return MetaTypeNode(MetaType.Boolean)
+        if node.op in BOOLEAN_OPERATORS:
+            bool_type = MetaTypeNode(MetaType.Boolean)
+            if not type_check(bool_type, left_type):
+                raise ProcessingError(node.left, "left operand should be boolean")
+            if not type_check(bool_type, right_type):
+                raise ProcessingError(node.left, "right operand should be boolean")
+            return bool_type
+        elif node.op in COMPARISON_OPERATORS:
+            if not type_check(left_type, right_type) and not type_check(
+                right_type, left_type
+            ):
+                raise ProcessingError(node, "operands are not the same type")
+            return MetaTypeNode(MetaType.Boolean)
+        elif node.op in ARITHMETIC_OPERATORS:
+            if not type_check(left_type, right_type) and not type_check(
+                right_type, left_type
+            ):
+                raise ProcessingError(node, "operands are not the same type")
+            return left_type
+        else:
+            raise RuntimeError()
