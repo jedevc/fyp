@@ -117,17 +117,12 @@ class CodeGen:
                 self._includes.add(variables.PATHS[vname])
             elif expr.variable.name in functions.TRANSLATIONS:
                 vname = functions.TRANSLATIONS[expr.variable.name]
-                self._includes.add(variables.PATHS[vname])
+                self._includes.add(functions.PATHS[vname])
             else:
                 vname = expr.variable.name
             return vname
         elif isinstance(expr, Function):
-            name = expr.func.variable.name
-            if name in functions.TRANSLATIONS:
-                fname = functions.TRANSLATIONS[name]
-                self._includes.add(functions.PATHS[fname])
-            else:
-                fname = name
+            fname = self._gen_expr(expr.func)
             return f"{fname}({', '.join(self._gen_expr(arg) for arg in expr.args)})"
         elif isinstance(expr, Array):
             return f"{self._gen_expr(expr.target)}[{self._gen_expr(expr.index)}]"

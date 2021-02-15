@@ -249,16 +249,17 @@ class Tracer:
             return prefix[-1].block
 
     def _trace(self, base: Block, prefix: List[Call]):
-        chunks = set()
-        variables = set()
+        chunks: Set[Chunk] = set()
+        variables: Set[ChunkVariable] = set()
 
-        def finder(part):
+        def finder(part: BlockItem):
             if isinstance(part, Variable):
-                chunks.add(part.variable.chunk)
+                if part.variable.chunk is not None:
+                    chunks.add(part.variable.chunk)
                 variables.add(part.variable)
-            elif isinstance(part, Function):
-                chunks.add(part.func.variable.chunk)
-                variables.add(part.func.variable)
+            # elif isinstance(part, Function):
+            #     chunks.add(part.func.variable.chunk)
+            #     variables.add(part.func.variable)
             elif isinstance(part, Call):
                 self._trace(part.block, prefix + [part])
 

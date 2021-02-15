@@ -194,7 +194,7 @@ class BlockifyExpressionVisitor(Visitor[Expression]):
 
     def visit_function(self, node: FunctionNode) -> Expression:
         var = node.target.accept(BlockifyLvalueVisitor(self.parent))
-        assert isinstance(var, Variable)
+        # assert isinstance(var, Variable)
         return Function(var, [expr.accept(self) for expr in node.arguments])
 
     def visit_value(self, node: ValueNode) -> Expression:

@@ -273,7 +273,10 @@ class Variable(BlockItem):
 
 class Function(BlockItem):
     def __init__(
-        self, func: Variable, args: Sequence[Expression], known_id: Optional[int] = None
+        self,
+        func: Expression,
+        args: Sequence[Expression],
+        known_id: Optional[int] = None,
     ):
         super().__init__(known_id)
         self.func = func
@@ -281,6 +284,7 @@ class Function(BlockItem):
 
     def traverse(self, func: TraversalFunc) -> None:
         func(self)
+        self.func.traverse(func)
         for arg in self.args:
             arg.traverse(func)
 
