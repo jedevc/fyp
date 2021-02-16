@@ -1,4 +1,3 @@
-import re
 from enum import Enum, unique
 from typing import List, Optional, Union
 
@@ -84,14 +83,16 @@ class TemplateValueNode(ValueNode):
         self.definition = definition
 
     @staticmethod
-    def construct(source: str):
-        if re.match(r"[0-9]+", source):
-            return IntValueNode(int(source), 10)
-        elif re.match(r"[0-9]+\.[0-9]", source):
-            lhs, rhs = source.split(".")
+    def construct(source: Union[str, int, float]) -> ValueNode:
+        if isinstance(source, str):
+            return StringValueNode(source)
+        elif isinstance(source, int):
+            return IntValueNode(source, 10)
+        elif isinstance(source, float):
+            lhs, rhs = f"{source:.20f}".split(".")
             return FloatValueNode(int(lhs), int(rhs))
         else:
-            return StringValueNode(source)
+            raise TypeError(f"cannot construct value from {type(source)}")
 
 
 class LiteralNode(Node):

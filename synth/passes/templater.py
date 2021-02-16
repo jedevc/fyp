@@ -1,7 +1,9 @@
-from typing import Dict
+from typing import Dict, Union
 
 from ..node import MapVisitor, TemplateValueNode, ValueNode
 from .error import ProcessingError
+
+EVAL_CONTEXT = {lib: __import__(lib) for lib in ("random", "string")}
 
 
 class TemplaterVisitor(MapVisitor):
@@ -11,10 +13,12 @@ class TemplaterVisitor(MapVisitor):
 
     def __init__(self):
         super().__init__()
-        self.instantiations: Dict[str, str] = {}
+        self.instantiations: Dict[str, Union[str, int, float]] = {}
 
-    def _evaluator(self, definition: str) -> str:  # pylint: disable=unused-argument
-        return "1"
+    def _evaluator(self, definition: str) -> Union[str, int, float]:
+        # pylint: disable=eval-used
+        result = eval(definition, EVAL_CONTEXT, self.instantiations)
+        return result
 
     def visit_value(self, node: ValueNode) -> ValueNode:
         if isinstance(node, TemplateValueNode):
