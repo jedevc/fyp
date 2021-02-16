@@ -1,5 +1,6 @@
+import re
 from enum import Enum, unique
-from typing import List, Union
+from typing import List, Optional, Union
 
 from .base import Node, X
 from .types import TypeNode
@@ -74,6 +75,23 @@ class StringValueNode(ValueNode):
     def __init__(self, value: str):
         super().__init__()
         self.value = value
+
+
+class TemplateValueNode(ValueNode):
+    def __init__(self, name: str, definition: Optional[str]):
+        super().__init__()
+        self.name = name
+        self.definition = definition
+
+    @staticmethod
+    def construct(source: str):
+        if re.match(r"[0-9]+", source):
+            return IntValueNode(int(source), 10)
+        elif re.match(r"[0-9]+\.[0-9]", source):
+            lhs, rhs = source.split(".")
+            return FloatValueNode(int(lhs), int(rhs))
+        else:
+            return StringValueNode(source)
 
 
 class LiteralNode(Node):

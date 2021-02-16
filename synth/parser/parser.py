@@ -31,6 +31,7 @@ from ..node import (
     SplitNode,
     StatementNode,
     StringValueNode,
+    TemplateValueNode,
     TypeNode,
     VariableNode,
     WhileNode,
@@ -336,6 +337,10 @@ class Parser:
             assert self.last is not None
             lhs, rhs = self.last.lexeme
             node = self.node_exit(FloatValueNode(int(lhs), int(rhs)))
+        elif self.accept(TokenType.Template):
+            assert self.last is not None
+            name, definition = self.last.lexeme
+            node = self.node_exit(TemplateValueNode(name, definition))
         else:
             self.node_cancel()
             node = self.lvalue()

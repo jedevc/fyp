@@ -45,7 +45,7 @@ SIMPLE_TOKENS: Dict[str, Union[TokenType, Dict[str, TokenType]]] = {
     "+": TokenType.Plus,
     "-": TokenType.Minus,
     "*": TokenType.Times,
-    # "/": TokenType.Divide,  # this one is more complex...
+    "/": TokenType.Divide,  # this one is more complex...
 }
 
 
@@ -105,6 +105,8 @@ class Lexer:
         within this function.
         """
 
+        prevn = self.n
+
         if self.ch is None:
             return Token(self.n, 1, TokenType.EOF)
         elif self.ch == "\n":
@@ -117,18 +119,6 @@ class Lexer:
             while self._isspace() and self.ch != "\n":
                 self._advance()
             return None
-        elif ttype := SIMPLE_TOKENS.get(self.ch):
-            self._advance()
-            if isinstance(ttype, dict):
-                for target in ttype:
-                    piece = self.stream[self.n : self.n + len(target) - 1]
-                    if piece == target[1:]:
-                        self._skip(len(target) - 1)
-                        return Token(self.n, len(target), ttype[target])
-
-                return Token(self.n, 1, TokenType.Unknown)
-            else:
-                return Token(self.n, 1, ttype)
         elif self.ch == "$":
             self._advance()
             if self.ch == "(":
@@ -138,7 +128,7 @@ class Lexer:
                 opened = 1
                 while opened != 0:
                     if self.ch is None:
-                        raise LexError(start, self.n, "unfinished comment")
+                        raise LexError(start, self.n, "unfinished literal")
                     elif self.ch == "(":
                         opened += 1
                     elif self.ch == ")":
@@ -178,6 +168,8 @@ class Lexer:
             else:
                 # just a division operator
                 return Token(self.n, 1, TokenType.Divide)
+        elif self.ch == "<" and (template := self._try_read_template()):
+            return Token(self.n, self.n - prevn, TokenType.Template, template)
         elif self.ch in ("'", '"'):
             s = self._read_str()
             return Token(self.n, len(s) + 2, TokenType.String, s)
@@ -194,6 +186,18 @@ class Lexer:
                 return Token(self.n, 2, TokenType.Integer, ord(self.ch_prev))
             else:
                 raise LexError(start, self.n, "invalid character literal")
+        elif ttype := SIMPLE_TOKENS.get(self.ch):
+            self._advance()
+            if isinstance(ttype, dict):
+                for target in ttype:
+                    piece = self.stream[self.n : self.n + len(target) - 1]
+                    if piece == target[1:]:
+                        self._skip(len(target) - 1)
+                        return Token(self.n, len(target), ttype[target])
+
+                return Token(self.n, 1, TokenType.Unknown)
+            else:
+                return Token(self.n, 1, ttype)
         elif self._isalpha():
             name = self._read_name()
             if name in RESERVED_WORDS:
@@ -273,6 +277,38 @@ class Lexer:
         self._advance()
 
         return self.stream[start + 1 : self.n - 1]
+
+    def _try_read_template(self) -> Optional[Tuple[str, Optional[str]]]:
+        state = (self.n, self.ch, self.ch_prev)
+        try:
+            if self.ch != "<":
+                raise LexError(state[0], self.n, "start of template not found")
+            self._advance()
+
+            name = self._read_name()
+            while self._isspace() and self.ch != "\n":
+                self._advance()
+
+            if self.ch == ";":
+                self._advance()
+                start = self.n
+                while self.ch is not None and self.ch != ">":
+                    self._advance()
+                if self.ch != ">":
+                    raise LexError(state[0], self.n, "unfinished template")
+
+                self._advance()
+                return (name, self.stream[start : self.n - 1].strip())
+            elif self.ch == ">":
+                self._advance()
+                return (name, None)
+            else:
+                raise LexError(state[0], self.n, "invalid template")
+        except LexError:
+            pass
+
+        self.n, self.ch, self.ch_prev = state
+        return None
 
     def _advance(self):
         self.ch_prev = self.ch

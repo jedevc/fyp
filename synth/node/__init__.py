@@ -16,6 +16,7 @@ from .expr import (
     Operator,
     RefNode,
     StringValueNode,
+    TemplateValueNode,
     ValueNode,
     VariableNode,
 )
@@ -45,4 +46,4 @@ from .types import (
     TypeNode,
     type_check,
 )
-from .visitor import TraversalVisitor, Visitor
+from .visitor import MapVisitor, TraversalVisitor, Visitor

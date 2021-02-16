@@ -7,7 +7,13 @@ from .error import SynthError
 from .graph.codegen import CodeGen
 from .interpret import Interpreter
 from .parser import Lexer, Parser
-from .passes import BlockifyVisitor, ChunkifyVisitor, PrinterVisitor, TypeCheckVisitor
+from .passes import (
+    BlockifyVisitor,
+    ChunkifyVisitor,
+    PrinterVisitor,
+    TemplaterVisitor,
+    TypeCheckVisitor,
+)
 
 
 def main() -> Optional[int]:
@@ -46,6 +52,9 @@ def synthesize(stream: str, output: TextIO, debug: str = "", style: str = "none"
     if debug == "print":
         visitor = PrinterVisitor(sys.stderr)
         spec.accept(visitor)
+
+    template_visitor = TemplaterVisitor()
+    spec.accept(template_visitor)
 
     type_visitor = TypeCheckVisitor()
     spec.accept(type_visitor)

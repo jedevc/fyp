@@ -1,4 +1,4 @@
-from typing import TYPE_CHECKING, Generic, Optional, TypeVar
+from typing import TYPE_CHECKING, Any, Generic, Optional, TypeVar
 
 if TYPE_CHECKING:
     from .base import Node
@@ -256,3 +256,141 @@ class TraversalVisitor(Visitor[Optional[T]]):
         node.expression.accept(self)
 
         return None
+
+
+class MapVisitor(Visitor[Any]):
+    def visit_spec(self, node: "SpecNode") -> "SpecNode":
+        for i, chunk in enumerate(node.chunks):
+            node.chunks[i] = chunk.accept(self)
+        for i, block in enumerate(node.blocks):
+            node.blocks[i] = block.accept(self)
+
+        return node
+
+    def visit_chunk(self, node: "ChunkNode") -> "ChunkNode":
+        for i, var in enumerate(node.variables):
+            node.variables[i] = var.accept(self)
+
+        return node
+
+    def visit_extern(self, node: "ExternChunkNode") -> "ExternChunkNode":
+        for i, var in enumerate(node.variables):
+            node.variables[i] = var.accept(self)
+
+        return node
+
+    def visit_block(self, node: "BlockNode") -> "BlockNode":
+        for i, stmt in enumerate(node.statements):
+            node.statements[i] = stmt.accept(self)
+
+        return node
+
+    def visit_declaration(self, node: "DeclarationNode") -> "DeclarationNode":
+        node.vartype = node.vartype.accept(self)
+        return node
+
+    def visit_special_declaration(
+        self, node: "SpecialDeclarationNode"
+    ) -> "SpecialDeclarationNode":
+        return node
+
+    def visit_type_simple(self, node: "SimpleTypeNode") -> "SimpleTypeNode":
+        return node
+
+    def visit_type_pointer(self, node: "PointerTypeNode") -> "PointerTypeNode":
+        node.base = node.base.accept(self)
+        return node
+
+    def visit_type_array(self, node: "ArrayTypeNode") -> "ArrayTypeNode":
+        node.base = node.base.accept(self)
+        return node
+
+    def visit_type_func(self, node: "FuncTypeNode") -> "FuncTypeNode":
+        for i, arg in enumerate(node.args):
+            node.args[i] = arg.accept(self)
+        node.ret = node.ret.accept(self)
+
+        return node
+
+    def visit_assignment(self, node: "AssignmentNode") -> "AssignmentNode":
+        node.target = node.target.accept(self)
+        node.expression = node.expression.accept(self)
+
+        return node
+
+    def visit_literal(self, node: "LiteralNode") -> "LiteralNode":
+        return node
+
+    def visit_ref(self, node: "RefNode") -> "RefNode":
+        node.target = node.target.accept(self)
+
+        return node
+
+    def visit_deref(self, node: "DerefNode") -> "DerefNode":
+        node.target = node.target.accept(self)
+
+        return node
+
+    def visit_array(self, node: "ArrayNode") -> "ArrayNode":
+        node.target = node.target.accept(self)
+        node.index = node.index.accept(self)
+
+        return node
+
+    def visit_binary(self, node: "BinaryOperationNode") -> "BinaryOperationNode":
+        node.left = node.left.accept(self)
+        node.right = node.right.accept(self)
+
+        return node
+
+    def visit_cast(self, node: "CastNode") -> "CastNode":
+        node.cast = node.cast.accept(self)
+        node.expr = node.expr.accept(self)
+
+        return node
+
+    def visit_variable(self, node: "VariableNode") -> "VariableNode":
+        return node
+
+    def visit_function(self, node: "FunctionNode") -> "FunctionNode":
+        node.target = node.target.accept(self)
+        for i, arg in enumerate(node.arguments):
+            node.arguments[i] = arg.accept(self)
+
+        return node
+
+    def visit_value(self, node: "ValueNode") -> "ValueNode":
+        return node
+
+    def visit_call(self, node: "CallNode") -> "CallNode":
+        return node
+
+    def visit_split(self, node: "SplitNode") -> "SplitNode":
+        return node
+
+    def visit_if(self, node: "IfNode") -> "IfNode":
+        node.condition = node.condition.accept(self)
+        for i, statement in enumerate(node.statements):
+            node.statements[i] = statement.accept(self)
+
+        if node.else_if:
+            node.else_if = node.else_if.accept(self)
+        if node.else_statements:
+            for i, statement in enumerate(node.else_statements):
+                node.else_statements[i] = statement.accept(self)
+
+        return node
+
+    def visit_while(self, node: "WhileNode") -> "WhileNode":
+        node.condition = node.condition.accept(self)
+        for i, statement in enumerate(node.statements):
+            node.statements[i] = statement.accept(self)
+
+        return node
+
+    def visit_exprstmt(
+        self, node: "ExpressionStatementNode"
+    ) -> "ExpressionStatementNode":
+        node.expression = node.expression.accept(self)
+
+        return node
