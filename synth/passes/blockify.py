@@ -48,10 +48,6 @@ from ..node import (
 from ..utils import generate_unique_name
 
 
-class Splitter:
-    pass
-
-
 class BlockifyVisitor(Visitor[None]):
     def __init__(self, chunks: List[Chunk], extern: Chunk):
         super().__init__()
