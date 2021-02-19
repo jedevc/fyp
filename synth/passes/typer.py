@@ -1,4 +1,5 @@
 import functools
+from typing import Dict, Optional
 
 from ..builtins import functions, types, variables
 from ..builtins.types import MetaType
@@ -51,21 +52,23 @@ def parse_typestring(typestr: str) -> TypeNode:
 
 
 class TypeCheckVisitor(TraversalVisitor[TypeNode]):
-    def __init__(self):
+    def __init__(self, require_main: bool = True):
         super().__init__()
-        self.vars = {}
+        self.require_main = require_main
 
-        self.blocks = {}
-        self.block_refs = {}
+        self.vars: Dict[str, TypeNode] = {}
 
-        self.block_current = None
+        self.blocks: Dict[str, BlockNode] = {}
+        self.block_refs: Dict[str, CallNode] = {}
+
+        self.block_current: Optional[str] = None
         self.block_seen_split = False
 
     def visit_spec(self, node: SpecNode):
         # resolve block references after traversal
         super().visit_spec(node)
 
-        if "main" not in self.blocks:
+        if self.require_main and "main" not in self.blocks:
             raise ProcessingError(node, "no main block is defined")
 
         for block_name in self.block_refs:

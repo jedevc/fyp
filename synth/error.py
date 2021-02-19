@@ -1,5 +1,5 @@
 class SynthError(BaseException):
-    def format(self, stream: str):
+    def __str__(self):
         raise NotImplementedError()
 
 

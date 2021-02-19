@@ -113,6 +113,7 @@ class Interpreter:
         }
 
     def _trace(self):
+        assert "main" in self.blocks
         traces = Tracer(self.blocks["main"])
 
         # determine functions that local chunks should be allocated on

@@ -1,6 +1,6 @@
 import sys
 from pathlib import Path
-from typing import List
+from typing import Iterable, List
 
 from .graph import Block, Chunk
 from .parser import Lexer, Parser
@@ -20,7 +20,9 @@ class Asset:
         self.extern = extern
 
     @staticmethod
-    def load(stream: str, print_ast: bool = False) -> "Asset":
+    def load(
+        stream: str, require_main: bool = True, print_ast: bool = False
+    ) -> "Asset":
         lex = Lexer(stream)
         tokens = lex.tokens_list()
 
@@ -33,7 +35,7 @@ class Asset:
         template_visitor = TemplaterVisitor()
         spec.accept(template_visitor)
 
-        type_visitor = TypeCheckVisitor()
+        type_visitor = TypeCheckVisitor(require_main=require_main)
         spec.accept(type_visitor)
 
         chunk_visitor = ChunkifyVisitor()
@@ -48,5 +50,23 @@ class Asset:
         return Asset(blocks, chunks, extern)
 
     @staticmethod
-    def loadpath(path: Path) -> "Asset":
-        return Asset.load(path.read_text())
+    def loadpath(
+        path: Path, require_main: bool = True, print_ast: bool = False
+    ) -> "Asset":
+        return Asset.load(
+            path.read_text(), require_main=require_main, print_ast=print_ast
+        )
+
+
+class AssetLoader:
+    EXTENSION = "spec"
+    ROOT = Path(__file__).parent.parent / "assets"
+
+    @staticmethod
+    def list(*category: str, require_main: bool = True) -> Iterable[Asset]:
+        current = AssetLoader.ROOT
+        for part in category:
+            current /= part
+
+        for path in current.glob(f"**/*.{AssetLoader.EXTENSION}"):
+            yield Asset.loadpath(path, require_main=require_main)

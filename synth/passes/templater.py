@@ -32,6 +32,6 @@ class TemplaterVisitor(MapVisitor):
                     node, f"template for {node.name} has not been defined yet"
                 )
 
-            return TemplateValueNode.construct(result)
+            return node.construct(result)
         else:
             return super().visit_value(node)

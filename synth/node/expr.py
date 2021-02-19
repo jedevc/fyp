@@ -82,17 +82,22 @@ class TemplateValueNode(ValueNode):
         self.name = name
         self.definition = definition
 
-    @staticmethod
-    def construct(source: Union[str, int, float]) -> ValueNode:
+    def construct(self, source: Union[str, int, float]) -> ValueNode:
+        node: ValueNode
         if isinstance(source, str):
-            return StringValueNode(source)
+            node = StringValueNode(source)
         elif isinstance(source, int):
-            return IntValueNode(source, 10)
+            node = IntValueNode(source, 10)
         elif isinstance(source, float):
             lhs, rhs = f"{source:.20f}".split(".")
-            return FloatValueNode(int(lhs), int(rhs))
+            node = FloatValueNode(int(lhs), int(rhs))
         else:
             raise TypeError(f"cannot construct value from {type(source)}")
+
+        node.token_start = self.token_start
+        node.token_end = self.token_end
+
+        return node
 
 
 class LiteralNode(Node):

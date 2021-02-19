@@ -61,7 +61,6 @@ def _translate_types(tokens: List[str], type_table: Dict[str, str]) -> List[str]
                 key = key_piece + " " + key
                 if key in type_table:
                     result = result[: -i - 1]
-                    break
 
             if key in type_table:
                 result.append(type_table[key])

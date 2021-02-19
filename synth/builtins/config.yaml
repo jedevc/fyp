@@ -12,25 +12,27 @@ core:
       - bool
 
     integral:
-      - char
       - signed char
       - unsigned char
+      - char
 
-      - short
       - signed short
       - unsigned short
+      - short
 
-      - int
       - signed int
       - unsigned int
+      - signed
+      - unsigned
+      - int
 
-      - long
       - signed long
       - unsigned long
+      - long
 
-      - long long
       - signed long long
       - unsigned long long
+      - long long
 
     floating:
       - float

@@ -29,7 +29,7 @@ def main() -> Optional[int]:
     try:
         synthesize(stream, args.outfile, print_ast=args.print_ast, style=args.format)
     except SynthError as err:
-        print(err.format(stream), file=sys.stderr)
+        print(err, file=sys.stderr)
         return 1
 
     return 0

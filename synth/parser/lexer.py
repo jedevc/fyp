@@ -108,13 +108,13 @@ class Lexer:
         prevn = self.n
 
         if self.ch is None:
-            return Token(self.n, 1, TokenType.EOF)
+            return Token(self.stream, self.n, 1, TokenType.EOF)
         elif self.ch == "\n":
             n = self.n
             self._advance()
             while self._isspace() and self.ch != "\n":
                 self._advance()
-            return Token(n, 1, TokenType.Newline)
+            return Token(self.stream, n, 1, TokenType.Newline)
         elif self._isspace():
             while self._isspace() and self.ch != "\n":
                 self._advance()
@@ -128,7 +128,7 @@ class Lexer:
                 opened = 1
                 while opened != 0:
                     if self.ch is None:
-                        raise LexError(start, self.n, "unfinished literal")
+                        raise LexError(self.stream, start, self.n, "unfinished literal")
                     elif self.ch == "(":
                         opened += 1
                     elif self.ch == ")":
@@ -136,6 +136,7 @@ class Lexer:
                     self._advance()
 
                 return Token(
+                    self.stream,
                     start - 2,
                     self.n,
                     TokenType.Literal,
@@ -143,7 +144,7 @@ class Lexer:
                 )
             else:
                 name = self._read_name()
-                return Token(self.n, len(name), TokenType.Name, "$" + name)
+                return Token(self.stream, self.n, len(name), TokenType.Name, "$" + name)
         elif self.ch == "/":
             self._advance()
             if self.ch == "/":
@@ -157,7 +158,7 @@ class Lexer:
                 while True:
                     self._advance()
                     if self.ch is None:
-                        raise LexError(start, self.n, "unfinished comment")
+                        raise LexError(self.stream, start, self.n, "unfinished comment")
                     elif self.ch == "*":
                         self._advance()
                         if self.ch == "/":
@@ -167,25 +168,31 @@ class Lexer:
                 return None
             else:
                 # just a division operator
-                return Token(self.n, 1, TokenType.Divide)
+                return Token(self.stream, self.n, 1, TokenType.Divide)
         elif self.ch == "<" and (template := self._try_read_template()):
-            return Token(self.n, self.n - prevn, TokenType.Template, template)
+            return Token(
+                self.stream, self.n, self.n - prevn, TokenType.Template, template
+            )
         elif self.ch in ("'", '"'):
             s = self._read_str()
-            return Token(self.n, len(s) + 2, TokenType.String, s)
+            return Token(self.stream, self.n, len(s) + 2, TokenType.String, s)
         elif self.ch == "#":
             self._advance()
             if self.ch in ("'", '"'):
                 s = self._read_str()
                 if len(s) != 1:
-                    raise LexError(start, self.n, "char literal is too long")
-                return Token(self.n, len(s) + 3, TokenType.Integer, ord(s))
+                    raise LexError(
+                        self.stream, start, self.n, "char literal is too long"
+                    )
+                return Token(self.stream, self.n, len(s) + 3, TokenType.Integer, ord(s))
             elif self.ch in string.ascii_letters or self.ch in string.digits:
                 self._advance()
                 assert self.ch_prev is not None
-                return Token(self.n, 2, TokenType.Integer, ord(self.ch_prev))
+                return Token(
+                    self.stream, self.n, 2, TokenType.Integer, ord(self.ch_prev)
+                )
             else:
-                raise LexError(start, self.n, "invalid character literal")
+                raise LexError(self.stream, start, self.n, "invalid character literal")
         elif ttype := SIMPLE_TOKENS.get(self.ch):
             self._advance()
             if isinstance(ttype, dict):
@@ -193,28 +200,34 @@ class Lexer:
                     piece = self.stream[self.n : self.n + len(target) - 1]
                     if piece == target[1:]:
                         self._skip(len(target) - 1)
-                        return Token(self.n, len(target), ttype[target])
+                        return Token(self.stream, self.n, len(target), ttype[target])
 
-                return Token(self.n, 1, TokenType.Unknown)
+                return Token(self.stream, self.n, 1, TokenType.Unknown)
             else:
-                return Token(self.n, 1, ttype)
+                return Token(self.stream, self.n, 1, ttype)
         elif self._isalpha():
             name = self._read_name()
             if name in RESERVED_WORDS:
-                return Token(self.n, len(name), TokenType.Reserved, name)
+                return Token(self.stream, self.n, len(name), TokenType.Reserved, name)
             else:
-                return Token(self.n, len(name), TokenType.Name, name)
+                return Token(self.stream, self.n, len(name), TokenType.Name, name)
         elif self._isnum():
             lhs, rhs = self._read_num()
             if isinstance(rhs, int):
-                return Token(self.n, len(lhs), TokenType.Integer, (lhs, rhs))
+                return Token(
+                    self.stream, self.n, len(lhs), TokenType.Integer, (lhs, rhs)
+                )
             else:
                 return Token(
-                    self.n, len(lhs) + 1 + len(rhs), TokenType.Float, (lhs, rhs)
+                    self.stream,
+                    self.n,
+                    len(lhs) + 1 + len(rhs),
+                    TokenType.Float,
+                    (lhs, rhs),
                 )
         else:
             self._advance()
-            return Token(self.n, 1, TokenType.Unknown)
+            return Token(self.stream, self.n, 1, TokenType.Unknown)
 
     def _read_name(self) -> str:
         start = self.n
@@ -224,7 +237,7 @@ class Lexer:
             self._advance()
 
         if self.ch is not None and not self._isspace() and self.ch not in SIMPLE_TOKENS:
-            raise LexError(start, self.n, "invalid word")
+            raise LexError(self.stream, start, self.n, "invalid word")
 
         return self.stream[start : self.n]
 
@@ -255,7 +268,7 @@ class Lexer:
                 self._advance()
 
         if self.ch is not None and not self._isspace() and self.ch not in SIMPLE_TOKENS:
-            raise LexError(start, self.n, "invalid number")
+            raise LexError(self.stream, start, self.n, "invalid number")
 
         if mid == self.n:
             return self.stream[start : self.n], base
@@ -271,7 +284,7 @@ class Lexer:
             self._advance()
 
         if self.ch is None or self.ch == "\n":
-            raise LexError(start, self.n - 1, "end of string not found")
+            raise LexError(self.stream, start, self.n - 1, "end of string not found")
 
         assert self.ch == quote
         self._advance()
@@ -282,7 +295,9 @@ class Lexer:
         state = (self.n, self.ch, self.ch_prev)
         try:
             if self.ch != "<":
-                raise LexError(state[0], self.n, "start of template not found")
+                raise LexError(
+                    self.stream, state[0], self.n, "start of template not found"
+                )
             self._advance()
 
             name = self._read_name()
@@ -295,7 +310,7 @@ class Lexer:
                 while self.ch is not None and self.ch != ">":
                     self._advance()
                 if self.ch != ">":
-                    raise LexError(state[0], self.n, "unfinished template")
+                    raise LexError(self.stream, state[0], self.n, "unfinished template")
 
                 self._advance()
                 return (name, self.stream[start : self.n - 1].strip())
@@ -303,7 +318,7 @@ class Lexer:
                 self._advance()
                 return (name, None)
             else:
-                raise LexError(state[0], self.n, "invalid template")
+                raise LexError(self.stream, state[0], self.n, "invalid template")
         except LexError:
             pass
 
