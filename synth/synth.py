@@ -3,17 +3,10 @@ import subprocess
 import sys
 from typing import Optional, TextIO
 
+from .assets import Asset
 from .error import SynthError
 from .graph.codegen import CodeGen
 from .interpret import Interpreter
-from .parser import Lexer, Parser
-from .passes import (
-    BlockifyVisitor,
-    ChunkifyVisitor,
-    PrinterVisitor,
-    TemplaterVisitor,
-    TypeCheckVisitor,
-)
 
 
 def main() -> Optional[int]:
@@ -21,7 +14,7 @@ def main() -> Optional[int]:
     arg_parser.add_argument("infile", type=argparse.FileType("r"))
     arg_parser.add_argument("outfile", type=argparse.FileType("w"))
     arg_parser.add_argument(
-        "--debug", choices=["print"], help="Perform debugging actions"
+        "--print-ast", action="store_true", help="Dump the parsed AST"
     )
     arg_parser.add_argument(
         "--format",
@@ -34,7 +27,7 @@ def main() -> Optional[int]:
     stream = args.infile.read()
 
     try:
-        synthesize(stream, args.outfile, debug=args.debug, style=args.format)
+        synthesize(stream, args.outfile, print_ast=args.print_ast, style=args.format)
     except SynthError as err:
         print(err.format(stream), file=sys.stderr)
         return 1
@@ -42,33 +35,12 @@ def main() -> Optional[int]:
     return 0
 
 
-def synthesize(stream: str, output: TextIO, debug: str = "", style: str = "none"):
-    lex = Lexer(stream)
-    tokens = lex.tokens_list()
+def synthesize(
+    stream: str, output: TextIO, style: str = "none", print_ast: bool = False
+):
+    asset = Asset.load(stream, print_ast=print_ast)
 
-    parser = Parser(tokens)
-    spec = parser.parse()
-
-    if debug == "print":
-        visitor = PrinterVisitor(sys.stderr)
-        spec.accept(visitor)
-
-    template_visitor = TemplaterVisitor()
-    spec.accept(template_visitor)
-
-    type_visitor = TypeCheckVisitor()
-    spec.accept(type_visitor)
-
-    chunk_visitor = ChunkifyVisitor()
-    spec.accept(chunk_visitor)
-    chunks = chunk_visitor.chunks
-    extern = chunk_visitor.extern
-
-    block_visitor = BlockifyVisitor(chunks, extern)
-    spec.accept(block_visitor)
-    blocks = block_visitor.result()
-
-    inter = Interpreter(blocks, chunks, extern)
+    inter = Interpreter(asset.blocks, asset.chunks, asset.extern)
     prog = inter.program()
     gen = CodeGen(prog)
     code = gen.generate()

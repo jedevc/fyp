@@ -28,6 +28,7 @@ from ..node import (
     SplitNode,
     StatementNode,
     StringValueNode,
+    TemplateValueNode,
     ValueNode,
     VariableNode,
     Visitor,
@@ -169,6 +170,8 @@ class PrinterVisitor(Visitor[None]):
             self._print(str(node.value))
         elif isinstance(node, FloatValueNode):
             self._print(f"{node.left}.{node.right}")
+        elif isinstance(node, TemplateValueNode):
+            self._print(f"<{node.name}; {node.definition}>")
         else:
             print(node)
             raise RuntimeError()

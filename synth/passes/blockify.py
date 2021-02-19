@@ -166,7 +166,7 @@ class BlockifyLvalueVisitor(Visitor[Lvalue]):
             return Variable(var)
 
     def visit_deref(self, node: DerefNode) -> Lvalue:
-        return Deref(node.target.accept(self))
+        return Deref(node.target.accept(BlockifyExpressionVisitor(self.parent)))
 
     def visit_array(self, node: ArrayNode) -> Lvalue:
         return Array(
@@ -194,7 +194,6 @@ class BlockifyExpressionVisitor(Visitor[Expression]):
 
     def visit_function(self, node: FunctionNode) -> Expression:
         var = node.target.accept(BlockifyLvalueVisitor(self.parent))
-        # assert isinstance(var, Variable)
         return Function(var, [expr.accept(self) for expr in node.arguments])
 
     def visit_value(self, node: ValueNode) -> Expression:
