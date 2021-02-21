@@ -95,19 +95,18 @@ class CodeGen:
                         "} " + f"else if ({self._gen_expr(condition)})" + " {\n"
                     )
                     lines.extend([self._gen_stmt(stmt) for stmt in statements])
-            lines.append("}\n")
+            lines.append("}")
             return "".join(lines)
         elif isinstance(stmt, While):
             block = (
                 "{\n" + "".join(self._gen_stmt(stmt) for stmt in stmt.statements) + "}"
             )
-            return f"while ({self._gen_expr(stmt.condition)}) {block}\n"
+            return f"while ({self._gen_expr(stmt.condition)}) {block}"
         elif isinstance(stmt, ExpressionStatement):
             return self._gen_expr(stmt.expr) + ";\n"
         elif isinstance(stmt, StatementGroup):
-            return "\n".join(self._gen_stmt(stmt) for stmt in stmt.statements)
+            return "".join(self._gen_stmt(stmt) for stmt in stmt.statements)
         else:
-            print(stmt)
             raise RuntimeError("cannot be translated into code")
 
     def _gen_expr(self, expr: Expression) -> str:

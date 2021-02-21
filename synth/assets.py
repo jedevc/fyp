@@ -20,9 +20,7 @@ class Asset:
         self.extern = extern
 
     @staticmethod
-    def load(
-        stream: str, require_main: bool = True, print_ast: bool = False
-    ) -> "Asset":
+    def load(stream: str, external: bool = False, print_ast: bool = False) -> "Asset":
         lex = Lexer(stream)
         tokens = lex.tokens_list()
 
@@ -35,7 +33,7 @@ class Asset:
         template_visitor = TemplaterVisitor()
         spec.accept(template_visitor)
 
-        type_visitor = TypeCheckVisitor(require_main=require_main)
+        type_visitor = TypeCheckVisitor(require_main=not external)
         spec.accept(type_visitor)
 
         chunk_visitor = ChunkifyVisitor()
@@ -51,11 +49,9 @@ class Asset:
 
     @staticmethod
     def loadpath(
-        path: Path, require_main: bool = True, print_ast: bool = False
+        path: Path, external: bool = False, print_ast: bool = False
     ) -> "Asset":
-        return Asset.load(
-            path.read_text(), require_main=require_main, print_ast=print_ast
-        )
+        return Asset.load(path.read_text(), external=external, print_ast=print_ast)
 
 
 class AssetLoader:
@@ -63,10 +59,10 @@ class AssetLoader:
     ROOT = Path(__file__).parent.parent / "assets"
 
     @staticmethod
-    def list(*category: str, require_main: bool = True) -> Iterable[Asset]:
+    def list(*category: str, external: bool = False) -> Iterable[Asset]:
         current = AssetLoader.ROOT
         for part in category:
             current /= part
 
         for path in current.glob(f"**/*.{AssetLoader.EXTENSION}"):
-            yield Asset.loadpath(path, require_main=require_main)
+            yield Asset.loadpath(path, external=external)

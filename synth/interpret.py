@@ -1,6 +1,6 @@
 import random
 from functools import reduce
-from typing import Any, Callable, Dict, List, Optional, Set, Tuple
+from typing import Any, Dict, List, Optional, Set, Tuple
 
 from .graph import (
     Array,
@@ -52,9 +52,19 @@ class Interpreter:
         self.maximals: Dict[str, Dict[str, UsageCapture]] = {}
 
         self._randomize()
-        self._trace()
 
         for blname, block in self.blocks.items():
+            block = self._apply_inline_calls(block)
+            self.blocks[blname] = block
+
+        self._repair_calls()
+
+        self._trace()
+
+        for blname in self.func_blocks:
+            # the inline blocks have already been handled
+
+            block = self.blocks[blname]
             block = self._apply_lifts(block)
             block = self._apply_calls(block)
             self.blocks[blname] = block
@@ -96,7 +106,9 @@ class Interpreter:
 
         # assign each block an interpretation
         self.func_blocks = {
-            blname for blname in self.blocks if blname == "main" or random.random() > 0
+            blname
+            for blname in self.blocks
+            if blname == "main" or random.random() > 0.5
         }
         self.inline_blocks = {
             blname for blname in self.blocks if blname not in self.func_blocks
@@ -106,7 +118,7 @@ class Interpreter:
         self.local_chunks = {
             chunk
             for chunk in self.chunks
-            if chunk.constraint.eof or random.random() > 0.5
+            if chunk.constraint.eof or random.random() > 0.0
         }
         self.global_chunks = {
             chunk for chunk in self.chunks if chunk not in self.local_chunks
@@ -118,7 +130,7 @@ class Interpreter:
 
         # determine functions that local chunks should be allocated on
         for chunk in self.local_chunks:
-            root = traces.root(chunk, lambda bl: bl.name in self.func_blocks)
+            root = traces.root(chunk)
             if root is None:
                 root = self.blocks["main"]
 
@@ -157,6 +169,40 @@ class Interpreter:
 
         return block.map(mapper)
 
+    def _repair_calls(self):
+        nblocks = {block: Block(block) for block in self.blocks}
+
+        def mapper(item: BlockItem) -> BlockItem:
+            if isinstance(item, Call):
+                return Call(nblocks[item.block.name])
+            elif isinstance(item, Block):
+                nblocks[item.name].add_statements(item.statements)
+                return item
+            else:
+                return item
+
+        for block in self.blocks.values():
+            block.map(mapper)
+
+        self.blocks = nblocks
+
+    def _apply_inline_calls(self, block: Block) -> Block:
+        def mapper(item: BlockItem) -> BlockItem:
+            if not isinstance(item, Call):
+                return item
+
+            if item.block.name in self.inline_blocks:
+                group = [
+                    stmt.map(mapper) for stmt in self.blocks[item.block.name].statements
+                ]
+                return StatementGroup(group)
+            elif item.block.name in self.func_blocks:
+                return item
+            else:
+                raise RuntimeError()
+
+        return block.map(mapper)
+
     def _apply_calls(self, block: Block) -> Block:
         def mapper(item: BlockItem) -> BlockItem:
             if not isinstance(item, Call):
@@ -184,7 +230,7 @@ class Interpreter:
                 new_stmt = ExpressionStatement(Function(Variable(cvar), args))
                 return new_stmt
             elif item.block.name in self.inline_blocks:
-                return StatementGroup(self.blocks[item.block.name].statements)
+                raise RuntimeError()
             else:
                 raise RuntimeError()
 
@@ -227,9 +273,7 @@ class Tracer:
                     else:
                         self.patches[bl] = list(collected)
 
-    def root(
-        self, chunk: Chunk, predicate: Optional[Callable[[Block], bool]] = None
-    ) -> Optional[Block]:
+    def root(self, chunk: Chunk) -> Optional[Block]:
         """
         Find the deepest block node that contains all references to a chunk,
         such that no siblings of the result reference the chunk.
@@ -239,11 +283,6 @@ class Tracer:
             return None
 
         prefix = self.prefixes[chunk]
-
-        if predicate:
-            while len(prefix) > 0 and not predicate(prefix[-1].block):
-                prefix.pop()
-
         if len(prefix) == 0:
             return self.base
         else:
@@ -254,23 +293,23 @@ class Tracer:
         variables: Set[ChunkVariable] = set()
 
         def finder(part: BlockItem):
+            nonlocal variables
+
             if isinstance(part, Variable):
                 if part.variable.chunk is not None:
                     chunks.add(part.variable.chunk)
                 variables.add(part.variable)
-            # elif isinstance(part, Function):
-            #     chunks.add(part.func.variable.chunk)
-            #     variables.add(part.func.variable)
             elif isinstance(part, Call):
                 self._trace(part.block, prefix + [part])
+                variables |= self.variables[part.block]
 
         base.traverse(finder)
 
         for chunk in chunks:
-            if chunk not in self.paths:
-                self.paths[chunk] = []
-
-            self.paths[chunk].append(prefix)
+            if chunk in self.paths:
+                self.paths[chunk].append(prefix)
+            else:
+                self.paths[chunk] = [prefix]
 
         self.variables[base] = variables
 

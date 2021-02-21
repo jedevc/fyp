@@ -3,10 +3,11 @@ import subprocess
 import sys
 from typing import Optional, TextIO
 
-from .assets import Asset
+from .assets import Asset, AssetLoader
 from .error import SynthError
 from .graph.codegen import CodeGen
 from .interpret import Interpreter
+from .nops import NopTransformer
 
 
 def main() -> Optional[int]:
@@ -40,7 +41,14 @@ def synthesize(
 ):
     asset = Asset.load(stream, print_ast=print_ast)
 
-    inter = Interpreter(asset.blocks, asset.chunks, asset.extern)
+    nops = AssetLoader.list("nops", external=True)
+    noper = NopTransformer(nops)
+    blocks = [noper.transform(block) for block in asset.blocks] + list(
+        noper.additional_blocks
+    )
+    chunks = asset.chunks + list(noper.additional_chunks)
+
+    inter = Interpreter(blocks, chunks, asset.extern)
     prog = inter.program()
     gen = CodeGen(prog)
     code = gen.generate()
