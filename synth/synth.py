@@ -1,10 +1,12 @@
 import argparse
 import subprocess
 import sys
+from functools import reduce
 from typing import Optional, TextIO
 
 from .assets import Asset, AssetLoader
 from .error import SynthError
+from .graph import merge_chunks
 from .graph.codegen import CodeGen
 from .interpret import Interpreter
 from .nops import NopTransformer
@@ -47,8 +49,9 @@ def synthesize(
         noper.additional_blocks
     )
     chunks = asset.chunks + list(noper.additional_chunks)
+    extern = reduce(merge_chunks, [asset.extern, *noper.additional_externs])
 
-    inter = Interpreter(blocks, chunks, asset.extern)
+    inter = Interpreter(blocks, chunks, extern)
     prog = inter.program()
     gen = CodeGen(prog)
     code = gen.generate()
