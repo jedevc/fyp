@@ -118,7 +118,7 @@ class Interpreter:
         self.local_chunks = {
             chunk
             for chunk in self.chunks
-            if chunk.constraint.eof or random.random() > 0.0
+            if chunk.constraint.eof or random.random() > 0.5
         }
         self.global_chunks = {
             chunk for chunk in self.chunks if chunk not in self.local_chunks

@@ -34,8 +34,8 @@ class NopTransformer:
         def mapper(item: BlockItem) -> BlockItem:
             if not isinstance(item, Call):
                 return item
-            # if random.random() > 0.1:
-            #     return item
+            if random.random() > 0.1:
+                return item
 
             def copier(item: BlockItem):
                 # we need to make each variable reference unique - since we
