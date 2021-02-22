@@ -2,7 +2,7 @@ import random
 from typing import Dict, Iterable, List, Set
 
 from .assets import Asset
-from .graph import Block, BlockItem, Call, Chunk, merge_chunks
+from .graph import Block, BlockItem, Call, Chunk, Variable, merge_chunks
 from .interpret import Tracer
 from .utils import generate_unique_name
 
@@ -33,9 +33,20 @@ class NopTransformer:
             # if random.random() > 0.1:
             #     return item
 
+            def copier(item: BlockItem):
+                # we need to make each variable reference unique - since we
+                # could instantiate this nop many times, in different variable
+                # contexts
+                if isinstance(item, Variable):
+                    return Variable(item.variable)
+                else:
+                    return item
+
             # create a variation of the block
             nop = random.choice(self._blocks)
-            nblock = Block(generate_unique_name(6), list(nop.statements))
+            nblock = Block(
+                generate_unique_name(6), [stmt.map(copier) for stmt in nop.statements]
+            )
             nblock.add_statement(item)
 
             self.additional_blocks.add(nblock)

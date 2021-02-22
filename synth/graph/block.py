@@ -30,7 +30,7 @@ class BlockItem:
         pass
 
     def map(self, func: MappingFunc) -> "BlockItem":
-        return func(self)
+        raise NotImplementedError()
 
 
 class Block(BlockItem):
@@ -168,7 +168,7 @@ class Call(BlockItem):
     def map(self, func: MappingFunc) -> "Call":
         # NOTE: same as above!
 
-        return func(self)
+        return func(Call(self.block, self.id))
 
     def __repr__(self) -> str:
         return f"<{self.__class__.__name__} {self.block.name}>"
@@ -265,7 +265,7 @@ class Variable(BlockItem):
         func(self)
 
     def map(self, func: MappingFunc) -> "Variable":
-        return func(self)
+        return func(Variable(self.variable, self.id))
 
     def __repr__(self) -> str:
         return f"<{self.__class__.__name__} {self.variable}>"
@@ -327,7 +327,7 @@ class Value(BlockItem):
         func(self)
 
     def map(self, func: MappingFunc) -> "Value":
-        return func(self)
+        return func(Value(self.value, self.id))
 
     def __repr__(self) -> str:
         return f"<{self.__class__.__name__} {self.value}>"
