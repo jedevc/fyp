@@ -473,16 +473,22 @@ class Parser:
             return self.node_exit(ArrayTypeNode(base, int(*size.lexeme)))
         elif self.accept(TokenType.Reserved, ReservedWord.Function):
             args = []
+            variadic = False
             self.expect(TokenType.ParenOpen)
             if not self.accept(TokenType.ParenClose):
-                args.append(self.declaration_type())
-                while self.accept(TokenType.Comma):
+                while True:
+                    if self.accept(TokenType.Ellipsis):
+                        variadic = True
+                        break
+
                     args.append(self.declaration_type())
+                    if not self.accept(TokenType.Comma):
+                        break
+
                 self.expect(TokenType.ParenClose)
 
             ret = self.declaration_type()
-
-            return self.node_exit(FuncTypeNode(ret, args))
+            return self.node_exit(FuncTypeNode(ret, args, variadic))
         else:
             core = self.expect(TokenType.Name)
             return self.node_exit(SimpleTypeNode(core.lexeme))

@@ -135,10 +135,7 @@ class TypeCheckVisitor(TraversalVisitor[TypeNode]):
         elif node.name in variables.TYPES:
             return parse_typestring(variables.TYPES[node.name])
         elif node.name in functions.SIGNATURES:
-            args, ret = functions.SIGNATURES[node.name]
-            return FuncTypeNode(
-                parse_typestring(ret), [parse_typestring(arg) for arg in args]
-            )
+            return parse_typestring(functions.SIGNATURES[node.name])
         else:
             raise ProcessingError(node, f"variable {node.name} does not exist")
 
@@ -188,16 +185,16 @@ class TypeCheckVisitor(TraversalVisitor[TypeNode]):
         if not isinstance(vtype, FuncTypeNode):
             raise ProcessingError(node, f"{funcname} exists, but is not a function")
 
-        if len(vtype.args) != len(node.arguments):
+        if not vtype.variadic and len(vtype.args) != len(node.arguments):
             raise ProcessingError(
                 node,
                 f"{funcname} expects {len(vtype.args)} arguments, but was given {len(node.arguments)}",
             )
 
-        for i, arg in enumerate(node.arguments):
+        for arg, varg in zip(node.arguments, vtype.args):
             type_result = arg.accept(self)
             assert type_result is not None
-            if not type_check(vtype.args[i], type_result):
+            if not type_check(varg, type_result):
                 # FIXME: better error message needed
                 raise ProcessingError(arg, "argument type mismatch")
 

@@ -145,15 +145,15 @@ class Generator:
 
             name = f"{tag.name}@{lib.name}"
             translations[name] = tag.name
-            signatures[name] = (
-                translate_types(tag.signature, self.type_table),
-                translate_type(tag.typeref, self.type_table),
-            )
+
+            args = translate_types(tag.signature, self.type_table)
+            ret = translate_type(tag.typeref, self.type_table)
+            signatures[name] = f"fn ({', '.join(args)}) {ret}"
 
         contents = ""
-        contents += "from typing import Dict, List, Tuple\n"
+        contents += "from typing import Dict\n"
         contents += f"TRANSLATIONS: Dict[str, str] = {translations}\n"
-        contents += f"SIGNATURES: Dict[str, Tuple[List[str], str]] = {signatures}\n"
+        contents += f"SIGNATURES: Dict[str, str] = {signatures}\n"
         contents += f"PATHS: Dict[str, str] = {paths}\n"
         output.write(contents)
 

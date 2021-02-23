@@ -81,10 +81,11 @@ class ArrayTypeNode(Node):
 
 
 class FuncTypeNode(Node):
-    def __init__(self, ret: TypeNode, args: List[TypeNode]):
+    def __init__(self, ret: TypeNode, args: List[TypeNode], variadic: bool = False):
         super().__init__()
         self.ret = ret
         self.args = args
+        self.variadic = variadic
 
     def accept(self, visitor: Visitor[X]) -> X:
         return visitor.visit_type_func(self)
