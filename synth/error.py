@@ -51,9 +51,10 @@ class ErrorLocation:
                     end_column += 1
                 if i < self.start:
                     start_column += 1
-        if pos != 0:
-            # left-over data
-            lines.append((count, stream[pos:i]))
+
+        left_over = stream[pos:]
+        if left_over:
+            lines.append((count, left_over))
 
         parts = []
         CONTEXT = 2
