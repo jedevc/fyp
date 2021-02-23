@@ -1,4 +1,4 @@
-from typing import Iterable, List, Optional, overload
+from typing import TYPE_CHECKING, Iterable, List, Optional, Union, overload
 
 from ..builtins import types
 from ..node import (
@@ -9,12 +9,22 @@ from ..node import (
     TypeNode,
 )
 
+if TYPE_CHECKING:
+    from .block import Expression
+
 
 class ChunkVariable:
-    def __init__(self, name: str, vtype: Optional[TypeNode], chunk: Optional["Chunk"]):
+    def __init__(
+        self,
+        name: str,
+        vtype: Optional[TypeNode],
+        chunk: Optional["Chunk"],
+        initial: Optional["Expression"] = None,
+    ):
         self.name = name
         self.vtype = vtype
         self.chunk = chunk
+        self.initial = initial
 
     def _typestr(self, tp: TypeNode) -> str:
         if isinstance(tp, SimpleTypeNode):
@@ -131,6 +141,12 @@ class Chunk:
             return None
         else:
             return self._vars[i]
+
+    def __contains__(self, var: Union[str, ChunkVariable]) -> bool:
+        if isinstance(var, str):
+            return var in self._table
+        else:
+            return var in self._vars
 
 
 @overload

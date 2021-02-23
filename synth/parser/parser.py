@@ -454,7 +454,11 @@ class Parser:
         self.expect(TokenType.Colon, fail_msg="expected type specifier after name")
         var_type = self.declaration_type()
 
-        return self.node_exit(DeclarationNode(var.lexeme, var_type))
+        initial: Optional[ExpressionNode] = None
+        if self.accept(TokenType.Assign):
+            initial = self.expression()
+
+        return self.node_exit(DeclarationNode(var.lexeme, var_type, initial))
 
     def declaration_type(self) -> TypeNode:
         """

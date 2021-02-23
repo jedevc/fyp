@@ -1,5 +1,6 @@
 from typing import Dict, List, Optional, Tuple, Union
 
+from ..builtins import functions, variables
 from ..graph import (
     Array,
     Assignment,
@@ -46,6 +47,7 @@ from ..node import (
     WhileNode,
 )
 from ..utils import generate_unique_name
+from .error import ProcessingError
 
 
 class BlockifyVisitor(Visitor[None]):
@@ -90,15 +92,21 @@ class BlockifyVisitor(Visitor[None]):
 
         return result_statements
 
-    def lookup_var(self, name: str) -> Optional[ChunkVariable]:
-        if (var := self.extern.lookup(name)) :
+    def lookup_var(self, name: str) -> ChunkVariable:
+        if name in ("argc", "argv"):
+            return ChunkVariable(name, None, None)
+        elif name in variables.TYPES:
+            return ChunkVariable(name, None, None)
+        elif name in functions.SIGNATURES:
+            return ChunkVariable(name, None, None)
+        elif (var := self.extern.lookup(name)) :
             return var
+        else:
+            for chunk in self.chunks:
+                if (var := chunk.lookup(name)) :
+                    return var
 
-        for chunk in self.chunks:
-            if (var := chunk.lookup(name)) :
-                return var
-
-        return None
+            raise KeyError(f"variable {name} not found")
 
 
 class BlockifyStatementVisitor(Visitor[Union[Statement]]):
@@ -155,11 +163,11 @@ class BlockifyLvalueVisitor(Visitor[Lvalue]):
         self.parent = parent
 
     def visit_variable(self, node: VariableNode) -> Lvalue:
-        var = self.parent.lookup_var(node.name)
-        if var is None:
-            return Variable(ChunkVariable(node.name, None, None))
-        else:
+        try:
+            var = self.parent.lookup_var(node.name)
             return Variable(var)
+        except KeyError as e:
+            raise ProcessingError(node, e.args[0])
 
     def visit_deref(self, node: DerefNode) -> Lvalue:
         return Deref(node.target.accept(BlockifyExpressionVisitor(self.parent)))

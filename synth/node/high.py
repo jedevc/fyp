@@ -1,16 +1,20 @@
-from typing import List, Union
+from typing import List, Optional, Union
 
 from .base import Node, X
+from .expr import ExpressionNode
 from .stmt import StatementNode
 from .types import TypeNode
 from .visitor import Visitor
 
 
 class DeclarationNode(Node):
-    def __init__(self, name: str, vartype: TypeNode):
+    def __init__(
+        self, name: str, vartype: TypeNode, initial: Optional[ExpressionNode] = None
+    ):
         super().__init__()
         self.name = name
         self.vartype = vartype
+        self.initial = initial
 
     def accept(self, visitor: Visitor[X]) -> X:
         return visitor.visit_declaration(self)

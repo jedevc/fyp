@@ -1,4 +1,6 @@
-from ..graph import Chunk, ChunkConstraint, ChunkVariable, merge_chunks
+from typing import Optional
+
+from ..graph import Chunk, ChunkConstraint, ChunkVariable, Expression, merge_chunks
 from ..node import (
     ChunkNode,
     DeclarationNode,
@@ -7,6 +9,7 @@ from ..node import (
     SpecNode,
     Visitor,
 )
+from .blockify import BlockifyExpressionVisitor, BlockifyVisitor
 from .error import ProcessingError
 
 
@@ -48,7 +51,16 @@ class ChunkifyChunkVisitor(Visitor[None]):
             var.accept(self)
 
     def visit_declaration(self, node: DeclarationNode):
-        var = ChunkVariable(node.name, node.vartype, self.chunk)
+        if node.name in self.chunk:
+            return
+
+        init: Optional[Expression] = None
+        if node.initial:
+            # visit the expression without any chunks/extern
+            init = node.initial.accept(
+                BlockifyExpressionVisitor(BlockifyVisitor([], Chunk([])))
+            )
+        var = ChunkVariable(node.name, node.vartype, self.chunk, initial=init)
         self.chunk.add_variable(var)
 
     def visit_special_declaration(self, node: SpecialDeclarationNode):

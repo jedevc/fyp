@@ -58,7 +58,10 @@ class CodeGen:
             except KeyError:
                 pass
 
-        return var.typename()
+        if var.initial:
+            return f"{var.typename()} = {self._gen_expr(var.initial)}"
+        else:
+            return var.typename()
 
     def _gen_func_decl(self, func: FunctionDefinition) -> str:
         lines = [self._gen_stmt(stmt) for stmt in func.statements]

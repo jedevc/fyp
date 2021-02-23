@@ -98,12 +98,36 @@ class TypeCheckVisitor(TraversalVisitor[TypeNode]):
         super().visit_call(node)
 
     def visit_declaration(self, node: DeclarationNode):
-        if node.name in self.vars:
+        if node.name in ("argc", "argv"):
             raise ProcessingError(
-                node, f"variable {node.name} cannot be declared twice"
+                node,
+                f"variable {node.name} has already been implicitly declared by main",
+            )
+        elif node.name in self.vars:
+            raise ProcessingError(
+                node, f"variable {node.name} has already been declared"
+            )
+        elif node.name in variables.TYPES:
+            raise ProcessingError(
+                node,
+                f"variable {node.name} has already been declared as a builtin variable",
+            )
+        elif node.name in functions.SIGNATURES:
+            raise ProcessingError(
+                node,
+                f"variable {node.name} has already been declared as a builtin function",
             )
 
         self.vars[node.name] = node.vartype
+        if node.initial:
+            rhs_type = node.initial.accept(self)
+            assert rhs_type is not None
+
+            if not type_check(self.vars[node.name], rhs_type):
+                raise ProcessingError(
+                    node, "incompatible types in declaration assignment"
+                )
+
         super().visit_declaration(node)
 
     def visit_type_simple(self, node: SimpleTypeNode) -> TypeNode:
