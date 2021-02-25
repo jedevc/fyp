@@ -2,7 +2,7 @@ import random
 from typing import Dict, Iterable, List, Set
 
 from .assets import Asset
-from .graph import Block, BlockItem, Call, Chunk, Variable
+from .graph import Block, BlockItem, Call, Chunk
 from .interpret import Tracer
 from .utils import generate_unique_name
 
@@ -38,13 +38,13 @@ class NopTransformer:
                 return item
 
             def copier(item: BlockItem):
-                # we need to make each variable reference unique - since we
+                # We need to make each variable reference unique - since we
                 # could instantiate this nop many times, in different variable
                 # contexts
-                if isinstance(item, Variable):
-                    return Variable(item.variable)
-                else:
-                    return item
+                # Also, it's just good practice to have every ID different,
+                # hopefully avoiding future problems!
+                item.id = BlockItem.new_id()
+                return item
 
             # create a variation of the block
             nop = random.choice(self._blocks)

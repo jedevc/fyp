@@ -21,10 +21,15 @@ class BlockItem:
 
     def __init__(self, known_id: Optional[int] = None):
         if known_id is None:
-            self.id = BlockItem._counter
-            BlockItem._counter += 1
+            self.id = BlockItem.new_id()
         else:
             self.id = known_id
+
+    @staticmethod
+    def new_id() -> int:
+        i = BlockItem._counter
+        BlockItem._counter += 1
+        return i
 
     def traverse(self, func: TraversalFunc):
         pass
