@@ -1,5 +1,5 @@
 import sys
-from typing import List, TextIO, Union
+from typing import List, TextIO
 
 from ..node import (
     ArrayNode,
@@ -24,7 +24,6 @@ from ..node import (
     PointerTypeNode,
     RefNode,
     SimpleTypeNode,
-    SpecialDeclarationNode,
     SpecNode,
     SplitNode,
     StatementNode,
@@ -68,9 +67,7 @@ class PrinterVisitor(Visitor[None]):
     def visit_extern(self, node: ExternChunkNode):
         self._visit_vars("extern", node.variables)
 
-    def _visit_vars(
-        self, name: str, variables: List[Union[DeclarationNode, SpecialDeclarationNode]]
-    ):
+    def _visit_vars(self, name: str, variables: List[DeclarationNode]):
         self._print(name + " ")
         self.indent += len(name) + 1
         for i, var in enumerate(variables):
@@ -83,9 +80,6 @@ class PrinterVisitor(Visitor[None]):
     def visit_declaration(self, node: DeclarationNode):
         self._print(f"{node.name} : ")
         node.vartype.accept(self)
-
-    def visit_special_declaration(self, node: SpecialDeclarationNode):
-        self._print(f"${node.name}")
 
     def visit_type_simple(self, node: SimpleTypeNode):
         self._print(node.core)

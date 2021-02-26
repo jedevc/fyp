@@ -1,14 +1,7 @@
 from typing import Optional
 
 from ..graph import Chunk, ChunkConstraint, ChunkVariable, Expression, merge_chunks
-from ..node import (
-    ChunkNode,
-    DeclarationNode,
-    ExternChunkNode,
-    SpecialDeclarationNode,
-    SpecNode,
-    Visitor,
-)
+from ..node import ChunkNode, DeclarationNode, ExternChunkNode, SpecNode, Visitor
 from .blockify import BlockifyExpressionVisitor, BlockifyVisitor
 from .error import ProcessingError
 
@@ -46,6 +39,16 @@ class ChunkifyChunkVisitor(Visitor[None]):
         for var in node.variables:
             var.accept(self)
 
+        if not self.allow_constraints and node.constraints:
+            raise ProcessingError(node, "cannot process chunk constraints here")
+
+        self.chunk.constraint = ChunkConstraint()
+        for cname in node.constraints:
+            if cname == "eof":
+                self.chunk.constraint.merge(ChunkConstraint(eof=True))
+            else:
+                raise ProcessingError(node, f"invalid chunk constraint {cname}")
+
     def visit_extern(self, node: ExternChunkNode):
         for var in node.variables:
             var.accept(self)
@@ -62,14 +65,3 @@ class ChunkifyChunkVisitor(Visitor[None]):
             )
         var = ChunkVariable(node.name, node.vartype, self.chunk, initial=init)
         self.chunk.add_variable(var)
-
-    def visit_special_declaration(self, node: SpecialDeclarationNode):
-        if not self.allow_constraints:
-            raise ProcessingError(node, "cannot process chunk constraints here")
-
-        if node.name == "eof":
-            self.chunk.constraint = self.chunk.constraint.join(
-                ChunkConstraint(eof=True)
-            )
-        else:
-            raise ProcessingError(node, f"invalid special variable {node.name}")

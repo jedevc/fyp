@@ -94,10 +94,11 @@ class ChunkConstraint:
     def __init__(self, eof=False):
         self.eof = eof
 
-    def join(self, other) -> "ChunkConstraint":
-        return ChunkConstraint(
-            eof=self.eof or other.eof,
-        )
+    def copy(self) -> "ChunkConstraint":
+        return ChunkConstraint(eof=self.eof)
+
+    def merge(self, other: "ChunkConstraint"):
+        self.eof = self.eof or other.eof
 
     @property
     def empty(self) -> bool:
@@ -167,6 +168,7 @@ def merge_chunks(first: Optional[Chunk], second: Optional[Chunk]) -> Chunk:
         assert first is not None
         return first
 
-    return Chunk(
-        [*first.variables, *second.variables], first.constraint.join(second.constraint)
-    )
+    constraint = first.constraint.copy()
+    constraint.merge(second.constraint)
+
+    return Chunk([*first.variables, *second.variables], constraint)

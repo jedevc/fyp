@@ -142,9 +142,6 @@ class Lexer:
                     TokenType.Literal,
                     self.stream[start : self.n - 1].strip(),
                 )
-            else:
-                name = self._read_name()
-                return Token(self.stream, self.n, len(name), TokenType.Name, "$" + name)
         elif self.ch == "/":
             self._advance()
             if self.ch == "/":
@@ -225,9 +222,9 @@ class Lexer:
                     TokenType.Float,
                     (lhs, rhs),
                 )
-        else:
-            self._advance()
-            return Token(self.stream, self.n, 1, TokenType.Unknown)
+
+        self._advance()
+        return Token(self.stream, self.n, 1, TokenType.Unknown)
 
     def _read_name(self) -> str:
         start = self.n

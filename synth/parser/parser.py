@@ -27,7 +27,6 @@ from ..node import (
     PointerTypeNode,
     RefNode,
     SimpleTypeNode,
-    SpecialDeclarationNode,
     SpecNode,
     SplitNode,
     StatementNode,
@@ -110,13 +109,24 @@ class Parser:
         self.node_enter()
 
         self.expect(TokenType.Reserved, ReservedWord.Chunk)
+
+        constraints = []
+        if self.accept(TokenType.ParenOpen):
+            while True:
+                constraint = self.expect(TokenType.Name)
+                constraints.append(constraint.lexeme)
+                if not self.accept(TokenType.Comma):
+                    break
+
+            self.expect(TokenType.ParenClose)
+
         variables = [self.declaration()]
         while self.accept(TokenType.Comma):
             self.accept(TokenType.Newline)
             variables.append(self.declaration())
         self.end_of_line(after="chunk")
 
-        return self.node_exit(ChunkNode(variables))
+        return self.node_exit(ChunkNode(variables, constraints))
 
     def extern_chunk(self) -> ExternChunkNode:
         """
@@ -446,7 +456,7 @@ class Parser:
 
         return node
 
-    def declaration(self) -> Union[DeclarationNode, SpecialDeclarationNode]:
+    def declaration(self) -> DeclarationNode:
         """
         Parse a variable declaration.
         """
@@ -454,9 +464,6 @@ class Parser:
         self.node_enter()
 
         var = self.expect(TokenType.Name)
-        if var.lexeme[0] == "$":
-            return self.node_exit(SpecialDeclarationNode(var.lexeme[1:]))
-
         self.expect(TokenType.Colon, fail_msg="expected type specifier after name")
         var_type = self.declaration_type()
 

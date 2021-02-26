@@ -13,14 +13,7 @@ if TYPE_CHECKING:
         ValueNode,
         VariableNode,
     )
-    from .high import (
-        BlockNode,
-        ChunkNode,
-        DeclarationNode,
-        ExternChunkNode,
-        SpecialDeclarationNode,
-        SpecNode,
-    )
+    from .high import BlockNode, ChunkNode, DeclarationNode, ExternChunkNode, SpecNode
     from .stmt import (
         AssignmentNode,
         CallNode,
@@ -51,9 +44,6 @@ class Visitor(Generic[T]):
         pass
 
     def visit_declaration(self, node: "DeclarationNode") -> T:
-        pass
-
-    def visit_special_declaration(self, node: "SpecialDeclarationNode") -> T:
         pass
 
     def visit_type_simple(self, node: "SimpleTypeNode") -> T:
@@ -150,10 +140,9 @@ class TraversalVisitor(Visitor[Optional[T]]):
 
     def visit_declaration(self, node: "DeclarationNode") -> Optional[T]:
         node.vartype.accept(self)
+        if node.initial:
+            node.initial.accept(self)
 
-        return None
-
-    def visit_special_declaration(self, node: "SpecialDeclarationNode") -> Optional[T]:
         return None
 
     def visit_type_simple(self, node: "SimpleTypeNode") -> Optional[T]:
@@ -287,11 +276,9 @@ class MapVisitor(Visitor[Any]):
 
     def visit_declaration(self, node: "DeclarationNode") -> "DeclarationNode":
         node.vartype = node.vartype.accept(self)
-        return node
+        if node.initial:
+            node.initial = node.initial.accept(self)
 
-    def visit_special_declaration(
-        self, node: "SpecialDeclarationNode"
-    ) -> "SpecialDeclarationNode":
         return node
 
     def visit_type_simple(self, node: "SimpleTypeNode") -> "SimpleTypeNode":

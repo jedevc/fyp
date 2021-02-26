@@ -1,7 +1,6 @@
 // need external flag file
 
-chunk buffer: [64]char,
-      $eof
+chunk (eof) buffer: [64]char
 
 block main {
     gets@libc(buffer)

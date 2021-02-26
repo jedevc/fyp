@@ -1,4 +1,4 @@
-from typing import List, Optional, Union
+from typing import List, Optional
 
 from .base import Node, X
 from .expr import ExpressionNode
@@ -20,25 +20,20 @@ class DeclarationNode(Node):
         return visitor.visit_declaration(self)
 
 
-class SpecialDeclarationNode(Node):
-    def __init__(self, name: str):
-        super().__init__()
-        self.name = name
-
-    def accept(self, visitor: Visitor[X]) -> X:
-        return visitor.visit_special_declaration(self)
-
-
 class ChunkNode(Node):
-    def __init__(self, variables: List[Union[DeclarationNode, SpecialDeclarationNode]]):
+    def __init__(self, variables: List[DeclarationNode], constraints: List[str]):
         super().__init__()
         self.variables = variables
+        self.constraints = constraints
 
     def accept(self, visitor: Visitor[X]) -> X:
         return visitor.visit_chunk(self)
 
 
 class ExternChunkNode(ChunkNode):
+    def __init__(self, variables: List[DeclarationNode]):
+        super().__init__(variables, [])
+
     def accept(self, visitor: Visitor[X]) -> X:
         return visitor.visit_extern(self)
 

@@ -21,14 +21,7 @@ from .expr import (
     ValueNode,
     VariableNode,
 )
-from .high import (
-    BlockNode,
-    ChunkNode,
-    DeclarationNode,
-    ExternChunkNode,
-    SpecialDeclarationNode,
-    SpecNode,
-)
+from .high import BlockNode, ChunkNode, DeclarationNode, ExternChunkNode, SpecNode
 from .stmt import (
     AssignmentNode,
     CallNode,
