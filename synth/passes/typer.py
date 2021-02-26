@@ -12,6 +12,7 @@ from ..node import (
     AssignmentNode,
     BinaryOperationNode,
     BlockNode,
+    BoolValueNode,
     CallNode,
     CastNode,
     DeclarationNode,
@@ -229,6 +230,8 @@ class TypeCheckVisitor(TraversalVisitor[TypeNode]):
             return MetaTypeNode(MetaType.Integral)
         elif isinstance(node, FloatValueNode):
             return MetaTypeNode(MetaType.Floating)
+        elif isinstance(node, BoolValueNode):
+            return MetaTypeNode(MetaType.Boolean)
         elif isinstance(node, StringValueNode):
             return PointerTypeNode(SimpleTypeNode("char"))
         else:

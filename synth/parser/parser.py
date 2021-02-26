@@ -6,6 +6,7 @@ from ..node import (
     AssignmentNode,
     BinaryOperationNode,
     BlockNode,
+    BoolValueNode,
     CallNode,
     CastNode,
     ChunkNode,
@@ -337,6 +338,11 @@ class Parser:
             assert self.last is not None
             lhs, rhs = self.last.lexeme
             node = self.node_exit(FloatValueNode(int(lhs), int(rhs)))
+        elif self.accept(TokenType.Name, "true") or self.accept(
+            TokenType.Name, "false"
+        ):
+            assert self.last is not None
+            node = self.node_exit(BoolValueNode(bool(self.last.lexeme)))
         elif self.accept(TokenType.Template):
             assert self.last is not None
             name, definition = self.last.lexeme

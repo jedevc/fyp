@@ -27,6 +27,7 @@ from ..node import (
     AssignmentNode,
     BinaryOperationNode,
     BlockNode,
+    BoolValueNode,
     CallNode,
     CastNode,
     DerefNode,
@@ -216,6 +217,11 @@ class BlockifyExpressionVisitor(Visitor[Expression]):
                 raise RuntimeError("value unrepresentable in C")
         elif isinstance(node, FloatValueNode):
             return Value(f"{node.left}.{node.right}")
+        elif isinstance(node, BoolValueNode):
+            if node.value:
+                return Value("true")
+            else:
+                return Value("false")
         else:
             raise RuntimeError()
 

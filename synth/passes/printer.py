@@ -7,6 +7,7 @@ from ..node import (
     AssignmentNode,
     BinaryOperationNode,
     BlockNode,
+    BoolValueNode,
     CallNode,
     CastNode,
     ChunkNode,
@@ -170,6 +171,11 @@ class PrinterVisitor(Visitor[None]):
             self._print(str(node.value))
         elif isinstance(node, FloatValueNode):
             self._print(f"{node.left}.{node.right}")
+        elif isinstance(node, BoolValueNode):
+            if node.value:
+                self._print("true")
+            else:
+                self._print("false")
         elif isinstance(node, TemplateValueNode):
             self._print(f"<{node.name}; {node.definition}>")
         else:

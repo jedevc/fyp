@@ -147,6 +147,9 @@ class CodeGen:
                 "(" + self._gen_expr(expr.left) + op + self._gen_expr(expr.right) + ")"
             )
         elif isinstance(expr, Value):
+            if expr.value in ("false", "true"):
+                self._includes.add("stdbool.h")
+
             return expr.value
         elif isinstance(expr, Cast):
             # FIXME: this is a bit hacky

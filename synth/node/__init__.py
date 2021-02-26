@@ -5,6 +5,7 @@ from .expr import (
     COMPARISON_OPERATORS,
     ArrayNode,
     BinaryOperationNode,
+    BoolValueNode,
     CastNode,
     DerefNode,
     ExpressionNode,

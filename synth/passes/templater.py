@@ -15,7 +15,7 @@ class TemplaterVisitor(MapVisitor):
         super().__init__()
         self.instantiations: Dict[str, Union[str, int, float]] = {}
 
-    def _evaluator(self, definition: str) -> Union[str, int, float]:
+    def _evaluator(self, definition: str) -> Union[str, bool, int, float]:
         # pylint: disable=eval-used
         result = eval(definition, EVAL_CONTEXT, self.instantiations)
         return result

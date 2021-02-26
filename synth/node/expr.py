@@ -70,6 +70,12 @@ class FloatValueNode(ValueNode):
         self.right = right
 
 
+class BoolValueNode(ValueNode):
+    def __init__(self, value: bool):
+        super().__init__()
+        self.value = value
+
+
 class StringValueNode(ValueNode):
     def __init__(self, value: str):
         super().__init__()
@@ -82,10 +88,12 @@ class TemplateValueNode(ValueNode):
         self.name = name
         self.definition = definition
 
-    def construct(self, source: Union[str, int, float]) -> ValueNode:
+    def construct(self, source: Union[str, bool, int, float]) -> ValueNode:
         node: ValueNode
         if isinstance(source, str):
             node = StringValueNode(source)
+        elif isinstance(source, bool):
+            node = BoolValueNode(source)
         elif isinstance(source, int):
             node = IntValueNode(source, 10)
         elif isinstance(source, float):
