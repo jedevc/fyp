@@ -100,10 +100,6 @@ class ChunkConstraint:
     def merge(self, other: "ChunkConstraint"):
         self.eof = self.eof or other.eof
 
-    @property
-    def empty(self) -> bool:
-        return not self.eof
-
     def __repr__(self) -> str:
         return f"<{self.__class__.__name__} eof={self.eof}>"
 

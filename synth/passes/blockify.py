@@ -1,10 +1,12 @@
 from typing import Dict, List, Optional, Tuple, Union
 
 from ..builtins import functions, variables
+from ..error import ConstraintError
 from ..graph import (
     Array,
     Assignment,
     Block,
+    BlockConstraint,
     Call,
     Cast,
     Chunk,
@@ -69,7 +71,20 @@ class BlockifyVisitor(Visitor[None]):
 
     def visit_block(self, node: BlockNode):
         statements = self.process_statements(node.statements)
+        constraint = BlockConstraint()
+        for cname in node.constraints:
+            try:
+                if cname == "func":
+                    constraint.merge(BlockConstraint(func=True))
+                elif cname == "inline":
+                    constraint.merge(BlockConstraint(inline=True))
+                else:
+                    raise ProcessingError(node, f"invalid block constraint {cname}")
+            except ConstraintError as e:
+                raise ProcessingError(node, str(e))
+
         self.blocks[node.name].add_statements(statements)
+        self.blocks[node.name].constraint = constraint
 
     def process_statements(self, statements: List[StatementNode]) -> List[Statement]:
         name = None

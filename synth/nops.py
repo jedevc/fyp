@@ -34,7 +34,7 @@ class NopTransformer:
         def mapper(item: BlockItem) -> BlockItem:
             if not isinstance(item, Call):
                 return item
-            if random.random() > 0.1:
+            if random.random() > 1.0:
                 return item
 
             def copier(item: BlockItem):
@@ -49,7 +49,9 @@ class NopTransformer:
             # create a variation of the block
             nop = random.choice(self._blocks)
             nblock = Block(
-                generate_unique_name(6), [stmt.map(copier) for stmt in nop.statements]
+                generate_unique_name(6),
+                [stmt.map(copier) for stmt in nop.statements],
+                nop.constraint,
             )
             nblock.add_statement(item)
 

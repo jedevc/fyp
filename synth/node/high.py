@@ -39,10 +39,13 @@ class ExternChunkNode(ChunkNode):
 
 
 class BlockNode(Node):
-    def __init__(self, name: str, statements: List[StatementNode]):
+    def __init__(
+        self, name: str, statements: List[StatementNode], constraints: List[str]
+    ):
         super().__init__()
         self.name = name
         self.statements = statements
+        self.constraints = constraints
 
     def accept(self, visitor: Visitor[X]) -> X:
         return visitor.visit_block(self)

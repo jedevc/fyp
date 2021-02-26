@@ -3,6 +3,10 @@ class SynthError(BaseException):
         raise NotImplementedError()
 
 
+class ConstraintError(BaseException):
+    pass
+
+
 class ErrorLocation:
     """
     Utility class to represent the location of an error.

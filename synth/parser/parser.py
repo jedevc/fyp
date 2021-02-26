@@ -110,15 +110,7 @@ class Parser:
 
         self.expect(TokenType.Reserved, ReservedWord.Chunk)
 
-        constraints = []
-        if self.accept(TokenType.ParenOpen):
-            while True:
-                constraint = self.expect(TokenType.Name)
-                constraints.append(constraint.lexeme)
-                if not self.accept(TokenType.Comma):
-                    break
-
-            self.expect(TokenType.ParenClose)
+        constraints = self.constraints()
 
         variables = [self.declaration()]
         while self.accept(TokenType.Comma):
@@ -153,9 +145,25 @@ class Parser:
 
         self.expect(TokenType.Reserved, ReservedWord.Block)
 
+        constraints = self.constraints()
+
         block_name = self.expect(TokenType.Name).lexeme
         statements = self.scope()
-        return self.node_exit(BlockNode(block_name, statements))
+
+        return self.node_exit(BlockNode(block_name, statements, constraints))
+
+    def constraints(self) -> List[str]:
+        constraints = []
+        if self.accept(TokenType.ParenOpen):
+            while True:
+                constraint = self.expect(TokenType.Name)
+                constraints.append(constraint.lexeme)
+                if not self.accept(TokenType.Comma):
+                    break
+
+            self.expect(TokenType.ParenClose)
+
+        return constraints
 
     def statement(self) -> StatementNode:
         """

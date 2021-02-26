@@ -105,14 +105,18 @@ class Interpreter:
         # TODO: accept a seed here
 
         # assign each block an interpretation
-        self.func_blocks = {
-            blname
-            for blname in self.blocks
-            if blname == "main" or random.random() > 0.5
-        }
-        self.inline_blocks = {
-            blname for blname in self.blocks if blname not in self.func_blocks
-        }
+        self.func_blocks: Set[str] = set()
+        self.inline_blocks: Set[str] = set()
+        for blname, block in self.blocks.items():
+            if blname == "main" or block.constraint.func:
+                self.func_blocks.add(blname)
+            elif block.constraint.inline:
+                self.inline_blocks.add(blname)
+            else:
+                if random.random() > 0.5:
+                    self.func_blocks.add(blname)
+                else:
+                    self.inline_blocks.add(blname)
 
         # assign each chunk an interpretation
         self.local_chunks = {

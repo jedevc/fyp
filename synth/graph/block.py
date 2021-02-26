@@ -1,5 +1,6 @@
 from typing import Callable, List, Optional, Sequence, Tuple, TypeVar, Union
 
+from ..error import ConstraintError
 from ..node import Operator as OperatorType
 from ..node import TypeNode
 from .chunk import Chunk, ChunkVariable, merge_chunks
@@ -38,16 +39,42 @@ class BlockItem:
         raise NotImplementedError()
 
 
+class BlockConstraint:
+    def __init__(self, func=False, inline=False):
+        self.func = func
+        self.inline = inline
+
+        self._verify()
+
+    def copy(self) -> "BlockConstraint":
+        return BlockConstraint(func=self.func, inline=self.inline)
+
+    def merge(self, other: "BlockConstraint"):
+        self.func = self.func or other.func
+        self.inline = self.inline or other.inline
+
+        self._verify()
+
+    def _verify(self):
+        if self.func and self.inline:
+            raise ConstraintError("cannot allow func and inline constraints")
+
+    def __repr__(self) -> str:
+        return f"<{self.__class__.__name__} func={self.func} inline={self.inline}>"
+
+
 class Block(BlockItem):
     def __init__(
         self,
         name: str,
         stmts: Optional[List[Statement]] = None,
+        constraint: Optional[BlockConstraint] = None,
         known_id: Optional[int] = None,
     ):
         super().__init__(known_id)
         self.name = name
         self.statements: List[Statement] = stmts or []
+        self.constraint = BlockConstraint() if constraint is None else constraint
 
     def traverse(self, func: TraversalFunc) -> None:
         func(self)
@@ -56,7 +83,12 @@ class Block(BlockItem):
 
     def map(self, func: MappingFunc) -> "Block":
         return func(
-            Block(self.name, [stmt.map(func) for stmt in self.statements], self.id)
+            Block(
+                self.name,
+                [stmt.map(func) for stmt in self.statements],
+                self.constraint.copy(),
+                self.id,
+            )
         )
 
     def add_statement(self, statement: Statement):

@@ -2,6 +2,7 @@ from .block import (
     Array,
     Assignment,
     Block,
+    BlockConstraint,
     BlockItem,
     Call,
     Cast,
