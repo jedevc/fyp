@@ -62,13 +62,18 @@ class PrinterVisitor(Visitor[None]):
             block.accept(self)
 
     def visit_chunk(self, node: ChunkNode):
-        self._visit_vars("chunk", node.variables)
+        self._visit_vars("chunk", node.variables, node.constraints)
 
     def visit_extern(self, node: ExternChunkNode):
-        self._visit_vars("extern", node.variables)
+        self._visit_vars("extern", node.variables, node.constraints)
 
-    def _visit_vars(self, name: str, variables: List[DeclarationNode]):
-        self._print(name + " ")
+    def _visit_vars(
+        self, name: str, variables: List[DeclarationNode], constraints: List[str]
+    ):
+        self._print(f"{name} ")
+        if constraints:
+            self._print(f"({', '.join(constraints)}) ")
+
         self.indent += len(name) + 1
         for i, var in enumerate(variables):
             var.accept(self)
@@ -80,6 +85,9 @@ class PrinterVisitor(Visitor[None]):
     def visit_declaration(self, node: DeclarationNode):
         self._print(f"{node.name} : ")
         node.vartype.accept(self)
+        if node.initial:
+            self._print(" = ")
+            node.initial.accept(self)
 
     def visit_type_simple(self, node: SimpleTypeNode):
         self._print(node.core)
@@ -103,6 +111,8 @@ class PrinterVisitor(Visitor[None]):
 
     def visit_block(self, node: BlockNode):
         self._print("block ")
+        if node.constraints:
+            self._print(f"({', '.join(node.constraints)}) ")
         self._print(node.name)
         self._visit_scope(node.statements)
         self._println()
@@ -160,7 +170,7 @@ class PrinterVisitor(Visitor[None]):
 
     def visit_value(self, node: ValueNode):
         if isinstance(node, StringValueNode):
-            self._print(quote(node.value))
+            self._print(repr(node.value))
         elif isinstance(node, IntValueNode):
             self._print(str(node.value))
         elif isinstance(node, FloatValueNode):
@@ -235,13 +245,3 @@ class PrinterVisitor(Visitor[None]):
         print(msg, file=self.output)
         if self.indent > 0:
             print(self.indent * " ", file=self.output, end="")
-
-
-def quote(s: str) -> str:
-    if '"' not in s:
-        return '"' + s + '"'
-    elif "'" not in s:
-        return "'" + s + "'"
-    else:
-        # shouldn't be possible?
-        return "`" + s + "`"

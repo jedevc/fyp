@@ -10,6 +10,7 @@ from .passes import (
     PrinterVisitor,
     TemplaterVisitor,
     TypeCheckVisitor,
+    VisualizerVisitor,
 )
 
 
@@ -20,15 +21,23 @@ class Asset:
         self.extern = extern
 
     @staticmethod
-    def load(stream: str, external: bool = False, print_ast: bool = False) -> "Asset":
+    def load(
+        stream: str,
+        external: bool = False,
+        print_ast: bool = False,
+        visualize_ast: bool = False,
+    ) -> "Asset":
         lex = Lexer(stream)
         tokens = lex.tokens_list()
 
         parser = Parser(tokens)
         spec = parser.parse()
         if print_ast:
-            visitor = PrinterVisitor(sys.stderr)
-            spec.accept(visitor)
+            printer = PrinterVisitor(sys.stderr)
+            spec.accept(printer)
+        if visualize_ast:
+            visualizer = VisualizerVisitor(sys.stderr)
+            spec.accept(visualizer)
 
         template_visitor = TemplaterVisitor()
         spec.accept(template_visitor)

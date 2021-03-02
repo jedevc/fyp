@@ -22,6 +22,9 @@ def main() -> Optional[int]:
         "--print-ast", action="store_true", help="Dump the parsed AST"
     )
     arg_parser.add_argument(
+        "--visualize-ast", action="store_true", help="Render the parsed AST"
+    )
+    arg_parser.add_argument(
         "--format",
         choices=["none", "llvm", "google", "chromium", "mozilla", "webkit"],
         default="webkit",
@@ -33,7 +36,12 @@ def main() -> Optional[int]:
 
     try:
         synthesize(
-            stream, args.outfile, args.seed, print_ast=args.print_ast, style=args.format
+            stream,
+            args.outfile,
+            args.seed,
+            print_ast=args.print_ast,
+            visualize_ast=args.visualize_ast,
+            style=args.format,
         )
     except SynthError as err:
         print(err, file=sys.stderr)
@@ -48,11 +56,12 @@ def synthesize(
     seed: Optional[str] = None,
     style: str = "none",
     print_ast: bool = False,
+    visualize_ast: bool = False,
 ):
     if seed is not None:
         random.seed(seed)
 
-    asset = Asset.load(stream, print_ast=print_ast)
+    asset = Asset.load(stream, print_ast=print_ast, visualize_ast=visualize_ast)
 
     nops = AssetLoader.list("nops", external=True)
     noper = NopTransformer(nops)
