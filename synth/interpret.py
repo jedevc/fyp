@@ -102,8 +102,6 @@ class Interpreter:
         return program
 
     def _randomize(self):
-        # TODO: accept a seed here
-
         # assign each block an interpretation
         self.func_blocks: Set[str] = set()
         self.inline_blocks: Set[str] = set()

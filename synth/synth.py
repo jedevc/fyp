@@ -1,4 +1,5 @@
 import argparse
+import random
 import subprocess
 import sys
 from functools import reduce
@@ -16,6 +17,7 @@ def main() -> Optional[int]:
     arg_parser = argparse.ArgumentParser()
     arg_parser.add_argument("infile", type=argparse.FileType("r"))
     arg_parser.add_argument("outfile", type=argparse.FileType("w"))
+    arg_parser.add_argument("--seed", help="Random seed to use")
     arg_parser.add_argument(
         "--print-ast", action="store_true", help="Dump the parsed AST"
     )
@@ -30,7 +32,9 @@ def main() -> Optional[int]:
     stream = args.infile.read()
 
     try:
-        synthesize(stream, args.outfile, print_ast=args.print_ast, style=args.format)
+        synthesize(
+            stream, args.outfile, args.seed, print_ast=args.print_ast, style=args.format
+        )
     except SynthError as err:
         print(err, file=sys.stderr)
         return 1
@@ -39,8 +43,15 @@ def main() -> Optional[int]:
 
 
 def synthesize(
-    stream: str, output: TextIO, style: str = "none", print_ast: bool = False
+    stream: str,
+    output: TextIO,
+    seed: Optional[str] = None,
+    style: str = "none",
+    print_ast: bool = False,
 ):
+    if seed is not None:
+        random.seed(seed)
+
     asset = Asset.load(stream, print_ast=print_ast)
 
     nops = AssetLoader.list("nops", external=True)
