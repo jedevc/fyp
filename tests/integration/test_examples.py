@@ -1,4 +1,6 @@
 import io
+import os
+import sys
 from pathlib import Path
 
 import pytest
@@ -35,7 +37,14 @@ def test_synth(example, functions, tmp_path):
         # coverage.
 
         output = io.StringIO()
-        synth.synthesize(source_code, output, print_ast=True, visualize_ast=True)
+        synth.synthesize(
+            source_code,
+            output,
+            dump={
+                synth.DumpType.AST: sys.stderr,
+                synth.DumpType.ASTDiagram: sys.stderr,
+            },
+        )
         program_code = output.getvalue()
         output.close()
 
@@ -50,4 +59,4 @@ def test_synth(example, functions, tmp_path):
 
         Toolchain.compile(helper_path, helper_code)
         Toolchain.compile(program_path, program_code)
-        Toolchain.link(Path("/dev/null"), helper_path, program_path)
+        Toolchain.link(Path(os.devnull), helper_path, program_path)

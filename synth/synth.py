@@ -3,9 +3,10 @@ import random
 import subprocess
 import sys
 from functools import reduce
-from typing import Optional, TextIO
+from typing import Dict, Optional, TextIO
 
 from .assets import Asset, AssetLoader
+from .dump import DumpType
 from .error import SynthError
 from .graph import merge_chunks
 from .graph.codegen import CodeGen
@@ -19,10 +20,12 @@ def main() -> Optional[int]:
     arg_parser.add_argument("outfile", type=argparse.FileType("w"))
     arg_parser.add_argument("--seed", help="Random seed to use")
     arg_parser.add_argument(
-        "--print-ast", action="store_true", help="Dump the parsed AST"
+        "--dump-ast", type=argparse.FileType("w"), help="Dump the parsed AST"
     )
     arg_parser.add_argument(
-        "--visualize-ast", action="store_true", help="Render the parsed AST"
+        "--dump-ast-diagram",
+        type=argparse.FileType("w"),
+        help="Dump a diagram of the parsed AST",
     )
     arg_parser.add_argument(
         "--format",
@@ -39,9 +42,11 @@ def main() -> Optional[int]:
             stream,
             args.outfile,
             args.seed,
-            print_ast=args.print_ast,
-            visualize_ast=args.visualize_ast,
             style=args.format,
+            dump={
+                DumpType.AST: args.dump_ast,
+                DumpType.ASTDiagram: args.dump_ast_diagram,
+            },
         )
     except SynthError as err:
         print(err, file=sys.stderr)
@@ -55,13 +60,12 @@ def synthesize(
     output: TextIO,
     seed: Optional[str] = None,
     style: str = "none",
-    print_ast: bool = False,
-    visualize_ast: bool = False,
+    dump: Optional[Dict[DumpType, Optional[TextIO]]] = None,
 ):
     if seed is not None:
         random.seed(seed)
 
-    asset = Asset.load(stream, print_ast=print_ast, visualize_ast=visualize_ast)
+    asset = Asset.load(stream, dump=dump)
 
     nops = AssetLoader.list("nops", external=True)
     noper = NopTransformer(nops)

@@ -1,7 +1,7 @@
-import sys
 from pathlib import Path
-from typing import Iterable, List
+from typing import Dict, Iterable, List, Optional, TextIO
 
+from .dump import DumpType
 from .graph import Block, Chunk
 from .parser import Lexer, Parser
 from .passes import (
@@ -24,19 +24,18 @@ class Asset:
     def load(
         stream: str,
         external: bool = False,
-        print_ast: bool = False,
-        visualize_ast: bool = False,
+        dump: Optional[Dict[DumpType, Optional[TextIO]]] = None,
     ) -> "Asset":
         lex = Lexer(stream)
         tokens = lex.tokens_list()
 
         parser = Parser(tokens)
         spec = parser.parse()
-        if print_ast:
-            printer = PrinterVisitor(sys.stderr)
+        if dump and (output := dump.get(DumpType.AST)):
+            printer = PrinterVisitor(output)
             spec.accept(printer)
-        if visualize_ast:
-            visualizer = VisualizerVisitor(sys.stderr)
+        if dump and (output := dump.get(DumpType.ASTDiagram)):
+            visualizer = VisualizerVisitor(output)
             spec.accept(visualizer)
 
         template_visitor = TemplaterVisitor()
@@ -58,9 +57,11 @@ class Asset:
 
     @staticmethod
     def loadpath(
-        path: Path, external: bool = False, print_ast: bool = False
+        path: Path,
+        external: bool = False,
+        dump: Optional[Dict[DumpType, Optional[TextIO]]] = None,
     ) -> "Asset":
-        return Asset.load(path.read_text(), external=external, print_ast=print_ast)
+        return Asset.load(path.read_text(), external=external, dump=dump)
 
 
 class AssetLoader:
