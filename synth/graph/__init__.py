@@ -23,3 +23,4 @@ from .block import (
 )
 from .chunk import Chunk, ChunkConstraint, ChunkVariable, merge_chunks
 from .program import Program
+from .visualizer import GraphVisualizer

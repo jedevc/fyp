@@ -8,7 +8,7 @@ from typing import Dict, Optional, TextIO
 from .assets import Asset, AssetLoader
 from .dump import DumpType
 from .error import SynthError
-from .graph import merge_chunks
+from .graph import GraphVisualizer, merge_chunks
 from .graph.codegen import CodeGen
 from .interpret import Interpreter
 from .nops import NopTransformer
@@ -26,6 +26,11 @@ def main() -> Optional[int]:
         "--dump-ast-diagram",
         type=argparse.FileType("w"),
         help="Dump a diagram of the parsed AST",
+    )
+    arg_parser.add_argument(
+        "--dump-block-graph",
+        type=argparse.FileType("w"),
+        help="Dump the block graph",
     )
     arg_parser.add_argument(
         "--format",
@@ -46,6 +51,7 @@ def main() -> Optional[int]:
             dump={
                 DumpType.AST: args.dump_ast,
                 DumpType.ASTDiagram: args.dump_ast_diagram,
+                DumpType.GraphBlock: args.dump_block_graph,
             },
         )
     except SynthError as err:
@@ -66,6 +72,10 @@ def synthesize(
         random.seed(seed)
 
     asset = Asset.load(stream, dump=dump)
+
+    vis = GraphVisualizer(asset.blocks, asset.chunks, asset.extern)
+    if dump and (dump_output := dump.get(DumpType.GraphBlock)):
+        vis.generate_block_graph(dump_output)
 
     nops = AssetLoader.list("nops", external=True)
     noper = NopTransformer(nops)

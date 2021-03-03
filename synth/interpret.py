@@ -190,6 +190,7 @@ class Interpreter:
 
     def _apply_inline_calls(self, block: Block) -> Block:
         def mapper(item: BlockItem) -> BlockItem:
+            item.id = BlockItem.new_id()
             if not isinstance(item, Call):
                 return item
 
@@ -269,7 +270,9 @@ class Tracer:
                 collected = set()
                 for call in reversed(path[len(prefix) :]):
                     bl = call.block
-                    collected |= self.variables[bl]
+                    collected |= {
+                        var for var in self.variables[bl] if var.chunk is chunk
+                    }
                     if bl in self.patches:
                         self.patches[bl] = list(set(self.patches[bl]) | collected)
                     else:
@@ -290,11 +293,16 @@ class Tracer:
         else:
             return prefix[-1].block
 
-    def _trace(self, base: Block, prefix: List[Call]):
+    def _trace(
+        self, base: Block, prefix: List[Call], exclude: Optional[Set[Block]] = None
+    ):
+        exclude = set() if exclude is None else exclude
+
         chunks: Set[Chunk] = set()
         variables: Set[ChunkVariable] = set()
 
         def finder(part: BlockItem):
+            nonlocal exclude
             nonlocal variables
 
             if isinstance(part, Variable):
@@ -302,10 +310,12 @@ class Tracer:
                     chunks.add(part.variable.chunk)
                 variables.add(part.variable)
             elif isinstance(part, Call):
-                self._trace(part.block, prefix + [part])
+                assert exclude is not None
+                self._trace(part.block, prefix + [part], exclude | {base})
                 variables |= self.variables[part.block]
 
-        base.traverse(finder)
+        if base not in exclude:
+            base.traverse(finder)
 
         for chunk in chunks:
             if chunk in self.paths:
@@ -329,7 +339,10 @@ class Lifter:
 
     @staticmethod
     def capture_usages(
-        base: Block, var: ChunkVariable, recursive: bool = True
+        base: Block,
+        var: ChunkVariable,
+        recursive: bool = True,
+        exclude: Optional[Set[Block]] = None,
     ) -> List["UsageCapture"]:
         """
         Find and capture all the usages (and their contexts) of a variable in a
@@ -338,6 +351,8 @@ class Lifter:
 
         captures: List[UsageCapture] = []
         stack: List[Any] = []
+
+        exclude = set() if exclude is None else exclude
 
         def finder(part):
             if isinstance(part, Variable) and part.variable == var:
@@ -360,7 +375,14 @@ class Lifter:
             else:
                 stack.append(part)
                 if recursive and isinstance(part, Call):
-                    captures.extend(Lifter.capture_usages(part.block, var, True))
+                    if part.block in exclude:
+                        return
+
+                    captures.extend(
+                        Lifter.capture_usages(
+                            part.block, var, True, exclude | {part.block}
+                        )
+                    )
 
         base.traverse(finder)
         return captures
