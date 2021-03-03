@@ -302,7 +302,6 @@ class Tracer:
         variables: Set[ChunkVariable] = set()
 
         def finder(part: BlockItem):
-            nonlocal exclude
             nonlocal variables
 
             if isinstance(part, Variable):
@@ -375,16 +374,13 @@ class Lifter:
             else:
                 stack.append(part)
                 if recursive and isinstance(part, Call):
-                    if part.block in exclude:
-                        return
-
                     captures.extend(
-                        Lifter.capture_usages(
-                            part.block, var, True, exclude | {part.block}
-                        )
+                        Lifter.capture_usages(part.block, var, True, exclude | {base})
                     )
 
-        base.traverse(finder)
+        if base not in exclude:
+            base.traverse(finder)
+
         return captures
 
     @staticmethod
