@@ -7,3 +7,4 @@ class DumpType(enum.Enum):
     ASTDiagram = 2
 
     GraphBlock = 3
+    GraphBlockChunk = 4

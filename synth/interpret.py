@@ -250,8 +250,9 @@ class Tracer:
     blocks and chunks.
     """
 
-    def __init__(self, base: Block):
+    def __init__(self, base: Block, recursive: bool = True):
         self.base = base
+        self.recursive = recursive
 
         self.paths: Dict[Chunk, List[List[Call]]] = {}
         self.variables: Dict[Block, Set[ChunkVariable]] = {}
@@ -310,8 +311,9 @@ class Tracer:
                 variables.add(part.variable)
             elif isinstance(part, Call):
                 assert exclude is not None
-                self._trace(part.block, prefix + [part], exclude | {base})
-                variables |= self.variables[part.block]
+                if self.recursive:
+                    self._trace(part.block, prefix + [part], exclude | {base})
+                    variables |= self.variables[part.block]
 
         if base not in exclude:
             base.traverse(finder)

@@ -18,26 +18,26 @@ def main() -> Optional[int]:
     arg_parser = argparse.ArgumentParser()
     arg_parser.add_argument("infile", type=argparse.FileType("r"))
     arg_parser.add_argument("outfile", type=argparse.FileType("w"))
+
     arg_parser.add_argument("--seed", help="Random seed to use")
-    arg_parser.add_argument(
-        "--dump-ast", type=argparse.FileType("w"), help="Dump the parsed AST"
-    )
-    arg_parser.add_argument(
-        "--dump-ast-diagram",
-        type=argparse.FileType("w"),
-        help="Dump a diagram of the parsed AST",
-    )
-    arg_parser.add_argument(
-        "--dump-block-graph",
-        type=argparse.FileType("w"),
-        help="Dump the block graph",
-    )
     arg_parser.add_argument(
         "--format",
         choices=["none", "llvm", "google", "chromium", "mozilla", "webkit"],
         default="webkit",
         help="Coding style to output",
     )
+
+    dumps = [
+        "dump-ast",
+        "dump-ast-diagram",
+        "dump-block-graph",
+        "dump-block-chunk-graph",
+    ]
+    for dump in dumps:
+        arg_parser.add_argument(
+            f"--{dump}",
+            type=argparse.FileType("w"),
+        )
     args = arg_parser.parse_args()
 
     stream = args.infile.read()
@@ -52,6 +52,7 @@ def main() -> Optional[int]:
                 DumpType.AST: args.dump_ast,
                 DumpType.ASTDiagram: args.dump_ast_diagram,
                 DumpType.GraphBlock: args.dump_block_graph,
+                DumpType.GraphBlockChunk: args.dump_block_chunk_graph,
             },
         )
     except SynthError as err:
@@ -73,9 +74,12 @@ def synthesize(
 
     asset = Asset.load(stream, dump=dump)
 
-    vis = GraphVisualizer(asset.blocks, asset.chunks, asset.extern)
     if dump and (dump_output := dump.get(DumpType.GraphBlock)):
-        vis.generate_block_graph(dump_output)
+        vis = GraphVisualizer(dump_output)
+        vis.generate_block_graph(asset.blocks, asset.chunks, asset.extern)
+    if dump and (dump_output := dump.get(DumpType.GraphBlockChunk)):
+        vis = GraphVisualizer(dump_output)
+        vis.generate_block_chunk_graph(asset.blocks, asset.chunks, asset.extern)
 
     nops = AssetLoader.list("nops", external=True)
     noper = NopTransformer(nops)
