@@ -23,7 +23,6 @@ from ..node import (
     IfNode,
     IntValueNode,
     Node,
-    Operator,
     PointerTypeNode,
     RefNode,
     SimpleTypeNode,
@@ -31,6 +30,7 @@ from ..node import (
     SplitNode,
     StringValueNode,
     TemplateValueNode,
+    UnaryOperationNode,
     ValueNode,
     VariableNode,
     Visitor,
@@ -146,22 +146,11 @@ class VisualizerVisitor(Visitor[int]):
         else:
             raise RuntimeError()
 
+    def visit_unary(self, node: UnaryOperationNode) -> int:
+        return self._connect(node.op.opstr(), node.item)
+
     def visit_binary(self, node: BinaryOperationNode) -> int:
-        op = {
-            Operator.Add: "+",
-            Operator.Subtract: "-",
-            Operator.Multiply: "*",
-            Operator.Divide: "/",
-            Operator.Eq: "==",
-            Operator.Neq: "!=",
-            Operator.Gt: ">",
-            Operator.Gte: ">=",
-            Operator.Lt: "<",
-            Operator.Lte: "<=",
-            Operator.And: "&&",
-            Operator.Or: "||",
-        }[node.op]
-        return self._connect(op, (node.left, node.right))
+        return self._connect(node.op.opstr(), (node.left, node.right))
 
     def visit_if(self, node: IfNode) -> int:
         root = self._node("if")

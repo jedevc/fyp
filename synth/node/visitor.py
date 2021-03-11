@@ -10,6 +10,7 @@ if TYPE_CHECKING:
         FunctionNode,
         LiteralNode,
         RefNode,
+        UnaryOperationNode,
         ValueNode,
         VariableNode,
     )
@@ -77,6 +78,9 @@ class Visitor(Generic[T]):
         pass
 
     def visit_array(self, node: "ArrayNode") -> T:
+        pass
+
+    def visit_unary(self, node: "UnaryOperationNode") -> T:
         pass
 
     def visit_binary(self, node: "BinaryOperationNode") -> T:
@@ -187,6 +191,11 @@ class TraversalVisitor(Visitor[Optional[T]]):
     def visit_array(self, node: "ArrayNode") -> Optional[T]:
         node.target.accept(self)
         node.index.accept(self)
+
+        return None
+
+    def visit_unary(self, node: "UnaryOperationNode") -> Optional[T]:
+        node.item.accept(self)
 
         return None
 
@@ -321,6 +330,11 @@ class MapVisitor(Visitor[Any]):
     def visit_array(self, node: "ArrayNode") -> "ArrayNode":
         node.target = node.target.accept(self)
         node.index = node.index.accept(self)
+
+        return node
+
+    def visit_unary(self, node: "UnaryOperationNode") -> "UnaryOperationNode":
+        node.item = node.item.accept(self)
 
         return node
 

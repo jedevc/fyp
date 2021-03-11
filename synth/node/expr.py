@@ -7,6 +7,7 @@ from .visitor import Visitor
 
 LvalueNode = Union["VariableNode", "ArrayNode", "DerefNode", "LiteralNode"]
 ExpressionNode = Union[
+    "UnaryOperationNode",
     "BinaryOperationNode",
     "CastNode",
     "FunctionNode",
@@ -22,19 +23,39 @@ class Operator(Enum):
     Subtract = 2
     Multiply = 3
     Divide = 4
+    Negate = 5
 
-    Eq = 5
-    Neq = 6
-    Gt = 7
-    Gte = 8
-    Lt = 9
-    Lte = 10
+    Eq = 6
+    Neq = 7
+    Gt = 8
+    Gte = 9
+    Lt = 10
+    Lte = 11
 
-    And = 11
-    Or = 12
+    Not = 12
+    And = 13
+    Or = 14
+
+    def opstr(self) -> str:
+        return {
+            Operator.Add: "+",
+            Operator.Subtract: "-",
+            Operator.Multiply: "*",
+            Operator.Divide: "/",
+            Operator.Negate: "-",
+            Operator.Eq: "==",
+            Operator.Neq: "!=",
+            Operator.Gt: ">",
+            Operator.Gte: ">=",
+            Operator.Lt: "<",
+            Operator.Lte: "<=",
+            Operator.Not: "!",
+            Operator.And: "&&",
+            Operator.Or: "||",
+        }[self]
 
 
-BOOLEAN_OPERATORS = (Operator.And, Operator.Or)
+BOOLEAN_OPERATORS = (Operator.And, Operator.Or, Operator.Not)
 COMPARISON_OPERATORS = (
     Operator.Eq,
     Operator.Neq,
@@ -48,6 +69,7 @@ ARITHMETIC_OPERATORS = (
     Operator.Subtract,
     Operator.Multiply,
     Operator.Divide,
+    Operator.Negate,
 )
 
 
@@ -162,6 +184,16 @@ class RefNode(Node):
 
     def accept(self, visitor: Visitor[X]) -> X:
         return visitor.visit_ref(self)
+
+
+class UnaryOperationNode(Node):
+    def __init__(self, op: Operator, item: ExpressionNode):
+        super().__init__()
+        self.op = op
+        self.item = item
+
+    def accept(self, visitor: Visitor[X]) -> X:
+        return visitor.visit_unary(self)
 
 
 class BinaryOperationNode(Node):

@@ -32,6 +32,7 @@ from ..node import (
     StringValueNode,
     TraversalVisitor,
     TypeNode,
+    UnaryOperationNode,
     ValueNode,
     VariableNode,
     WhileNode,
@@ -261,6 +262,20 @@ class TypeCheckVisitor(TraversalVisitor[TypeNode]):
             raise ProcessingError(node.index, "cannot index non-array")
 
         return target_type.base
+
+    def visit_unary(self, node: UnaryOperationNode) -> TypeNode:
+        item_type = node.item.accept(self)
+        assert item_type is not None
+
+        if node.op in BOOLEAN_OPERATORS:
+            bool_type = MetaTypeNode(MetaType.Boolean)
+            if not type_check(bool_type, item_type):
+                raise ProcessingError(node.item, "operand should be boolean")
+            return bool_type
+        elif node.op in ARITHMETIC_OPERATORS:
+            return item_type
+        else:
+            raise RuntimeError()
 
     def visit_binary(self, node: BinaryOperationNode) -> TypeNode:
         left_type = node.left.accept(self)

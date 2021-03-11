@@ -20,7 +20,6 @@ from ..node import (
     FuncTypeNode,
     IfNode,
     IntValueNode,
-    Operator,
     PointerTypeNode,
     RefNode,
     SimpleTypeNode,
@@ -189,21 +188,7 @@ class PrinterVisitor(Visitor[None]):
     def visit_binary(self, node: BinaryOperationNode):
         self._print("(")
         node.left.accept(self)
-        op = {
-            Operator.Add: "+",
-            Operator.Subtract: "-",
-            Operator.Multiply: "*",
-            Operator.Divide: "/",
-            Operator.Eq: "==",
-            Operator.Neq: "!=",
-            Operator.Gt: ">",
-            Operator.Gte: ">=",
-            Operator.Lt: "<",
-            Operator.Lte: "<=",
-            Operator.And: "&&",
-            Operator.Or: "||",
-        }[node.op]
-        self._print(f" {op} ")
+        self._print(f" {node.op.opstr()} ")
         node.right.accept(self)
         self._print(")")
 

@@ -44,6 +44,7 @@ from ..node import (
     SplitNode,
     StatementNode,
     StringValueNode,
+    UnaryOperationNode,
     ValueNode,
     VariableNode,
     Visitor,
@@ -246,5 +247,8 @@ class BlockifyExpressionVisitor(Visitor[Expression]):
     def visit_literal(self, node: LiteralNode) -> Expression:
         return Value(node.content.rstrip(";"))
 
+    def visit_unary(self, node: UnaryOperationNode) -> Expression:
+        return Operation(node.op, [node.item.accept(self)])
+
     def visit_binary(self, node: BinaryOperationNode) -> Expression:
-        return Operation(node.op, node.left.accept(self), node.right.accept(self))
+        return Operation(node.op, [node.left.accept(self), node.right.accept(self)])

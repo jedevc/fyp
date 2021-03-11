@@ -18,6 +18,7 @@ from .expr import (
     RefNode,
     StringValueNode,
     TemplateValueNode,
+    UnaryOperationNode,
     ValueNode,
     VariableNode,
 )

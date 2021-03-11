@@ -12,7 +12,6 @@ from .block import (
     FunctionDefinition,
     If,
     Operation,
-    OperatorType,
     Ref,
     Statement,
     StatementGroup,
@@ -129,23 +128,14 @@ class CodeGen:
         elif isinstance(expr, Array):
             return f"{self._gen_expr(expr.target)}[{self._gen_expr(expr.index)}]"
         elif isinstance(expr, Operation):
-            op = {
-                OperatorType.Add: "+",
-                OperatorType.Subtract: "-",
-                OperatorType.Multiply: "*",
-                OperatorType.Divide: "/",
-                OperatorType.Eq: "==",
-                OperatorType.Neq: "!=",
-                OperatorType.Gt: ">",
-                OperatorType.Gte: ">=",
-                OperatorType.Lt: "<",
-                OperatorType.Lte: "<=",
-                OperatorType.And: "&&",
-                OperatorType.Or: "||",
-            }[expr.op]
-            return (
-                "(" + self._gen_expr(expr.left) + op + self._gen_expr(expr.right) + ")"
-            )
+            op = expr.op.opstr()
+            if len(expr.operands) == 1:
+                return "(" + op + self._gen_expr(expr.operands[0]) + ")"
+            elif len(expr.operands) == 2:
+                left, right = expr.operands
+                return "(" + self._gen_expr(left) + op + self._gen_expr(right) + ")"
+            else:
+                raise RuntimeError()
         elif isinstance(expr, Value):
             if expr.value in ("false", "true"):
                 self._includes.add("stdbool.h")

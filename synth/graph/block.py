@@ -335,23 +335,25 @@ class Operation(BlockItem):
     def __init__(
         self,
         op: OperatorType,
-        left: Expression,
-        right: Expression,
+        operands: List[Expression],
         known_id: Optional[int] = None,
     ):
         super().__init__(known_id)
         self.op = op
-        self.left = left
-        self.right = right
+        self.operands = operands
 
     def traverse(self, func: TraversalFunc) -> None:
         func(self)
-        self.left.traverse(func)
-        self.right.traverse(func)
+        for operand in self.operands:
+            operand.traverse(func)
 
     def map(self, func: MappingFunc) -> "Operation":
         return func(
-            Operation(self.op, self.left.map(func), self.right.map(func), self.id)
+            Operation(
+                self.op,
+                [expr.map(func) for expr in self.operands],
+                self.id,
+            )
         )
 
 

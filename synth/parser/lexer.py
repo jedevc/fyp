@@ -26,16 +26,17 @@ SIMPLE_TOKENS: Dict[str, Union[TokenType, Dict[str, TokenType]]] = {
     },
     "!": {
         "!=": TokenType.CompareNE,
-        "!": TokenType.Negate,
+        "!": TokenType.BooleanNot,
     },
     "&": {
         "&&": TokenType.BooleanAnd,
-        "&": TokenType.And,
+        "&": TokenType.BitwiseAnd,
     },
     "|": {
         "||": TokenType.BooleanOr,
-        "|": TokenType.Or,
+        "|": TokenType.BitwiseOr,
     },
+    "~": TokenType.BitwiseNot,
     "[": TokenType.BracketOpen,
     "]": TokenType.BracketClose,
     "(": TokenType.ParenOpen,

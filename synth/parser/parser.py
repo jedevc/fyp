@@ -33,6 +33,7 @@ from ..node import (
     StringValueNode,
     TemplateValueNode,
     TypeNode,
+    UnaryOperationNode,
     VariableNode,
     WhileNode,
 )
@@ -291,13 +292,49 @@ class Parser:
         """
 
         return self.binary(
-            self.atom,
+            self.standalone,
             self.product,
             {
                 TokenType.Times: Operator.Multiply,
                 TokenType.Divide: Operator.Divide,
             },
         )
+
+    def standalone(self) -> ExpressionNode:
+        """
+        Parse a standalone expression with a possible unary prefix operator.
+        """
+
+        return self.unary(
+            self.atom,
+            {
+                TokenType.BooleanNot: Operator.Not,
+                TokenType.Minus: Operator.Negate,
+            },
+        )
+
+    def unary(
+        self,
+        item: Callable[[], ExpressionNode],
+        operators: Dict[TokenType, Operator],
+    ) -> ExpressionNode:
+        """
+        Parse an arbitrary unary expression.
+        """
+
+        self.node_enter()
+        found = None
+        for op in operators:
+            if self.accept(op):
+                found = op
+                break
+
+        operand = item()
+        if found:
+            return self.node_exit(UnaryOperationNode(operators[found], operand))
+        else:
+            self.node_cancel()
+            return operand
 
     def binary(
         self,
@@ -339,7 +376,7 @@ class Parser:
                 self.expect(TokenType.ParenOpen)
                 node = self.expression()
                 self.expect(TokenType.ParenClose)
-        elif self.accept(TokenType.And):
+        elif self.accept(TokenType.BitwiseAnd):
             target = self.lvalue()
             node = self.node_exit(RefNode(target))
         elif self.accept(TokenType.String):

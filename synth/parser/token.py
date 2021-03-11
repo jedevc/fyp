@@ -41,15 +41,15 @@ class TokenType(Enum):
     CompareLE = 27
     CompareGE = 28
 
-    Negate = 29
+    Ellipsis = 29
+    Literal = 30
 
-    Ellipsis = 30
-    Literal = 31
-
-    And = 32
-    BooleanAnd = 33
-    Or = 34
+    BitwiseAnd = 31
+    BitwiseOr = 32
+    BitwiseNot = 33
+    BooleanAnd = 34
     BooleanOr = 35
+    BooleanNot = 36
 
 
 PRINTABLE_NAMES = {
@@ -77,7 +77,6 @@ PRINTABLE_NAMES = {
     TokenType.Minus: "minus",
     TokenType.Times: "times",
     TokenType.Divide: "divide",
-    TokenType.Negate: "negate",
     TokenType.CompareEQ: "equals",
     TokenType.CompareNE: "not equals",
     TokenType.CompareLT: "less than",
@@ -86,10 +85,12 @@ PRINTABLE_NAMES = {
     TokenType.CompareGE: "greater than or equal to",
     TokenType.Ellipsis: "ellipsis",
     TokenType.Literal: "literal",
-    TokenType.And: "and",
-    TokenType.BooleanAnd: "boolean and",
-    TokenType.Or: "or",
+    TokenType.BitwiseAnd: "bitwise and",
+    TokenType.BitwiseOr: "bitwise or",
+    TokenType.BitwiseNot: "bitwise not",
+    TokenType.BooleanNot: "boolean not",
     TokenType.BooleanOr: "boolean or",
+    TokenType.BooleanNot: "boolean not",
 }
 
 
