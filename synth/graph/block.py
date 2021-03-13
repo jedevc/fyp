@@ -3,7 +3,7 @@ from typing import Callable, List, Optional, Sequence, Tuple, TypeVar, Union
 from ..error import ConstraintError
 from ..node import Operator as OperatorType
 from ..node import TypeNode
-from .chunk import Chunk, ChunkVariable, merge_chunks
+from .chunk import Chunk, ChunkVariable
 
 Lvalue = Union["Variable", "Array", "Deref"]
 Expression = Union["Operation", "Function", "Value", "Ref", "Cast", Lvalue]
@@ -106,17 +106,16 @@ class FunctionDefinition:
         self.func = func
         self.args = args
 
-        self.locals: Optional[Chunk] = None
+        self.locals: List[ChunkVariable] = []
+        self.statics: List[ChunkVariable] = []
+
         self.statements: List[Statement] = []
 
-    def add_local(self, var: ChunkVariable):
-        if self.locals:
-            self.locals.add_variable(var)
+    def add_locals(self, chunk: Chunk, static: bool = False):
+        if static:
+            self.statics.extend(chunk.variables)
         else:
-            self.locals = Chunk([var])
-
-    def add_locals(self, chunk: Chunk):
-        self.locals = merge_chunks(self.locals, chunk)
+            self.locals.extend(chunk.variables)
 
     def add_statement(self, statement: Statement):
         self.statements.append(statement)

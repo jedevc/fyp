@@ -1,4 +1,4 @@
-from typing import List, Set
+from typing import List, Optional, Set
 
 from ..builtins import functions, types, variables
 from .block import (
@@ -41,7 +41,13 @@ class CodeGen:
             parts.extend(f"{self._gen_decl(var)};" for var in program.globals)
             parts.append("")
 
-        parts.extend(self._gen_func_decl(func) for func in program.functions)
+        for func in program.functions:
+            decl = self._gen_func_decl(func)
+            if decl is not None:
+                parts.append(decl)
+        for func in program.functions:
+            defi = self._gen_func_def(func)
+            parts.append(defi)
 
         if self._includes:
             includes = [f"#include <{include}>" for include in self._includes]
@@ -62,10 +68,23 @@ class CodeGen:
         else:
             return var.typename()
 
-    def _gen_func_decl(self, func: FunctionDefinition) -> str:
-        lines = [self._gen_stmt(stmt) for stmt in func.statements]
-        if func.locals is not None:
-            lines = [f"{self._gen_decl(var)};" for var in func.locals.variables] + lines
+    def _gen_func_decl(self, func: FunctionDefinition) -> Optional[str]:
+        if func.func == "main":
+            return None
+
+        if func.args:
+            args = ", ".join(self._gen_decl(arg) for arg in func.args)
+        else:
+            args = ""
+        return f"void {func.func}({args});"
+
+    def _gen_func_def(self, func: FunctionDefinition) -> str:
+        lines: List[str] = []
+        if func.statics:
+            lines.extend(f"static {self._gen_decl(var)};" for var in func.statics)
+        if func.locals:
+            lines.extend(f"{self._gen_decl(var)};" for var in func.locals)
+        lines.extend(self._gen_stmt(stmt) for stmt in func.statements)
 
         if func.func == "main":
             lines.append("return 0;\n")

@@ -1,6 +1,6 @@
 // need external flag file
 
-chunk (eof) buffer: [64]char
+chunk (local) buffer: [64]char
 
 block main {
     gets@libc(buffer)

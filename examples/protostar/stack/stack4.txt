@@ -1,7 +1,7 @@
 extern flag: fn () void,
        tryagain: fn () void
 
-chunk (eof) buffer: [64]char
+chunk (local) buffer: [64]char
 
 block main {
     gets@libc(buffer)

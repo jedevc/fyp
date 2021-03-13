@@ -86,7 +86,7 @@ class Interpreter:
                 func.add_statement(stmt)
             if blname in self.block_locals:
                 for chunk in self.block_locals[blname]:
-                    func.add_locals(chunk)
+                    func.add_locals(chunk, static=chunk.constraint.static)
 
             program.add_function(func)
 
@@ -117,14 +117,18 @@ class Interpreter:
                     self.inline_blocks.add(blname)
 
         # assign each chunk an interpretation
-        self.local_chunks = {
-            chunk
-            for chunk in self.chunks
-            if chunk.constraint.eof or random.random() > 0.5
-        }
-        self.global_chunks = {
-            chunk for chunk in self.chunks if chunk not in self.local_chunks
-        }
+        self.local_chunks: Set[Chunk] = set()
+        self.global_chunks: Set[Chunk] = set()
+        for chunk in self.chunks:
+            if chunk.constraint.islocal:
+                self.local_chunks.add(chunk)
+            elif chunk.constraint.isglobal:
+                self.global_chunks.add(chunk)
+            else:
+                if random.random() > 0.5:
+                    self.local_chunks.add(chunk)
+                else:
+                    self.global_chunks.add(chunk)
 
     def _trace(self):
         assert "main" in self.blocks

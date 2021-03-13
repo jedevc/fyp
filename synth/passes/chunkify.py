@@ -44,10 +44,16 @@ class ChunkifyChunkVisitor(Visitor[None]):
 
         self.chunk.constraint = ChunkConstraint()
         for cname in node.constraints:
-            if cname == "eof":
-                self.chunk.constraint.merge(ChunkConstraint(eof=True))
+            if cname == "local":
+                con = ChunkConstraint(islocal=True)
+            elif cname == "global":
+                con = ChunkConstraint(isglobal=True)
+            elif cname == "static":
+                con = ChunkConstraint(static=True)
             else:
                 raise ProcessingError(node, f"invalid chunk constraint {cname}")
+
+            self.chunk.constraint.merge(con)
 
     def visit_extern(self, node: ExternChunkNode):
         for var in node.variables:

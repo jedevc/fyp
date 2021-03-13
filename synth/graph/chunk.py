@@ -1,6 +1,7 @@
 from typing import TYPE_CHECKING, Iterable, List, Optional, Union, overload
 
 from ..builtins import types
+from ..error import ConstraintError
 from ..node import (
     ArrayTypeNode,
     FuncTypeNode,
@@ -91,17 +92,31 @@ class ChunkVariable:
 
 
 class ChunkConstraint:
-    def __init__(self, eof=False):
-        self.eof = eof
+    def __init__(self, islocal=False, isglobal=False, static=False):
+        self.islocal = islocal
+        self.isglobal = isglobal
+        self.static = static
+
+        self._verify()
 
     def copy(self) -> "ChunkConstraint":
-        return ChunkConstraint(eof=self.eof)
+        return ChunkConstraint(
+            islocal=self.islocal, isglobal=self.isglobal, static=self.static
+        )
 
     def merge(self, other: "ChunkConstraint"):
-        self.eof = self.eof or other.eof
+        self.islocal = self.islocal or other.islocal
+        self.isglobal = self.isglobal or other.isglobal
+        self.static = self.static or other.static
+
+        self._verify()
+
+    def _verify(self):
+        if self.islocal and self.isglobal:
+            raise ConstraintError("cannot allow local and global constraints")
 
     def __repr__(self) -> str:
-        return f"<{self.__class__.__name__} eof={self.eof}>"
+        return f"<{self.__class__.__name__} local={self.islocal} global={self.isglobal} static={self.static}>"
 
 
 class Chunk:
