@@ -5,17 +5,17 @@ set -e
 exec 1>&2
 
 # formatting
-isort --multi-line=3 --trailing-comma --force-grid-wrap=0 --use-parentheses --line-width=88 --check synth tools
-black --check synth tools tests
+isort --multi-line=3 --trailing-comma --force-grid-wrap=0 --use-parentheses --line-width=88 --check vulnspec/ tools/ tests/
+black --check vulnspec/ tools/ tests/
 
 # type checking
-mypy synth tools tests
+mypy vulnspec/ tools/ tests/
 
 # linting
-pylint synth tools tests
+pylint vulnspec/ tools/ tests/
 
 # simple run
-python -m synth --help > /dev/null
+python -m vulnspec --help > /dev/null
 
 # tests
 pytest

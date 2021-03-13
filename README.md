@@ -4,15 +4,21 @@
 
 To synthesize a program:
 
+```bash
+python -m vulnspec synth <target-file> <c-file>
 ```
-python -m synth <target> -
+
+Then to build it:
+
+```bash
+python -m vulnspec build <c-file>
 ```
 
 ## Development
 
 To regenerate the libraries:
 
-```
+```bash
 PYTHONPATH=./tools python -m builtin_generator synth/builtins
 ```
 

@@ -6,6 +6,6 @@ isort \
     --force-grid-wrap=0 \
     --use-parentheses \
     --line-width=88 \
-    synth tools tests
+    vulnspec/ tools/ tests/
 
-black synth tools tests
+black vulnspec/ tools/ tests/

@@ -5,7 +5,7 @@ from pathlib import Path
 
 import pytest
 
-import synth
+import vulnspec
 
 from .helpers import FunctionGenerator, Toolchain
 
@@ -37,12 +37,12 @@ def test_synth(example, functions, tmp_path):
         # coverage.
 
         output = io.StringIO()
-        synth.synthesize(
+        vulnspec.synthesize(
             source_code,
             output,
             dump={
-                synth.DumpType.AST: sys.stderr,
-                synth.DumpType.ASTDiagram: sys.stderr,
+                vulnspec.DumpType.AST: sys.stderr,
+                vulnspec.DumpType.ASTDiagram: sys.stderr,
             },
         )
         program_code = output.getvalue()

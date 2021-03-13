@@ -26,23 +26,23 @@ jobs:
 
       - name: Check formatting with black
         run: |
-          black --check synth tools tests
+          black --check vulnspec/ tools/ tests/
           
       - name: Check import ordering with isort
         run: |
-          isort --multi-line=3 --trailing-comma --force-grid-wrap=0 --use-parentheses --line-width=88 --check synth tools tests
+          isort --multi-line=3 --trailing-comma --force-grid-wrap=0 --use-parentheses --line-width=88 --check vulnspec/ tools/ tests/
           
       - name: Check typing with mypy
         run: |
-          mypy synth tools tests
+          mypy vulnspec/ tools/ tests/
 
       - name: Check linting with pylint
         run: |
-          pylint synth tools tests
+          pylint vulnspec/ tools/ tests/
 
-      - name: Check synth runs
+      - name: Check a simple run
         run: |
-          python -m synth --help
+          python -m vulnspec --help
 
       - name: Run tests
         run: |
