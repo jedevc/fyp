@@ -86,6 +86,11 @@ class TypeCheckVisitor(TraversalVisitor[TypeNode]):
             raise ProcessingError(
                 node, f"block {self.block_current} cannot be defined twice"
             )
+        elif self.block_current in self.vars:
+            raise ProcessingError(
+                node,
+                f"name {node.name} has already been used as a variable",
+            )
 
         self.blocks[self.block_current] = node
 
