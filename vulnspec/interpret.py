@@ -258,6 +258,7 @@ class Tracer:
         self.base = base
         self.recursive = recursive
 
+        self.blocks: Set[Block] = set()
         self.paths: Dict[Chunk, List[List[Call]]] = {}
         self.variables: Dict[Block, Set[ChunkVariable]] = {}
         self._trace(base, [])
@@ -328,6 +329,7 @@ class Tracer:
             else:
                 self.paths[chunk] = [prefix]
 
+        self.blocks.add(base)
         self.variables[base] = variables
 
 

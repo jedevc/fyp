@@ -1,6 +1,5 @@
 class SynthError(BaseException):
-    def __str__(self):
-        raise NotImplementedError()
+    pass
 
 
 class ConstraintError(BaseException):
