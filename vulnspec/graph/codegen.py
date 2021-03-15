@@ -106,15 +106,16 @@ class CodeGen:
             for i, (condition, statements) in enumerate(stmt.groups):
                 if i == 0:
                     assert condition is not None
-                    lines.append(f"if ({self._gen_expr(condition)})" + " {\n")
+                    lines.append(
+                        f"if {self._gen_expr(condition, force_parens=True)}" + " {\n"
+                    )
                     lines.extend([self._gen_stmt(stmt) for stmt in statements])
                 elif condition is None:
                     lines.append("} else {\n")
                     lines.extend([self._gen_stmt(stmt) for stmt in statements])
                 else:
-                    lines.append(
-                        "} " + f"else if ({self._gen_expr(condition)})" + " {\n"
-                    )
+                    cond = self._gen_expr(condition, force_parens=True)
+                    lines.append("} " + f"else if {cond}" + " {\n")
                     lines.extend([self._gen_stmt(stmt) for stmt in statements])
             lines.append("}")
             return "".join(lines)
@@ -122,7 +123,7 @@ class CodeGen:
             block = (
                 "{\n" + "".join(self._gen_stmt(stmt) for stmt in stmt.statements) + "}"
             )
-            return f"while ({self._gen_expr(stmt.condition)}) {block}"
+            return f"while {self._gen_expr(stmt.condition, force_parens=True)} {block}"
         elif isinstance(stmt, ExpressionStatement):
             return self._gen_expr(stmt.expr) + ";\n"
         elif isinstance(stmt, StatementGroup):
@@ -130,7 +131,8 @@ class CodeGen:
         else:
             raise RuntimeError("cannot be translated into code")
 
-    def _gen_expr(self, expr: Expression) -> str:
+    def _gen_expr(self, expr: Expression, force_parens: bool = False) -> str:
+        result: str
         if isinstance(expr, Variable):
             if expr.variable.name in variables.TRANSLATIONS:
                 vname = variables.TRANSLATIONS[expr.variable.name]
@@ -140,33 +142,42 @@ class CodeGen:
                 self._includes.add(functions.PATHS[vname])
             else:
                 vname = expr.variable.name
-            return vname
+            result = vname
         elif isinstance(expr, Function):
             fname = self._gen_expr(expr.func)
-            return f"{fname}({', '.join(self._gen_expr(arg) for arg in expr.args)})"
+            result = f"{fname}({', '.join(self._gen_expr(arg) for arg in expr.args)})"
         elif isinstance(expr, Array):
-            return f"{self._gen_expr(expr.target)}[{self._gen_expr(expr.index)}]"
+            result = f"{self._gen_expr(expr.target)}[{self._gen_expr(expr.index)}]"
         elif isinstance(expr, Operation):
             op = expr.op.opstr()
             if len(expr.operands) == 1:
-                return "(" + op + self._gen_expr(expr.operands[0]) + ")"
+                result = op + self._gen_expr(expr.operands[0])
             elif len(expr.operands) == 2:
                 left, right = expr.operands
-                return "(" + self._gen_expr(left) + op + self._gen_expr(right) + ")"
+                result = self._gen_expr(left) + op + self._gen_expr(right)
             else:
                 raise RuntimeError()
+
+            if not force_parens:
+                # only wrap with parens when we're not going to do it later
+                result = f"({result})"
         elif isinstance(expr, Value):
             if expr.value in ("false", "true"):
                 self._includes.add("stdbool.h")
 
-            return expr.value
+            result = expr.value
         elif isinstance(expr, Cast):
             # FIXME: this is a bit hacky
             typestr = ChunkVariable("", expr.cast, None).typestr()
-            return f"({typestr}) {self._gen_expr(expr.expr)}"
+            result = f"({typestr}) {self._gen_expr(expr.expr)}"
         elif isinstance(expr, Deref):
-            return "*" + self._gen_expr(expr.target)
+            result = "*" + self._gen_expr(expr.target)
         elif isinstance(expr, Ref):
-            return "&" + self._gen_expr(expr.target)
+            result = "&" + self._gen_expr(expr.target)
         else:
             raise RuntimeError("cannot be translated into code")
+
+        if force_parens:
+            result = f"({result})"
+
+        return result
