@@ -57,7 +57,9 @@ class Interpreter:
             block = self._apply_inline_calls(block)
             self.blocks[blname] = block
 
-        self._repair_calls()
+        self.blocks = {
+            block.name: block for block in repair_calls(list(self.blocks.values()))
+        }
 
         self._trace()
 
@@ -175,23 +177,6 @@ class Interpreter:
 
         return block.map(mapper)
 
-    def _repair_calls(self):
-        nblocks = {block: Block(block) for block in self.blocks}
-
-        def mapper(item: BlockItem) -> BlockItem:
-            if isinstance(item, Call):
-                return Call(nblocks[item.block.name])
-            elif isinstance(item, Block):
-                nblocks[item.name].add_statements(item.statements)
-                return item
-            else:
-                return item
-
-        for block in self.blocks.values():
-            block.map(mapper)
-
-        self.blocks = nblocks
-
     def _apply_inline_calls(self, block: Block) -> Block:
         def mapper(item: BlockItem) -> BlockItem:
             item.id = BlockItem.new_id()
@@ -206,6 +191,8 @@ class Interpreter:
             elif item.block.name in self.func_blocks:
                 return item
             else:
+                print(item.block)
+                print(self.blocks)
                 raise RuntimeError()
 
         return block.map(mapper)
@@ -574,3 +561,23 @@ class UsageCapture:
             return self._maximal(first.target, second.target)
         else:
             raise RuntimeError()
+
+
+def repair_calls(blocks: List[Block]) -> List[Block]:
+    nblocks = {
+        block.name: Block(block.name, constraint=block.constraint, known_id=block.id)
+        for block in blocks
+    }
+
+    def mapper(item: BlockItem) -> BlockItem:
+        if isinstance(item, Call):
+            return Call(nblocks[item.block.name], known_id=item.id)
+        else:
+            return item
+
+    for block in blocks:
+        nblock = nblocks[block.name]
+        for stmt in block.statements:
+            nblock.add_statement(stmt.map(mapper))
+
+    return list(nblocks.values())

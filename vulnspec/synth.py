@@ -13,6 +13,7 @@ from .error import SynthError
 from .graph import GraphVisualizer
 from .graph.codegen import CodeGen
 from .interpret import Interpreter
+from .names import rename
 from .nops import NopTransformer
 
 
@@ -134,6 +135,8 @@ def synthesize(
     nops = AssetLoader.list("nops", external=True)
     noper = NopTransformer(nops)
     asset = noper.transform(asset)
+
+    rename(asset, {"buffer": "vulnerableoverflow"})
 
     inter = Interpreter(asset.blocks, asset.chunks, asset.extern)
     prog = inter.program()

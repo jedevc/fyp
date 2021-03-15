@@ -50,7 +50,6 @@ from ..node import (
     Visitor,
     WhileNode,
 )
-from ..utils import generate_unique_name
 from .error import ProcessingError
 
 
@@ -60,6 +59,8 @@ class BlockifyVisitor(Visitor[None]):
         self.chunks = chunks
         self.extern = extern
 
+        self.block_current: str = ""
+        self.block_split_count: int = 0
         self.blocks: Dict[str, Block] = {}
 
     def result(self) -> List[Block]:
@@ -71,6 +72,9 @@ class BlockifyVisitor(Visitor[None]):
             block.accept(self)
 
     def visit_block(self, node: BlockNode):
+        self.block_current = node.name
+        self.block_split_count = 0
+
         statements = self.process_statements(node.statements)
         constraint = BlockConstraint()
         for cname in node.constraints:
@@ -93,7 +97,8 @@ class BlockifyVisitor(Visitor[None]):
 
         for statement in statements:
             if isinstance(statement, SplitNode):
-                name = generate_unique_name(8)
+                self.block_split_count += 1
+                name = f"{self.block_current}{self.block_split_count}"
 
                 next_block = Block(name)
                 self.blocks[name] = next_block

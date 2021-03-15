@@ -5,8 +5,8 @@ from typing import Dict, Iterable, List, Set
 from .assets import Asset
 from .error import SynthError
 from .graph import Block, BlockItem, Call, Chunk, merge_chunks
-from .interpret import Tracer
-from .utils import generate_unique_name
+from .interpret import Tracer, repair_calls
+from .names import generate_unique_name
 
 
 class NopTransformError(SynthError):
@@ -84,8 +84,10 @@ class NopTransformer:
             return Call(nblock)
 
         blocks = [block.map(mapper) for block in asset.blocks] + list(additional_blocks)
+        blocks = repair_calls(blocks)
         chunks = asset.chunks + list(additional_chunks)
         extern = reduce(merge_chunks, [asset.extern, *additional_externs])
+
         return Asset(blocks, chunks, extern)
 
 

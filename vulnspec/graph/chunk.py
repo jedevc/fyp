@@ -140,6 +140,28 @@ class Chunk:
         self._vars.append(variable)
         self._table[variable.name] = len(self._vars) - 1
 
+    def rename_variable(self, variable: ChunkVariable, name: str):
+        if variable not in self._vars:
+            raise KeyError("variable not in chunk")
+
+        idx = self._table[variable.name]
+
+        self._table.pop(variable.name)
+        variable.name = name
+        self._table[variable.name] = idx
+
+    def remove_variable(self, variable: ChunkVariable):
+        if variable.name not in self._table:
+            raise KeyError("variable not in chunk table")
+
+        idx = self._table[variable.name]
+        target = self._vars[idx]
+        if target is not variable:
+            raise KeyError("variable does not match")
+
+        self._vars.remove(target)
+        self._table.pop(target.name)
+
     @property
     def variables(self) -> List[ChunkVariable]:
         return self._vars
