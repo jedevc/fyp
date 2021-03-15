@@ -1,7 +1,7 @@
 import json
 from typing import Any, List, Set, TextIO, Tuple
 
-from ..interpret import Tracer
+from ..interpret.trace import Tracer
 from .block import Block, BlockItem, Call
 from .chunk import Chunk
 

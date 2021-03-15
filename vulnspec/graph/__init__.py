@@ -22,5 +22,5 @@ from .block import (
     While,
 )
 from .chunk import Chunk, ChunkConstraint, ChunkVariable, merge_chunks
+from .codegen import CodeGen
 from .program import Program
-from .visualizer import GraphVisualizer

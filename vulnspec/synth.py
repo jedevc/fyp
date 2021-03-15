@@ -10,10 +10,9 @@ from .assets import Asset, AssetLoader
 from .compile import CompilerConfig
 from .dump import DumpType
 from .error import SynthError
-from .graph import GraphVisualizer
-from .graph.codegen import CodeGen
+from .graph import CodeGen
+from .graph.visualizer import GraphVisualizer
 from .interpret import Interpreter
-from .names import rename
 from .nops import NopTransformer
 
 
@@ -136,9 +135,7 @@ def synthesize(
     noper = NopTransformer(nops)
     asset = noper.transform(asset)
 
-    rename(asset, {"buffer": "vulnerableoverflow"})
-
-    inter = Interpreter(asset.blocks, asset.chunks, asset.extern)
+    inter = Interpreter(asset)
     prog = inter.program()
     gen = CodeGen(prog)
     code = gen.generate()
