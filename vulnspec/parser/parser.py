@@ -112,6 +112,7 @@ class Parser:
         self.expect(TokenType.Reserved, ReservedWord.Chunk)
 
         constraints = self.constraints()
+        self.accept(TokenType.Newline)
 
         variables = [self.declaration()]
         while self.accept(TokenType.Comma):

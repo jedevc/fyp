@@ -1,19 +1,21 @@
+from typing import Dict
+
 from .block import FunctionDefinition
 from .chunk import ChunkVariable
 
 
 class Program:
     def __init__(self):
-        self.globals = []
-        self.externs = []
+        self.globals: Dict[str, ChunkVariable] = {}
+        self.externs: Dict[str, ChunkVariable] = {}
 
-        self.functions = []
+        self.functions: Dict[str, FunctionDefinition] = {}
 
     def add_global(self, var: ChunkVariable):
-        self.globals.append(var)
+        self.globals[var.name] = var
 
     def add_extern(self, var: ChunkVariable):
-        self.externs.append(var)
+        self.externs[var.name] = var
 
     def add_function(self, func: FunctionDefinition):
-        self.functions.append(func)
+        self.functions[func.func] = func

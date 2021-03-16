@@ -35,17 +35,19 @@ class CodeGen:
     def _gen_program(self, program: Program) -> str:
         parts: List[str] = []
         if program.externs:
-            parts.extend(f"extern {self._gen_decl(var)};" for var in program.externs)
+            parts.extend(
+                f"extern {self._gen_decl(var)};" for var in program.externs.values()
+            )
             parts.append("")
         if program.globals:
-            parts.extend(f"{self._gen_decl(var)};" for var in program.globals)
+            parts.extend(f"{self._gen_decl(var)};" for var in program.globals.values())
             parts.append("")
 
-        for func in program.functions:
+        for func in program.functions.values():
             decl = self._gen_func_decl(func)
             if decl is not None:
                 parts.append(decl)
-        for func in program.functions:
+        for func in program.functions.values():
             defi = self._gen_func_def(func)
             parts.append(defi)
 

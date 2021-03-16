@@ -3,6 +3,7 @@ import string
 from typing import Dict, Set
 
 from .assets import Asset
+from .graph import BlockItem, ChunkVariable, FunctionDefinition, Variable
 
 _names: Set[str] = set()
 
@@ -21,11 +22,13 @@ def generate_unique_name(length: int) -> str:
     return name
 
 
-def rename(asset: Asset, mapping: Dict[str, str]):
+def rename_blocks(asset: Asset, mapping: Dict[str, str]):
     for block in asset.blocks:
         if block.name in mapping:
             block.name = mapping[block.name]
 
+
+def rename_vars(asset: Asset, mapping: Dict[str, str]):
     for chunk in asset.chunks:
         for var in chunk.variables:
             if var.name in mapping:
@@ -34,3 +37,27 @@ def rename(asset: Asset, mapping: Dict[str, str]):
     for var in asset.extern.variables:
         if var.name in mapping:
             raise RuntimeError("cannot rename extern")
+
+
+def rename_args(func: FunctionDefinition, mapping: Dict[str, str]):
+    nargs: Dict[str, ChunkVariable] = {}
+
+    for i, arg in enumerate(func.args):
+        if arg.name not in mapping:
+            continue
+
+        narg = ChunkVariable(mapping[arg.name], arg.vtype, None)
+        nargs[arg.name] = narg
+        func.args[i] = narg
+
+    def mapper(item: BlockItem) -> BlockItem:
+        if isinstance(item, Variable):
+            print(item.variable.name)
+
+        if isinstance(item, Variable) and item.variable.name in nargs:
+            return Variable(nargs[item.variable.name])
+        else:
+            return item
+
+    for i, stmt in enumerate(func.statements):
+        func.statements[i] = stmt.map(mapper)
