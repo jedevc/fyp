@@ -37,6 +37,13 @@ def main() -> Optional[int]:
         default="webkit",
         help="Coding style to output",
     )
+
+    SYNTH_DUMP_ARGS = [
+        "--dump-ast",
+        "--dump-ast-diagram",
+        "--dump-block-graph",
+        "--dump-block-chunk-graph",
+    ]
     for dump in SYNTH_DUMP_ARGS:
         parser_synth.add_argument(dump, type=argparse.FileType("w"))
 
@@ -51,14 +58,6 @@ def main() -> Optional[int]:
     else:
         parser.print_help()
         return 1
-
-
-SYNTH_DUMP_ARGS = [
-    "--dump-ast",
-    "--dump-ast-diagram",
-    "--dump-block-graph",
-    "--dump-block-chunk-graph",
-]
 
 
 def action_synth(args) -> int:
@@ -107,18 +106,11 @@ def action_synth(args) -> int:
 def action_build(args) -> int:
     stream = args.infile.read()
 
-    match = re.search(r"Build:((?:\s*>\s*.*\n)+)", stream, re.MULTILINE)
-    if not match:
-        print("Cannot file build command in target file", file=sys.stderr)
+    try:
+        run_commands(stream, "build")
+    except KeyError as e:
+        print(f"{e} commands not found in input file", file=sys.stderr)
         return 1
-
-    for command in match.group(1).split("\n"):
-        command = command.split(">")[-1].strip()
-        if not command:
-            continue
-
-        print(command)
-        subprocess.run(command, shell=True, check=True)
 
     return 0
 
@@ -164,3 +156,19 @@ def synthesize(
             stdout=output,
             check=True,
         )
+
+
+def run_commands(stream: str, section: str):
+    match = re.search(
+        section + r":((?:\s*>\s*.*\n)+)", stream, re.MULTILINE | re.IGNORECASE
+    )
+    if not match:
+        raise KeyError(section)
+
+    for command in match.group(1).split("\n"):
+        command = command.split(">")[-1].strip()
+        if not command:
+            continue
+
+        print(command, file=sys.stderr, flush=True)
+        subprocess.run(command, shell=True, check=True)
