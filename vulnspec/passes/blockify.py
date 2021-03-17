@@ -83,6 +83,8 @@ class BlockifyVisitor(Visitor[None]):
                     constraint.merge(BlockConstraint(func=True))
                 elif cname == "inline":
                     constraint.merge(BlockConstraint(inline=True))
+                elif cname == "nop":
+                    constraint.merge(BlockConstraint(nop=True))
                 else:
                     raise ProcessingError(node, f"invalid block constraint {cname}")
             except ConstraintError as e:

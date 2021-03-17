@@ -1,6 +1,4 @@
-chunk x : int = 3
-
-block (inline) sleep {
+block (nop, inline) sleep {
     sleep@libc(<SleepSeconds; random.randint(1, 6)>)
 }
 

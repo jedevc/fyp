@@ -40,18 +40,21 @@ class BlockItem:
 
 
 class BlockConstraint:
-    def __init__(self, func=False, inline=False):
+    def __init__(self, func=False, inline=False, nop=False):
         self.func = func
         self.inline = inline
+
+        self.nop = nop
 
         self._verify()
 
     def copy(self) -> "BlockConstraint":
-        return BlockConstraint(func=self.func, inline=self.inline)
+        return BlockConstraint(func=self.func, inline=self.inline, nop=self.nop)
 
     def merge(self, other: "BlockConstraint"):
         self.func = self.func or other.func
         self.inline = self.inline or other.inline
+        self.nop = self.nop or other.nop
 
         self._verify()
 
@@ -60,7 +63,7 @@ class BlockConstraint:
             raise ConstraintError("cannot allow func and inline constraints")
 
     def __repr__(self) -> str:
-        return f"<{self.__class__.__name__} func={self.func} inline={self.inline}>"
+        return f"<{self.__class__.__name__} func={self.func} inline={self.inline} nop={self.nop}>"
 
 
 class Block(BlockItem):

@@ -23,7 +23,14 @@ class NopTransformer:
 
         for asset in assets:
             self._blocks.extend(asset.blocks)
+
+            have_added = False
             for block in asset.blocks:
+                if block.constraint.nop:
+                    have_added = True
+                else:
+                    continue
+
                 self._names.add(block.name)
 
                 block_vars = Tracer(block).variables[block]
@@ -37,6 +44,9 @@ class NopTransformer:
                     for var in block_vars
                     if var.chunk and var in asset.extern.variables
                 }
+
+            if not have_added:
+                raise RuntimeError("no nops were loaded from asset")
 
             for chunk in asset.chunks:
                 for var in chunk.variables:
@@ -88,7 +98,7 @@ class NopTransformer:
         chunks = asset.chunks + list(additional_chunks)
         extern = reduce(merge_chunks, [asset.extern, *additional_externs])
 
-        return Asset(blocks, chunks, extern)
+        return Asset(asset.name, blocks, chunks, extern)
 
 
 def copier(item: BlockItem):

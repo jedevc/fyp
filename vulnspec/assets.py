@@ -1,5 +1,6 @@
+from io import TextIOWrapper
 from pathlib import Path
-from typing import Dict, Iterable, List, Optional, TextIO
+from typing import Dict, Iterable, List, Optional, TextIO, Union
 
 from .dump import DumpType
 from .graph import Block, Chunk
@@ -15,13 +16,35 @@ from .passes import (
 
 
 class Asset:
-    def __init__(self, blocks: List[Block], chunks: List[Chunk], extern: Chunk):
+    def __init__(
+        self, name: str, blocks: List[Block], chunks: List[Chunk], extern: Chunk
+    ):
+        self.name = name
+
         self.blocks = blocks
         self.chunks = chunks
         self.extern = extern
 
     @staticmethod
     def load(
+        source: Union[str, TextIO, Path],
+        external: bool = False,
+        dump: Optional[Dict[DumpType, Optional[TextIO]]] = None,
+    ) -> "Asset":
+        if isinstance(source, str):
+            return Asset._load("", source, external=external, dump=dump)
+        elif isinstance(source, Path):
+            return Asset._load(
+                str(source), source.read_text(), external=external, dump=dump
+            )
+        elif isinstance(source, TextIOWrapper):
+            return Asset._load(source.name, source.read(), external=external, dump=dump)
+        else:
+            raise TypeError()
+
+    @staticmethod
+    def _load(
+        name: str,
         stream: str,
         external: bool = False,
         dump: Optional[Dict[DumpType, Optional[TextIO]]] = None,
@@ -53,15 +76,7 @@ class Asset:
         spec.accept(block_visitor)
         blocks = block_visitor.result()
 
-        return Asset(blocks, chunks, extern)
-
-    @staticmethod
-    def loadpath(
-        path: Path,
-        external: bool = False,
-        dump: Optional[Dict[DumpType, Optional[TextIO]]] = None,
-    ) -> "Asset":
-        return Asset.load(path.read_text(), external=external, dump=dump)
+        return Asset(name, blocks, chunks, extern)
 
 
 class AssetLoader:
@@ -75,4 +90,4 @@ class AssetLoader:
             current /= part
 
         for path in current.glob(f"**/*.{AssetLoader.EXTENSION}"):
-            yield Asset.loadpath(path, external=external)
+            yield Asset.load(path, external=external)
