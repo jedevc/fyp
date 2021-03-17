@@ -1,5 +1,3 @@
-import io
-import os
 import sys
 from pathlib import Path
 
@@ -7,7 +5,7 @@ import pytest
 
 import vulnspec
 
-from .helpers import FunctionGenerator, Toolchain
+from .helpers import FunctionGenerator
 
 PROTOSTAR_HELPERS = [
     (FunctionGenerator.print, "flag", "FLAG{}"),
@@ -21,42 +19,41 @@ PROTOSTAR_HELPERS = [
         ("protostar/stack/stack0.txt", PROTOSTAR_HELPERS),
         ("protostar/stack/stack1.txt", PROTOSTAR_HELPERS),
         ("protostar/stack/stack2.txt", PROTOSTAR_HELPERS),
-        ("protostar/stack/stack3.txt", PROTOSTAR_HELPERS),
-        ("protostar/stack/stack4.txt", PROTOSTAR_HELPERS),
-        ("protostar/stack/stack5.txt", PROTOSTAR_HELPERS),
+        ("protostar/stack/stack3.txt", []),
+        ("protostar/stack/stack4.txt", []),
+        ("protostar/stack/stack5.txt", []),
     ],
 )
 def test_synth(example, functions, tmp_path):
     path = Path("examples") / example
-    with open(path) as f:
-        source_code = f.read()
+    source_code = path.read_text()
+
+    program = tmp_path / "program.c"
+    helpers = tmp_path / "helpers.c"
 
     for _ in range(5):
         # Because the synthesis process is partly random, we repeat the
         # generation multiple times to try and ensure we acheive adequate
         # coverage.
 
-        output = io.StringIO()
-        vulnspec.synthesize(
-            source_code,
-            output,
-            dump={
-                vulnspec.DumpType.AST: sys.stderr,
-                vulnspec.DumpType.ASTDiagram: sys.stderr,
-            },
-        )
-        program_code = output.getvalue()
-        output.close()
+        with program.open("w") as f:
+            vulnspec.synthesize(
+                source_code,
+                f,
+                dump={
+                    vulnspec.DumpType.AST: sys.stderr,
+                    vulnspec.DumpType.ASTDiagram: sys.stderr,
+                    vulnspec.DumpType.GraphBlock: sys.stderr,
+                    vulnspec.DumpType.GraphBlockChunk: sys.stderr,
+                },
+            )
 
-        gen = FunctionGenerator()
-        for args in functions:
-            func, args = args[0], args[1:]
-            func(gen, *args)
-        helper_code = gen.code()
+        if functions:
+            with helpers.open("w") as f:
+                gen = FunctionGenerator()
+                for args in functions:
+                    func, args = args[0], args[1:]
+                    func(gen, *args)
+                gen.code(f)
 
-        helper_path = tmp_path / "helpers.o"
-        program_path = tmp_path / "program.o"
-
-        Toolchain.compile(helper_path, helper_code)
-        Toolchain.compile(program_path, program_code)
-        Toolchain.link(Path(os.devnull), helper_path, program_path)
+        vulnspec.run_commands(program.read_text(), "build")

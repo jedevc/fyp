@@ -19,17 +19,21 @@ class CompilerConfig:
     }
 
     def __init__(self, source: str):
-        self.config = configparser.ConfigParser()
+        self.config = configparser.ConfigParser(allow_no_value=True)
         self.config["compile"] = CompilerConfig.COMPILER_DEFAULTS
         self.config["security"] = CompilerConfig.SECURITY_DEFAULTS
+        self.config["files"] = {}
         for comment in _extract_comments(source):
             if comment.startswith("[compile]\n"):
                 self.config.read_string(comment)
             elif comment.startswith("[security]\n"):
                 self.config.read_string(comment)
+            elif comment.startswith("[files]\n"):
+                self.config.read_string(comment)
 
     def commands(self, source: Path) -> List[str]:
         sources = [str(source)]
+        sources.extend(str(source.parent / key) for key in self.config["files"].keys())
 
         output = str(source.with_suffix(""))
 
