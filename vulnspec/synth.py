@@ -47,9 +47,14 @@ def main() -> Optional[int]:
     for dump in SYNTH_DUMP_ARGS:
         parser_synth.add_argument(dump, type=argparse.FileType("w"))
 
-    build_synth = subparsers.add_parser("build")
-    build_synth.set_defaults(action=action_build)
-    build_synth.add_argument("infile", type=argparse.FileType("r"))
+    parser_build = subparsers.add_parser("build")
+    parser_build.set_defaults(action=action_build)
+    parser_build.add_argument("infile", type=argparse.FileType("r"))
+
+    parser_strip = subparsers.add_parser("strip")
+    parser_strip.set_defaults(action=action_strip_file_comment)
+    parser_strip.add_argument("infile", type=argparse.FileType("r"))
+    parser_strip.add_argument("outfile", type=argparse.FileType("w"))
 
     args = parser.parse_args()
 
@@ -92,6 +97,50 @@ def action_build(args) -> int:
     except KeyError as e:
         print(f"{e} commands not found in input file", file=sys.stderr)
         return 1
+
+    return 0
+
+
+def action_strip_file_comment(args) -> int:
+    lines = args.infile
+
+    # ignore inputs that don't have a file header comment
+    if not next(lines).startswith("/*"):
+        return 0
+
+    # skip past file header comment
+    while True:
+        try:
+            line = next(lines)
+        except StopIteration:
+            print(
+                "unexpected end of file while parsing header comment", file=sys.stderr
+            )
+            return 1
+
+        if line.startswith(" */"):
+            break
+
+        if line.startswith(" *") or line.startswith(" >"):
+            continue
+
+        print("unexpected line prefix while parsing header comment", file=sys.stderr)
+        return 1
+
+    # strip whitespace
+    while True:
+        try:
+            line = next(lines)
+        except StopIteration:
+            break
+
+        if line.strip():
+            args.outfile.write(line)
+            break
+
+    # print all remaining lines
+    for line in lines:
+        args.outfile.write(line)
 
     return 0
 
@@ -153,9 +202,13 @@ def synthesize(
 
 def run_commands(stream: str, section: str):
     match = re.search(
-        section + r":((?:\s*>\s*.*\n)+)", stream, re.MULTILINE | re.IGNORECASE
+        r"/\*.*" + section + r":((?:\s*>\s*[^\n]*\n)+)",
+        stream,
+        re.MULTILINE | re.IGNORECASE | re.DOTALL,
     )
     if not match:
+        raise KeyError(section)
+    if "*/" in match.group(0):
         raise KeyError(section)
 
     for command in match.group(1).split("\n"):
