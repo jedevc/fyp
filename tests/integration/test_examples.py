@@ -35,6 +35,7 @@ def test_synth(example, tmp_path):
             vulnspec.synthesize(
                 source_code,
                 f,
+                vulnspec.Configuration(source_code),
                 dump={
                     vulnspec.DumpType.AST: sys.stderr,
                     vulnspec.DumpType.ASTDiagram: sys.stderr,

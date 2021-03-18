@@ -1,3 +1,4 @@
+from .config import Configuration
 from .dump import DumpType
 from .error import SynthError
 from .parser import LexError, ParseError

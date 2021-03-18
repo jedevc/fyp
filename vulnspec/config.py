@@ -3,7 +3,7 @@ from pathlib import Path
 from typing import Iterable, List
 
 
-class CompilerConfig:
+class Configuration:
     COMPILER_DEFAULTS = {
         "cc": "gcc",
         "warnings": "no",
@@ -20,8 +20,8 @@ class CompilerConfig:
 
     def __init__(self, source: str):
         self.config = configparser.ConfigParser(allow_no_value=True)
-        self.config["compile"] = CompilerConfig.COMPILER_DEFAULTS
-        self.config["security"] = CompilerConfig.SECURITY_DEFAULTS
+        self.config["compile"] = Configuration.COMPILER_DEFAULTS
+        self.config["security"] = Configuration.SECURITY_DEFAULTS
         self.config["files"] = {}
         for comment in _extract_comments(source):
             if comment.startswith("[compile]\n"):
