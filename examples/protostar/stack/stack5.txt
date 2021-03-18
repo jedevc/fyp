@@ -1,5 +1,3 @@
-// need external flag file
-
 chunk (local) buffer: [64]char
 
 block main {

@@ -5,31 +5,26 @@ import pytest
 
 import vulnspec
 
-from .helpers import FunctionGenerator
-
-PROTOSTAR_HELPERS = [
-    (FunctionGenerator.print, "flag", "FLAG{}"),
-    (FunctionGenerator.exit, "tryagain", "Try again!"),
-]
-
 
 @pytest.mark.parametrize(
-    ("example", "functions"),
+    "example",
     [
-        ("protostar/stack/stack0.txt", PROTOSTAR_HELPERS),
-        ("protostar/stack/stack1.txt", PROTOSTAR_HELPERS),
-        ("protostar/stack/stack2.txt", PROTOSTAR_HELPERS),
-        ("protostar/stack/stack3.txt", []),
-        ("protostar/stack/stack4.txt", []),
-        ("protostar/stack/stack5.txt", []),
+        "protostar/stack/stack0.txt",
+        "protostar/stack/stack1.txt",
+        "protostar/stack/stack2.txt",
+        "protostar/stack/stack3.txt",
+        "protostar/stack/stack4.txt",
+        "protostar/stack/stack5.txt",
     ],
 )
-def test_synth(example, functions, tmp_path):
+def test_synth(example, tmp_path):
     path = Path("examples") / example
     source_code = path.read_text()
 
     program = tmp_path / "program.c"
+
     helpers = tmp_path / "helpers.c"
+    helpers.symlink_to(path.parent.resolve() / "helpers.c")
 
     for _ in range(5):
         # Because the synthesis process is partly random, we repeat the
@@ -47,13 +42,5 @@ def test_synth(example, functions, tmp_path):
                     vulnspec.DumpType.GraphBlockChunk: sys.stderr,
                 },
             )
-
-        if functions:
-            with helpers.open("w") as f:
-                gen = FunctionGenerator()
-                for args in functions:
-                    func, args = args[0], args[1:]
-                    func(gen, *args)
-                gen.code(f)
 
         vulnspec.run_commands(program.read_text(), "build")
