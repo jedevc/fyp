@@ -4,7 +4,7 @@ import re
 import subprocess
 import sys
 from pathlib import Path
-from typing import Dict, Optional, TextIO
+from typing import Dict, Iterable, Optional, TextIO
 
 from .assets import Asset, AssetLoader
 from .compile import CompilerConfig
@@ -200,7 +200,7 @@ def synthesize(
         )
 
 
-def run_commands(stream: str, section: str):
+def extract_commands(stream: str, section: str) -> Iterable[str]:
     match = re.search(
         r"/\*.*" + section + r":((?:\s*>\s*[^\n]*\n)+)",
         stream,
@@ -216,5 +216,10 @@ def run_commands(stream: str, section: str):
         if not command:
             continue
 
+        yield command
+
+
+def run_commands(stream: str, section: str):
+    for command in extract_commands(stream, section):
         print(command, file=sys.stderr, flush=True)
         subprocess.run(command, shell=True, check=True)

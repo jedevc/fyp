@@ -1,7 +1,7 @@
 import sys
 
-from . import synth
+from . import vulnspec
 
 if __name__ == "__main__":
-    result = synth.main()
+    result = vulnspec.main()
     sys.exit(result)
