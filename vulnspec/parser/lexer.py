@@ -176,6 +176,7 @@ class Lexer:
             return Token(self.stream, self.n, len(s) + 2, TokenType.String, s)
         elif self.ch == "#":
             self._advance()
+            start = self.n
             if self.ch in ("'", '"'):
                 s = self._read_str()
                 if len(s) != 1:
