@@ -1,5 +1,9 @@
 // [files]
 // helpers.c
+//
+// [env]
+// type = tcp-shell-setuid
+// port = 4000
 
 extern flag: fn () void,
        tryagain: fn () void

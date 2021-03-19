@@ -20,7 +20,7 @@ class Configuration:
 
     ENVIRONMENT_DEFAULTS = {
         "type": "raw-raw-raw",
-        "port": "1337",
+        "port": "",
         "script": "",
     }
 
@@ -29,7 +29,7 @@ class Configuration:
         self.config["compile"] = Configuration.COMPILER_DEFAULTS
         self.config["security"] = Configuration.SECURITY_DEFAULTS
         self.config["files"] = {}
-        self.config["environment"] = Configuration.ENVIRONMENT_DEFAULTS
+        self.config["env"] = Configuration.ENVIRONMENT_DEFAULTS
         for comment in _extract_comments(source):
             if comment.startswith("[compile]\n"):
                 self.config.read_string(comment)
@@ -37,7 +37,7 @@ class Configuration:
                 self.config.read_string(comment)
             elif comment.startswith("[files]\n"):
                 self.config.read_string(comment)
-            elif comment.startswith("[environment]\n"):
+            elif comment.startswith("[env]\n"):
                 self.config.read_string(comment)
 
     def build_commands(self, source: Path) -> List[str]:
@@ -105,13 +105,13 @@ class Configuration:
 
     @property
     def environ(self) -> "Environment":
-        env = self.config["environment"]
+        env = self.config["env"]
         access, interface, method = env["type"].split("-")
         return Environment(
             access,
             interface,
             method,
-            int(env["port"]),
+            int(env["port"]) if env["port"] else None,
             Path(env["script"]) if env["script"] else None,
         )
 
@@ -124,7 +124,7 @@ class Environment:
         access: str,
         interface: str,
         method: str,
-        port: int,
+        port: Optional[int] = None,
         script: Optional[Path] = None,
     ):
         assert access in ("raw", "tcp", "ssh")
@@ -200,6 +200,7 @@ class Environment:
         if self.access == "raw":
             cmd = binary
         elif self.access == "tcp":
+            assert self.port is not None
             cmd = f'ncat -lkp {self.port} -c "{binary}"'
         elif self.access == "ssh":
             shell = binary
@@ -209,7 +210,8 @@ class Environment:
         print("USER $user", file=output)
         print(file=output)
 
-        print(f"EXPOSE {self.port}", file=output)
+        if self.port:
+            print(f"EXPOSE {self.port}", file=output)
         print(f"CMD {cmd}", file=output)
 
     def join_commands(self, commands: List[str]) -> str:
@@ -221,7 +223,7 @@ def _extract_comments(stream: str) -> Iterable[str]:
     comment = ""
     while stream:
         if stream.startswith("//"):
-            stream = stream[2:].lstrip()
+            stream = stream[2:].lstrip(" ")
             if (n := stream.find("\n")) != -1:
                 comment += stream[: n + 1]
                 stream = stream[n + 1 :]
