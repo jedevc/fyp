@@ -1,6 +1,6 @@
 import configparser
 from pathlib import Path
-from typing import Iterable, List, Optional, TextIO
+from typing import Dict, Iterable, List, Optional, TextIO
 
 
 class Configuration:
@@ -117,6 +117,8 @@ class Configuration:
 
 
 class Environment:
+    DIRECTORY = Path("/opt/pwn/")
+
     def __init__(
         self,
         access: str,
@@ -136,47 +138,62 @@ class Environment:
         self.port = port
         self.script = script
 
-    def docker(self, target: Path, output: TextIO):
+    def docker(self, target: Path, extras: Dict[Path, Path], output: TextIO):
         print("FROM ubuntu:latest", file=output)
-        print("ARG flag", file=output)
+        print(file=output)
+
         print("ARG user=pwn", file=output)
+        if self.method != "raw":
+            print("ARG flag", file=output)
+        print(file=output)
 
         dependencies = []
-        if self.access == "tcp":
+        if self.method == "raw":
+            pass
+        elif self.access == "tcp":
             dependencies.append("ncat")
         elif self.access == "ssh":
             dependencies.append("openssh-server")
 
         print("RUN apt-get update && apt-get upgrade -y", file=output)
         print(f"RUN apt-get install -y {' '.join(dependencies)}", file=output)
+        print(file=output)
 
         print("RUN chmod 3773 /tmp", file=output)
+        print(file=output)
 
-        print(f"COPY {target.name} /opt/pwn/{target.name}", file=output)
+        targetdest = Environment.DIRECTORY / target
+
+        print(f"COPY {target} {targetdest}", file=output)
+        for extra_src, extra_dst in extras.items():
+            print(f"COPY {extra_src} {Environment.DIRECTORY / extra_dst}", file=output)
+        print(file=output)
 
         if self.method == "raw":
             pass
         elif self.method == "basic":
             print("RUN echo '$flag' > /flag.txt", file=output)
+            print(file=output)
         elif self.method == "setuid":
             commands = [
                 "useradd -ms /sbin/nologin owner",
                 'echo "$flag" > /flag.txt',
-                f"chown owner:owner /opt/pwn/{target.name} /flag.txt",
-                f"chmod u+s /opt/pwn/{target.name}",
+                f"chown -R owner:owner {Environment.DIRECTORY} /flag.txt",
+                f"chmod u+s {targetdest}",
                 "chmod 600 /flag.txt",
             ]
-            cmdstr = " && \\ \n    ".join(commands)
-            print(f"RUN {cmdstr}", file=output)
+            print(f"RUN {self.join_commands(commands)}", file=output)
+            print(file=output)
 
         if self.script:
             print(f"COPY {self.script} /tmp/provision", file=output)
             print("RUN /tmp/provision && rm /tmp/provision", file=output)
+            print(file=output)
 
         shell = "/bin/bash"
 
         if self.interface == "raw":
-            binary = f"/opt/pwn/{target.name}"
+            binary = str(targetdest)
         elif self.interface == "shell":
             binary = shell
 
@@ -190,9 +207,14 @@ class Environment:
 
         print(f"RUN useradd -ms {shell} $user", file=output)
         print("USER $user", file=output)
+        print(file=output)
 
         print(f"EXPOSE {self.port}", file=output)
         print(f"CMD {cmd}", file=output)
+
+    def join_commands(self, commands: List[str]) -> str:
+        TAB = 4 * " "
+        return f" && \\ \n{TAB}".join(commands)
 
 
 def _extract_comments(stream: str) -> Iterable[str]:

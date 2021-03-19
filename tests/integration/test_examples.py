@@ -42,6 +42,7 @@ def test_synth(example, tmp_path):
                     vulnspec.DumpType.GraphBlock: sys.stderr,
                     vulnspec.DumpType.GraphBlockChunk: sys.stderr,
                 },
+                file_comment=True,
             )
 
         vulnspec.run_commands(program.read_text(), "build")

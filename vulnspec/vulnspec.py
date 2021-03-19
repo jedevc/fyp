@@ -1,6 +1,7 @@
 import argparse
 import random
 import re
+import shutil
 import subprocess
 import sys
 from pathlib import Path
@@ -62,6 +63,12 @@ def main() -> Optional[int]:
     parser_environ.add_argument("outpath", type=Path)
     parser_environ.add_argument("--seed", help="Random seed to use")
     parser_environ.add_argument(
+        "--extra", action="append", help="Extra files to include"
+    )
+    parser_environ.add_argument(
+        "--extra-src", action="store_true", help="Include generated source code"
+    )
+    parser_environ.add_argument(
         "--format",
         choices=["none", "llvm", "google", "chromium", "mozilla", "webkit"],
         default="webkit",
@@ -116,8 +123,38 @@ def action_build(args) -> int:
 
 def action_environment(args) -> int:
     stream = args.infile.read()
+    base = Path(args.infile.name).parent
+
+    args.outpath.mkdir(parents=True, exist_ok=True)
 
     config = Configuration(stream)
+
+    for fname in config.config["files"]:
+        dstp = args.outpath / fname
+        srcp = base / fname
+        shutil.copy(srcp, dstp)
+
+    copies = {}
+    if args.extra:
+        for fname in args.extra:
+            if ":" in fname:
+                src, dst = fname.split(":", maxsplit=1)
+                docker_src = Path(src.lstrip("/"))
+                docker_dst = Path(dst)
+
+                actual_src = Path(src)
+                actual_dst = args.outpath / Path(dst.lstrip("/"))
+            else:
+                actual_src = Path(fname)
+                actual_dst = args.outpath / actual_src.name
+
+                docker_src = Path(actual_src.name)
+                docker_dst = Path(actual_src.name)
+
+            actual_dst.parent.mkdir(parents=True, exist_ok=True)
+            shutil.copy(actual_src, actual_dst)
+
+            copies[docker_src] = docker_dst
 
     target = args.outpath / "target.c"
     try:
@@ -136,9 +173,14 @@ def action_environment(args) -> int:
     for command in config.build_commands(target):
         subprocess.run(command, shell=True, check=True)
 
+    if args.extra_src:
+        copies[target.name] = target.name
+
     dockerfile = args.outpath / "Dockerfile"
     with dockerfile.open("w") as f:
-        config.environ.docker(config.build_output(target), f)
+        config.environ.docker(
+            config.build_output(target).relative_to(args.outpath), copies, f
+        )
 
     return 0
 
@@ -194,7 +236,7 @@ def synthesize(
     seed: Optional[str] = None,
     style: str = "none",
     dump: Optional[Dict[DumpType, Optional[TextIO]]] = None,
-    file_comment: bool = True,
+    file_comment: bool = False,
 ):
     if seed is not None:
         random.seed(seed)
