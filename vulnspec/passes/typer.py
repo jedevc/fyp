@@ -61,32 +61,28 @@ class TypeCheckVisitor(TraversalVisitor[TypeNode]):
         self.vars: Dict[str, TypeNode] = {}
 
         self.blocks: Dict[str, BlockNode] = {}
-        self.block_refs: Dict[str, CallNode] = {}
 
         self.block_current: Optional[str] = None
         self.block_seen_split = False
 
     def visit_spec(self, node: SpecNode):
-        # resolve block references after traversal
-        super().visit_spec(node)
+        for block in node.blocks:
+            if block.name in self.blocks:
+                raise ProcessingError(
+                    block, f"block {block.name} cannot be defined twice"
+                )
+
+            self.blocks[block.name] = block
 
         if self.require_main and "main" not in self.blocks:
             raise ProcessingError(node, "no main block is defined")
 
-        for block_name in self.block_refs:
-            if block_name not in self.blocks:
-                raise ProcessingError(
-                    self.block_refs[block_name], f"block {block_name} is not defined"
-                )
+        super().visit_spec(node)
 
     def visit_block(self, node: BlockNode):
         self.block_current = node.name
         self.block_seen_split = False
-        if self.block_current in self.blocks:
-            raise ProcessingError(
-                node, f"block {self.block_current} cannot be defined twice"
-            )
-        elif self.block_current in self.vars:
+        if self.block_current in self.vars:
             raise ProcessingError(
                 node,
                 f"name {node.name} has already been used as a variable",
@@ -100,7 +96,8 @@ class TypeCheckVisitor(TraversalVisitor[TypeNode]):
         self.block_seen_split = True
 
     def visit_call(self, node: CallNode):
-        self.block_refs[node.target] = node
+        if node.target not in self.blocks:
+            raise ProcessingError(node, f"block {node.target} is not defined")
 
         super().visit_call(node)
 
@@ -167,6 +164,14 @@ class TypeCheckVisitor(TraversalVisitor[TypeNode]):
             return parse_typestring(variables.TYPES[node.name])
         elif node.name in functions.SIGNATURES:
             return parse_typestring(functions.SIGNATURES[node.name])
+        elif node.name in self.blocks:
+            if "func" in self.blocks[node.name].constraints:
+                return FuncTypeNode(SimpleTypeNode("void"), [])
+            else:
+                raise ProcessingError(
+                    node,
+                    "blocks can only be referenced as variables when constrained as functions",
+                )
         else:
             raise ProcessingError(node, f"variable {node.name} does not exist")
 

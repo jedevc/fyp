@@ -123,6 +123,8 @@ class BlockifyVisitor(Visitor[None]):
             return ChunkVariable(name, None, None)
         elif name in functions.SIGNATURES:
             return ChunkVariable(name, None, None)
+        elif name in self.blocks:
+            return ChunkVariable(name, None, None)
         elif (var := self.extern.lookup(name)) :
             return var
         else:

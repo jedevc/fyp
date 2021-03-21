@@ -92,7 +92,7 @@ class FuncTypeNode(Node):
 
     @property
     def meta(self) -> MetaType:
-        return MetaType.Pointer
+        return MetaType.Void
 
     def __repr__(self) -> str:
         args = ", ".join(repr(arg) for arg in self.args)
