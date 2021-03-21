@@ -408,7 +408,7 @@ class Parser:
             node = self.lvalue()
 
         # Parse a function call (if it exists)
-        if self.match(TokenType.ParenOpen):
+        while self.match(TokenType.ParenOpen):
             node = self.function(node)
 
         # Parse a cast (if it exists)
