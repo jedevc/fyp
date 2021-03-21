@@ -191,6 +191,8 @@ class TypeCheckVisitor(TraversalVisitor[TypeNode]):
         rhs_type = node.expression.accept(self)
         assert lhs_type is not None and rhs_type is not None
 
+        if isinstance(lhs_type, FuncTypeNode):
+            raise ProcessingError(node.target, "cannot assign to function")
         if not type_check(lhs_type, rhs_type):
             raise ProcessingError(node, "incompatible types in assignment")
 
@@ -210,19 +212,24 @@ class TypeCheckVisitor(TraversalVisitor[TypeNode]):
 
     def visit_function(self, node: FunctionNode) -> TypeNode:
         vtype = node.target.accept(self)
-        funcname = (
-            node.target.name if isinstance(node.target, VariableNode) else "function"
-        )
         if not isinstance(vtype, FuncTypeNode):
-            raise ProcessingError(node, f"{funcname} exists, but is not a function")
+            raise ProcessingError(node, "value is not a function and cannot be called")
 
         if not vtype.variadic and len(vtype.args) != len(node.arguments):
+            funcname = (
+                node.target.name
+                if isinstance(node.target, VariableNode)
+                else "function"
+            )
             raise ProcessingError(
                 node,
                 f"{funcname} expects {len(vtype.args)} arguments, but was given {len(node.arguments)}",
             )
 
         for arg, varg in zip(node.arguments, vtype.args):
+            if isinstance(arg, FuncTypeNode):
+                raise ProcessingError(arg, "cannot pass function to function")
+
             type_result = arg.accept(self)
             assert type_result is not None
             if not type_check(varg, type_result):
