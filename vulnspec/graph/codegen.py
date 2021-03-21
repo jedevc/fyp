@@ -161,7 +161,6 @@ class CodeGen:
                 raise RuntimeError()
 
             if not force_parens:
-                # only wrap with parens when we're not going to do it later
                 result = f"({result})"
         elif isinstance(expr, Value):
             if expr.value in ("false", "true"):
@@ -174,8 +173,12 @@ class CodeGen:
             result = f"({typestr}) {self._gen_expr(expr.expr)}"
         elif isinstance(expr, Deref):
             result = "*" + self._gen_expr(expr.target)
+            if not force_parens:
+                result = f"({result})"
         elif isinstance(expr, Ref):
             result = "&" + self._gen_expr(expr.target)
+            if not force_parens:
+                result = f"({result})"
         else:
             raise RuntimeError("cannot be translated into code")
 

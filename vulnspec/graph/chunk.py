@@ -27,31 +27,27 @@ class ChunkVariable:
         self.chunk = chunk
         self.initial = initial
 
-    def _typestr(self, tp: TypeNode) -> str:
-        if isinstance(tp, SimpleTypeNode):
-            return types.TRANSLATIONS[tp.core]
-        elif isinstance(tp, PointerTypeNode):
-            return f"*{self._typestr(tp.base)}"
-        elif isinstance(tp, ArrayTypeNode):
-            return f"{self._typestr(tp.base)}[{tp.size}]"
-        elif isinstance(tp, FuncTypeNode):
-            args = ", ".join(self._typestr(arg) for arg in tp.args)
-            ret = self._typestr(tp.ret)
-            return f"{ret} (*)({args})"
-        else:
-            raise RuntimeError("invalid variable type")
+    def _typenamestr(
+        self, tp: TypeNode, original: Optional[str], name: Optional[str]
+    ) -> str:
+        original = original or ""
+        name = name or ""
 
-    def _typenamestr(self, name: str, tp: TypeNode) -> str:
         if isinstance(tp, SimpleTypeNode):
             return f"{types.TRANSLATIONS[tp.core]} {name}"
-        elif isinstance(tp, PointerTypeNode):
-            return self._typenamestr(f"*{name}", tp.base)
-        elif isinstance(tp, ArrayTypeNode):
-            return self._typenamestr(f"{name}[{tp.size}]", tp.base)
         elif isinstance(tp, FuncTypeNode):
-            args = ", ".join(self._typestr(arg) for arg in tp.args)
-            ret = self._typestr(tp.ret)
-            return f"{ret} (*{name})({args})"
+            args = ", ".join(self._typenamestr(arg, None, None) for arg in tp.args)
+            if name == original:
+                assert original
+                base = f"{original}({args})"
+                return self._typenamestr(tp.ret, base, base)
+            else:
+                ret = self._typenamestr(tp.ret, None, None)
+                return f"{ret} ({name})({args})"
+        elif isinstance(tp, PointerTypeNode):
+            return self._typenamestr(tp.base, original, f"*{name}")
+        elif isinstance(tp, ArrayTypeNode):
+            return self._typenamestr(tp.base, original, f"{name}[{tp.size}]")
         else:
             raise RuntimeError("invalid variable type")
 
@@ -59,13 +55,13 @@ class ChunkVariable:
         if self.vtype is None:
             return f"void {self.name}"
 
-        return self._typenamestr(self.name, self.vtype)
+        return self._typenamestr(self.vtype, self.name, self.name)
 
     def typestr(self) -> str:
         if self.vtype is None:
             return "void"
 
-        return self._typestr(self.vtype)
+        return self._typenamestr(self.vtype, None, None).strip()
 
     def _basic_types(self, tp: TypeNode) -> Iterable[str]:
         if isinstance(tp, SimpleTypeNode):
