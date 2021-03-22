@@ -2,7 +2,7 @@ from io import TextIOWrapper
 from pathlib import Path
 from typing import Dict, Iterable, List, Optional, TextIO, Union
 
-from .dump import DumpType
+from .common.dump import DumpType
 from .graph import Block, Chunk
 from .parser import Lexer, Parser
 from .passes import (

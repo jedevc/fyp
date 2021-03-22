@@ -2,8 +2,8 @@ import random
 import string
 from typing import Dict, Set
 
-from .assets import Asset
-from .graph import BlockItem, ChunkVariable, FunctionDefinition, Variable
+from ..assets import Asset
+from ..graph import BlockItem, ChunkVariable, FunctionDefinition, Variable
 
 _names: Set[str] = set()
 

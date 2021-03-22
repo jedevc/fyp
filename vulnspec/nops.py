@@ -3,10 +3,10 @@ from functools import reduce
 from typing import Dict, Iterable, List, Set
 
 from .assets import Asset
-from .error import SynthError
+from .common.error import SynthError
+from .common.names import generate_unique_name
 from .graph import Block, BlockItem, Call, Chunk, merge_chunks
 from .interpret import Tracer, repair_calls
-from .names import generate_unique_name
 
 
 class NopTransformError(SynthError):

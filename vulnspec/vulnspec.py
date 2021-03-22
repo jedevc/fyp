@@ -8,9 +8,9 @@ from pathlib import Path
 from typing import Dict, Iterable, Optional, TextIO
 
 from .assets import Asset, AssetLoader
+from .common.dump import DumpType
+from .common.error import SynthError
 from .config import Configuration
-from .dump import DumpType
-from .error import SynthError
 from .graph import CodeGen
 from .graph.visualizer import GraphVisualizer
 from .interpret import Interpreter

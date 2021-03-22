@@ -1,6 +1,6 @@
 from typing import Callable, List, Optional, Sequence, Tuple, TypeVar, Union
 
-from ..error import ConstraintError
+from ..common.error import ConstraintError
 from ..node import Operator as OperatorType
 from ..node import TypeNode
 from .chunk import Chunk, ChunkVariable

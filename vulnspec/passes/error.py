@@ -1,4 +1,4 @@
-from ..error import ErrorLocation, SynthError
+from ..common.error import ErrorLocation, SynthError
 from ..node import Node
 
 

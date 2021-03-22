@@ -1,7 +1,7 @@
 from typing import Dict, List, Optional, Tuple, Union
 
 from ..builtins import functions, variables
-from ..error import ConstraintError
+from ..common.error import ConstraintError
 from ..graph import (
     Array,
     Assignment,

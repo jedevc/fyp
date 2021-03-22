@@ -1,7 +1,7 @@
 from typing import TYPE_CHECKING, Iterable, List, Optional, Union, overload
 
 from ..builtins import types
-from ..error import ConstraintError
+from ..common.error import ConstraintError
 from ..node import (
     ArrayTypeNode,
     FuncTypeNode,
