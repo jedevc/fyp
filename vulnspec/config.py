@@ -117,7 +117,8 @@ class Configuration:
 
 
 class Environment:
-    DIRECTORY = Path("/opt/pwn/")
+    USER = "pwn"
+    DIRECTORY = Path(f"/home/{USER}")
 
     def __init__(
         self,
@@ -169,18 +170,19 @@ class Environment:
             print(f"COPY {extra_src} {Environment.DIRECTORY / extra_dst}", file=output)
         print(file=output)
 
+        flagdest = Environment.DIRECTORY / "flag.txt"
         if self.method == "raw":
             pass
         elif self.method == "basic":
-            print("RUN echo '$flag' > /flag.txt", file=output)
+            print(f"RUN echo '$flag' > {flagdest}", file=output)
             print(file=output)
         elif self.method == "setuid":
             commands = [
                 "useradd -ms /sbin/nologin owner",
-                'echo "$flag" > /flag.txt',
-                f"chown -R owner:owner {Environment.DIRECTORY} /flag.txt",
+                f'echo "$flag" > {flagdest}',
+                f"chown -R owner:owner {Environment.DIRECTORY} {flagdest}",
                 f"chmod u+s {targetdest}",
-                "chmod 600 /flag.txt",
+                f"chmod 600 {flagdest}",
             ]
             print(f"RUN {self.join_commands(commands)}", file=output)
             print(file=output)
