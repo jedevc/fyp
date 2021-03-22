@@ -204,11 +204,20 @@ class Environment:
             cmd = f'ncat -lkp {self.port} -c "{binary}"'
         elif self.access == "ssh":
             shell = binary
-            cmd = "sshd -D"
+            cmd = f"/usr/sbin/sshd -D -p {self.port}"
 
         print(f"RUN useradd -ms {shell} $user", file=output)
-        print("USER $user", file=output)
-        print(file=output)
+
+        if self.access == "ssh":
+            commands = [
+                "mkdir -p /run/sshd",
+                "passwd -d $user",
+                "echo 'PermitEmptyPasswords yes' >> /etc/ssh/sshd_config.d/empty-passwords.conf",
+            ]
+            print(f"RUN {self.join_commands(commands)}", file=output)
+        else:
+            print("USER $user", file=output)
+            print(file=output)
 
         if self.port:
             print(f"EXPOSE {self.port}", file=output)
