@@ -40,10 +40,12 @@ class TagKind(Enum):
     PROTOTYPE = "prototype"
     FUNCTION = "function"
     TYPEDEF = "typedef"
+    CLASS = "class"
     UNION = "union"
     STRUCT = "struct"
     ENUM = "enum"
     ENUMERATOR = "enumerator"
     VARIABLE = "variable"
+    LOCAL = "local"
 
     MEMBER = "member"  # ???
