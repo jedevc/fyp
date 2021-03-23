@@ -3,7 +3,7 @@ import io
 from collections import Counter
 from datetime import datetime
 from pathlib import Path
-from typing import Dict, List, Set, Tuple
+from typing import Dict, List, Set, TextIO, Tuple
 
 import black
 from builtin_generator.library import Library
@@ -22,15 +22,19 @@ def main():
     if args.build:
         lib.build()
 
-    table = Table(2)
+    table_vars = Table(2)
+    table_funcs = Table(2)
 
     tags = lib.tags(headers=True, sources=True, extra_flags=["--kinds-c=+l"])
     for tag in tags:
         if tag.name.startswith("__") and tag.name.endswith("__"):
             continue
+        name = tag.name.strip("_")
 
-        if tag.kind == TagKind.LOCAL:
-            table.insert(tag.name)
+        if tag.kind in (TagKind.LOCAL, TagKind.VARIABLE):
+            table_vars.insert(name)
+        if tag.kind in (TagKind.FUNCTION, TagKind.PROTOTYPE):
+            table_funcs.insert(name)
 
     output = io.StringIO()
 
@@ -43,13 +47,11 @@ def main():
             "'''",
         ]
     )
+
     print(prefix + "\n", file=output)
     print(INCLUDE_FILE.read_text(), file=output)
-    print("class Model:", file=output)
-    print(f"\tSIZE = {table.size}", file=output)
-    print(f"\tTERMINAL = '{Table.END}'", file=output)
-    print(f"\tCHARS = '{table.chars}'", file=output)
-    print(f"\tTABLE = {table.construct()}", file=output)
+    dump_table("ModelVars", table_vars, output)
+    dump_table("ModelFuncs", table_funcs, output)
 
     final = output.getvalue()
     try:
@@ -99,6 +101,14 @@ class Table:
             result[key] = pieces
 
         return result
+
+
+def dump_table(name: str, table: Table, output: TextIO):
+    print(f"class {name}:", file=output)
+    print(f"\tSIZE = {table.size}", file=output)
+    print(f"\tTERMINAL = '{Table.END}'", file=output)
+    print(f"\tCHARS = '{table.chars}'", file=output)
+    print(f"\tTABLE = {table.construct()}", file=output)
 
 
 if __name__ == "__main__":

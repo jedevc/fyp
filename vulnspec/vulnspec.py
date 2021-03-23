@@ -15,8 +15,7 @@ from .config import Configuration
 from .graph import CodeGen
 from .graph.visualizer import GraphVisualizer
 from .interpret import Interpreter
-from .markov import Markov
-from .markov import Model as MarkovModel
+from .markov import Markov, ModelFuncs, ModelVars
 from .nops import NopTransformer
 
 
@@ -258,15 +257,15 @@ def synthesize(
     asset = noper.transform(asset)
 
     mapping = {}
-    model = Markov(MarkovModel.TABLE, MarkovModel.SIZE, MarkovModel.TERMINAL)
+    model_vars = Markov(ModelVars.TABLE, ModelVars.SIZE, ModelVars.TERMINAL)
+    model_funcs = Markov(ModelFuncs.TABLE, ModelFuncs.SIZE, ModelFuncs.TERMINAL)
     for block in asset.blocks:
         if block.name == "main":
             continue
-
-        mapping[block.name] = model.generate()
+        mapping[block.name] = model_funcs.generate()
     for chunk in asset.chunks:
         for var in chunk.variables:
-            mapping[var.name] = model.generate()
+            mapping[var.name] = model_vars.generate()
 
     rename_blocks(asset, mapping)
     rename_vars(asset, mapping)
