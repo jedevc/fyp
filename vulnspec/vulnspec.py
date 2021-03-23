@@ -15,7 +15,7 @@ from .config import Configuration
 from .graph import CodeGen
 from .graph.visualizer import GraphVisualizer
 from .interpret import Interpreter
-from .markov import Markov, ModelFuncs, ModelVars
+from .markov import ModelFuncs, ModelVars, create_markov
 from .nops import NopTransformer
 
 
@@ -257,8 +257,8 @@ def synthesize(
     asset = noper.transform(asset)
 
     mapping = {}
-    model_vars = Markov(ModelVars.TABLE, ModelVars.SIZE, ModelVars.TERMINAL)
-    model_funcs = Markov(ModelFuncs.TABLE, ModelFuncs.SIZE, ModelFuncs.TERMINAL)
+    model_vars = create_markov(ModelVars, (1, 12))
+    model_funcs = create_markov(ModelFuncs, (3, 12))
     for block in asset.blocks:
         if block.name == "main":
             continue

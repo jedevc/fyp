@@ -1,5 +1,16 @@
 import random
-from typing import Dict, List, Set, Tuple
+from typing import Any, Dict, List, Set, Tuple
+
+
+def create_markov(model: Any, size: Tuple[int, int]) -> "MarkovWrapper":
+    if model.MODE == "single":
+        markov = Markov(model.TABLE, model.SIZE, model.TERMINAL)
+    elif model.MODE == "multi":
+        markov = MultiMarkov(model.TABLES, model.MAX_SIZE, model.TERMINAL)
+    else:
+        raise KeyError()
+
+    return MarkovWrapper(markov, size)
 
 
 class Markov:
@@ -11,21 +22,10 @@ class Markov:
         self.size = size
         self.terminal = terminal
 
-        self._exclude: Set[str] = set()
-
     def generate(self) -> str:
-        while True:
-            result = self._generate()
-            if result not in self._exclude:
-                break
-
-        self._exclude.add(result)
-        return result
-
-    def _generate(self) -> str:
         complete = ""
         while True:
-            ch = self._choose(complete[-self.size :])
+            ch = self.choose(complete)
             if ch == self.terminal:
                 break
 
@@ -33,7 +33,8 @@ class Markov:
 
         return complete
 
-    def _choose(self, prefix: str) -> str:
+    def choose(self, prefix: str) -> str:
+        prefix = prefix[-self.size :]
         assert len(prefix) <= self.size
 
         sub = self.lookup[prefix]
@@ -60,3 +61,49 @@ class Markov:
         #     assert sub[start][0] <= n <= sub[start + 1][0]
 
         return sub[start][1]
+
+
+class MultiMarkov(Markov):
+    def __init__(
+        self,
+        lookups: List[Dict[str, List[Tuple[float, str]]]],
+        max_size: int,
+        terminal: str,
+    ):
+        super().__init__({}, max_size, terminal)
+
+        self.markovs = [
+            Markov(lookup, i + 1, terminal) for i, lookup in enumerate(lookups)
+        ]
+        assert len(self.markovs) == self.size
+
+    def choose(self, prefix: str) -> str:
+        while True:
+            markov = self.markovs[int(random.triangular(0, len(self.markovs)))]
+            try:
+                return markov.choose(prefix)
+            except KeyError:
+                # oh boi
+                continue
+
+
+class MarkovWrapper:
+    def __init__(self, markov: Markov, size_range: Tuple[int, int]):
+        self.markov = markov
+
+        self.min_size, self.max_size = size_range
+
+        self._exclude: Set[str] = set()
+
+    def generate(self) -> str:
+        while True:
+            result = self.markov.generate()
+            if not self.min_size <= len(result) <= self.max_size:
+                continue
+            if result in self._exclude:
+                continue
+
+            break
+
+        self._exclude.add(result)
+        return result

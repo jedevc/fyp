@@ -22,19 +22,26 @@ def main():
     if args.build:
         lib.build()
 
-    table_vars = Table(2)
-    table_funcs = Table(2)
-
     tags = lib.tags(headers=True, sources=True, extra_flags=["--kinds-c=+l"])
+
+    tables = {
+        "vars": MultiTable(3),
+        "funcs": MultiTable(3),
+    }
+    table_tags = {
+        TagKind.LOCAL: "vars",
+        TagKind.VARIABLE: "vars",
+        TagKind.FUNCTION: "funcs",
+        TagKind.PROTOTYPE: "funcs",
+    }
+
     for tag in tags:
         if tag.name.startswith("__") and tag.name.endswith("__"):
             continue
         name = tag.name.strip("_")
 
-        if tag.kind in (TagKind.LOCAL, TagKind.VARIABLE):
-            table_vars.insert(name)
-        if tag.kind in (TagKind.FUNCTION, TagKind.PROTOTYPE):
-            table_funcs.insert(name)
+        if (tablename := table_tags.get(tag.kind)) :
+            tables[tablename].insert(name)
 
     output = io.StringIO()
 
@@ -50,8 +57,14 @@ def main():
 
     print(prefix + "\n", file=output)
     print(INCLUDE_FILE.read_text(), file=output)
-    dump_table("ModelVars", table_vars, output)
-    dump_table("ModelFuncs", table_funcs, output)
+    for tablename, table in tables.items():
+        model = f"Model{tablename.capitalize()}"
+        if isinstance(table, Table):
+            dump_table(model, table, output)
+        elif isinstance(table, MultiTable):
+            dump_multitable(model, table, output)
+        else:
+            raise TypeError()
 
     final = output.getvalue()
     try:
@@ -68,16 +81,13 @@ class Table:
     def __init__(self, size: int = 1):
         self.size = size
         self.table: Dict[str, Counter[str]] = {}
-        self._chars: Set[str] = set()
 
-    @property
-    def chars(self):
-        return "".join(sorted(self._chars))
+        self.chars: Set[str] = set()
 
     def insert(self, word: str):
         word += Table.END
         for ch in word:
-            self._chars.add(ch)
+            self.chars.add(ch)
 
         for j in range(len(word)):
             i = max(0, j - self.size)
@@ -103,12 +113,33 @@ class Table:
         return result
 
 
+class MultiTable:
+    def __init__(self, max_size: int = 1):
+        self.max_size = max_size
+        self.tables = [Table(size) for size in range(1, max_size + 1)]
+
+    def insert(self, word: str):
+        for table in self.tables:
+            table.insert(word)
+
+    def construct(self) -> List[Dict[str, List[Tuple[float, str]]]]:
+        return [table.construct() for table in self.tables]
+
+
 def dump_table(name: str, table: Table, output: TextIO):
     print(f"class {name}:", file=output)
+    print("\tMODE = 'single'", file=output)
     print(f"\tSIZE = {table.size}", file=output)
     print(f"\tTERMINAL = '{Table.END}'", file=output)
-    print(f"\tCHARS = '{table.chars}'", file=output)
     print(f"\tTABLE = {table.construct()}", file=output)
+
+
+def dump_multitable(name: str, table: MultiTable, output: TextIO):
+    print(f"class {name}:", file=output)
+    print("\tMODE = 'multi'", file=output)
+    print(f"\tMAX_SIZE = {table.max_size}", file=output)
+    print(f"\tTERMINAL = '{Table.END}'", file=output)
+    print(f"\tTABLES = {table.construct()}", file=output)
 
 
 if __name__ == "__main__":
