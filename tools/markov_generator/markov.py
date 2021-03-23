@@ -1,5 +1,5 @@
 import random
-from typing import Dict, List, Tuple
+from typing import Dict, List, Set, Tuple
 
 
 class Markov:
@@ -11,7 +11,18 @@ class Markov:
         self.size = size
         self.terminal = terminal
 
+        self._exclude: Set[str] = set()
+
     def generate(self) -> str:
+        while True:
+            result = self._generate()
+            if result not in self._exclude:
+                break
+
+        self._exclude.add(result)
+        return result
+
+    def _generate(self) -> str:
         complete = ""
         while True:
             ch = self._choose(complete[-self.size :])

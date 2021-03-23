@@ -10,10 +10,13 @@ from typing import Dict, Iterable, Optional, TextIO
 from .assets import Asset, AssetLoader
 from .common.dump import DumpType
 from .common.error import SynthError
+from .common.names import rename_blocks, rename_vars
 from .config import Configuration
 from .graph import CodeGen
 from .graph.visualizer import GraphVisualizer
 from .interpret import Interpreter
+from .markov import Markov
+from .markov import Model as MarkovModel
 from .nops import NopTransformer
 
 
@@ -253,6 +256,20 @@ def synthesize(
     nops = AssetLoader.list("nops", external=True)
     noper = NopTransformer(nops)
     asset = noper.transform(asset)
+
+    mapping = {}
+    model = Markov(MarkovModel.TABLE, MarkovModel.SIZE, MarkovModel.TERMINAL)
+    for block in asset.blocks:
+        if block.name == "main":
+            continue
+
+        mapping[block.name] = model.generate()
+    for chunk in asset.chunks:
+        for var in chunk.variables:
+            mapping[var.name] = model.generate()
+
+    rename_blocks(asset, mapping)
+    rename_vars(asset, mapping)
 
     inter = Interpreter(asset)
     prog = inter.program()

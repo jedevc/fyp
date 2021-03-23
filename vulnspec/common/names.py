@@ -38,6 +38,15 @@ def rename_vars(asset: Asset, mapping: Dict[str, str]):
         if var.name in mapping:
             raise RuntimeError("cannot rename extern")
 
+    # traverse the block graph (to get all those chunk-less variables)
+    def traverser(item: BlockItem):
+        if isinstance(item, Variable):
+            if item.variable.name in mapping:
+                item.variable.name = mapping[item.variable.name]
+
+    for block in asset.blocks:
+        block.traverse(traverser)
+
 
 def rename_args(func: FunctionDefinition, mapping: Dict[str, str]):
     nargs: Dict[str, ChunkVariable] = {}
