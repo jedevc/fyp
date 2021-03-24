@@ -100,8 +100,6 @@ class FuncTypeNode(Node):
 
 
 def metatype_is_reachable(start: MetaType, destination: MetaType) -> bool:
-    print(start, destination)
-
     if start == destination:
         return True
 
@@ -117,12 +115,10 @@ def metatype_is_reachable(start: MetaType, destination: MetaType) -> bool:
 
             stack.append(conn)
 
-    print("false")
     return False
 
 
 def type_check(left: TypeNode, right: TypeNode, strict: bool = False) -> bool:
-    print(left, right)
     if isinstance(left, SimpleTypeNode) and isinstance(right, SimpleTypeNode):
         if strict:
             return left.core == right.core
