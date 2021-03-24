@@ -2,7 +2,9 @@ import json
 import random
 from typing import Any, Dict, List, Set, Tuple
 
+from .builtins import functions, types, variables
 from .common.data import data_path
+from .parser.token import RESERVED_WORDS
 
 
 class MarkovLoader:
@@ -112,6 +114,14 @@ class MarkovWrapper:
             if not self.min_size <= len(result) <= self.max_size:
                 continue
             if result in self._exclude:
+                continue
+            if result in RESERVED_WORDS:
+                continue
+            if (
+                result in types.TRANSLATIONS
+                or result in functions.TRANSLATIONS
+                or result in variables.TRANSLATIONS
+            ):
                 continue
 
             break
