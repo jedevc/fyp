@@ -8,6 +8,7 @@ from pathlib import Path
 from typing import Dict, Iterable, Optional, TextIO
 
 from .assets import Asset, AssetLoader
+from .common.data import data_path
 from .common.dump import DumpType
 from .common.error import SynthError
 from .common.names import rename_blocks, rename_vars
@@ -252,7 +253,7 @@ def synthesize(
         vis = GraphVisualizer(dump_output)
         vis.generate_block_chunk_graph(asset.blocks, asset.chunks, asset.extern)
 
-    nops = AssetLoader.list("nops", external=True)
+    nops = AssetLoader(data_path("nops")).list(external=True)
     noper = NopTransformer(nops)
     asset = noper.transform(asset)
 

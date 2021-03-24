@@ -52,6 +52,9 @@ class NopTransformer:
                 for var in chunk.variables:
                     self._names.add(var.name)
 
+        if len(self._blocks) == 0:
+            raise RuntimeError("no assets were found")
+
     def transform(self, asset: Asset) -> Asset:
         # check for name collisions
         for block in asset.blocks:

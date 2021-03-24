@@ -80,14 +80,10 @@ class Asset:
 
 
 class AssetLoader:
-    EXTENSION = "spec"
-    ROOT = Path(__file__).parent.parent / "assets"
+    def __init__(self, root: Path, extension: str = "spec"):
+        self.root = root
+        self.extension = extension
 
-    @staticmethod
-    def list(*category: str, external: bool = False) -> Iterable[Asset]:
-        current = AssetLoader.ROOT
-        for part in category:
-            current /= part
-
-        for path in current.glob(f"**/*.{AssetLoader.EXTENSION}"):
+    def list(self, external: bool = False) -> Iterable[Asset]:
+        for path in self.root.glob(f"**/*.{self.extension}"):
             yield Asset.load(path, external=external)
