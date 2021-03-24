@@ -19,6 +19,11 @@ python -m vulnspec build <c-file>
 To regenerate the libraries:
 
 ```bash
-PYTHONPATH=./tools python -m builtin_generator synth/builtins
+PYTHONPATH=./tools python -m builtin_generator data/builtins
 ```
 
+To regenerate the markov chains:
+
+```
+PYTHONPATH=./tools python -m markov_generator ../musl-1.2.1/ > data/markov.json
+```

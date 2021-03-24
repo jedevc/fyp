@@ -1,6 +1,6 @@
 from typing import List, Optional, Union
 
-from ..builtins.types import METAS, MetaType, MetaTypeGraph
+from ..builtins import MetaType, types
 from .base import Node, X
 from .visitor import Visitor
 
@@ -23,7 +23,7 @@ class SimpleTypeNode(Node):
 
     @property
     def meta(self) -> MetaType:
-        return METAS.get(self.core, MetaType.Any)
+        return types.META_PARENTS.get(self.core, types.meta("any"))
 
     def __repr__(self) -> str:
         return f"<{self.__class__.__name__} {self.core}>"
@@ -57,7 +57,7 @@ class PointerTypeNode(Node):
 
     @property
     def meta(self) -> MetaType:
-        return MetaType.Pointer
+        return types.meta("pointer")
 
     def __repr__(self) -> str:
         return f"<{self.__class__.__name__} {self.base}>"
@@ -74,7 +74,7 @@ class ArrayTypeNode(Node):
 
     @property
     def meta(self) -> MetaType:
-        return MetaType.Pointer
+        return types.meta("pointer")
 
     def __repr__(self) -> str:
         return f"<{self.__class__.__name__} {self.base}>"
@@ -92,7 +92,7 @@ class FuncTypeNode(Node):
 
     @property
     def meta(self) -> MetaType:
-        return MetaType.Void
+        return types.meta("void")
 
     def __repr__(self) -> str:
         args = ", ".join(repr(arg) for arg in self.args)
@@ -100,25 +100,29 @@ class FuncTypeNode(Node):
 
 
 def metatype_is_reachable(start: MetaType, destination: MetaType) -> bool:
+    print(start, destination)
+
     if start == destination:
         return True
 
     stack = [start]
     while len(stack) > 0:
         expand = stack.pop()
-        for conn in MetaTypeGraph[expand]:
+        for conn in types.META_GRAPH[expand]:
+            if conn in stack:
+                continue
+
             if conn == destination:
                 return True
-            elif conn not in stack:
-                # avoid infinite recursion
-                continue
 
             stack.append(conn)
 
+    print("false")
     return False
 
 
 def type_check(left: TypeNode, right: TypeNode, strict: bool = False) -> bool:
+    print(left, right)
     if isinstance(left, SimpleTypeNode) and isinstance(right, SimpleTypeNode):
         if strict:
             return left.core == right.core

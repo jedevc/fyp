@@ -1,8 +1,7 @@
 import functools
 from typing import Dict, Optional
 
-from ..builtins import functions, types, variables
-from ..builtins.types import MetaType
+from ..builtins import MetaTypes, functions, types, variables
 from ..node import (
     ARITHMETIC_OPERATORS,
     BOOLEAN_OPERATORS,
@@ -178,7 +177,7 @@ class TypeCheckVisitor(TraversalVisitor[TypeNode]):
     def visit_if(self, node: IfNode) -> None:
         condition_type = node.condition.accept(self)
         assert condition_type is not None
-        if not type_check(MetaTypeNode(MetaType.Boolean), condition_type):
+        if not type_check(MetaTypeNode(MetaTypes.Boolean), condition_type):
             raise ProcessingError(node.condition, "if condition must be bool")
 
         super().visit_if(node)
@@ -186,7 +185,7 @@ class TypeCheckVisitor(TraversalVisitor[TypeNode]):
     def visit_while(self, node: WhileNode) -> None:
         condition_type = node.condition.accept(self)
         assert condition_type is not None
-        if not type_check(MetaTypeNode(MetaType.Boolean), condition_type):
+        if not type_check(MetaTypeNode(MetaTypes.Boolean), condition_type):
             raise ProcessingError(node.condition, "while condition must be bool")
 
         super().visit_while(node)
@@ -245,11 +244,11 @@ class TypeCheckVisitor(TraversalVisitor[TypeNode]):
 
     def visit_value(self, node: ValueNode) -> TypeNode:
         if isinstance(node, IntValueNode):
-            return MetaTypeNode(MetaType.Integral)
+            return MetaTypeNode(MetaTypes.Integral)
         elif isinstance(node, FloatValueNode):
-            return MetaTypeNode(MetaType.Floating)
+            return MetaTypeNode(MetaTypes.Floating)
         elif isinstance(node, BoolValueNode):
-            return MetaTypeNode(MetaType.Boolean)
+            return MetaTypeNode(MetaTypes.Boolean)
         elif isinstance(node, StringValueNode):
             return PointerTypeNode(SimpleTypeNode("char"))
         else:
@@ -260,14 +259,14 @@ class TypeCheckVisitor(TraversalVisitor[TypeNode]):
 
     def visit_literal(self, node: LiteralNode) -> TypeNode:
         if node.content == "NULL":
-            return MetaTypeNode(MetaType.Integral)
+            return MetaTypeNode(MetaTypes.Integral)
         else:
-            return MetaTypeNode(MetaType.Any)
+            return MetaTypeNode(MetaTypes.Any)
 
     def visit_array(self, node: ArrayNode) -> TypeNode:
         index_type = node.index.accept(self)
         assert index_type is not None
-        if not type_check(MetaTypeNode(MetaType.Integral), index_type):
+        if not type_check(MetaTypeNode(MetaTypes.Integral), index_type):
             raise ProcessingError(
                 node.index, "cannot index with non-integer expressions"
             )
@@ -285,7 +284,7 @@ class TypeCheckVisitor(TraversalVisitor[TypeNode]):
         assert item_type is not None
 
         if node.op in BOOLEAN_OPERATORS:
-            bool_type = MetaTypeNode(MetaType.Boolean)
+            bool_type = MetaTypeNode(MetaTypes.Boolean)
             if not type_check(bool_type, item_type):
                 raise ProcessingError(node.item, "operand should be boolean")
             return bool_type
@@ -300,7 +299,7 @@ class TypeCheckVisitor(TraversalVisitor[TypeNode]):
         assert left_type is not None and right_type is not None
 
         if node.op in BOOLEAN_OPERATORS:
-            bool_type = MetaTypeNode(MetaType.Boolean)
+            bool_type = MetaTypeNode(MetaTypes.Boolean)
             if not type_check(bool_type, left_type):
                 raise ProcessingError(node.left, "left operand should be boolean")
             if not type_check(bool_type, right_type):
@@ -311,7 +310,7 @@ class TypeCheckVisitor(TraversalVisitor[TypeNode]):
                 right_type, left_type
             ):
                 raise ProcessingError(node, "operands are not the same type")
-            return MetaTypeNode(MetaType.Boolean)
+            return MetaTypeNode(MetaTypes.Boolean)
         elif node.op in ARITHMETIC_OPERATORS:
             if not type_check(left_type, right_type) and not type_check(
                 right_type, left_type
