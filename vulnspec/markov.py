@@ -117,6 +117,8 @@ class MarkovWrapper:
                 continue
             if result in RESERVED_WORDS:
                 continue
+            if result in ("argc", "argv"):
+                continue
             if (
                 result in types.TRANSLATIONS
                 or result in functions.TRANSLATIONS
