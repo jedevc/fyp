@@ -1,6 +1,6 @@
 from io import TextIOWrapper
 from pathlib import Path
-from typing import Dict, Iterable, List, Optional, TextIO, Union
+from typing import Any, Dict, Iterable, List, Optional, TextIO, Union
 
 from .common.dump import DumpType
 from .graph import Block, Chunk
@@ -24,6 +24,8 @@ class Asset:
         self.blocks = blocks
         self.chunks = chunks
         self.extern = extern
+
+        self.attachments: Dict[str, Any] = {}
 
     @staticmethod
     def load(
@@ -76,7 +78,9 @@ class Asset:
         spec.accept(block_visitor)
         blocks = block_visitor.result()
 
-        return Asset(name, blocks, chunks, extern)
+        asset = Asset(name, blocks, chunks, extern)
+        asset.attachments["templates"] = template_visitor.instantiations
+        return asset
 
 
 class AssetLoader:

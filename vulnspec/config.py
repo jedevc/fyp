@@ -1,6 +1,7 @@
 import configparser
+import io
 from pathlib import Path
-from typing import Dict, Iterable, List, Optional, TextIO
+from typing import Dict, Iterable, List, Optional
 
 
 class Configuration:
@@ -24,13 +25,20 @@ class Configuration:
         "script": "",
     }
 
-    def __init__(self, source: str):
+    def __init__(self, source_path: Path, spec: str):
+        if source_path.suffix != ".c":
+            raise ValueError()
+
+        self.source_path = source_path
+        self.dest_path = source_path.with_suffix("")
+        self.spec = spec
+
         self.config = configparser.ConfigParser(allow_no_value=True)
         self.config["compile"] = Configuration.COMPILER_DEFAULTS
         self.config["security"] = Configuration.SECURITY_DEFAULTS
         self.config["files"] = {}
         self.config["env"] = Configuration.ENVIRONMENT_DEFAULTS
-        for comment in _extract_comments(source):
+        for comment in _extract_comments(self.spec):
             if comment.startswith("[compile]\n"):
                 self.config.read_string(comment)
             elif comment.startswith("[security]\n"):
@@ -40,17 +48,14 @@ class Configuration:
             elif comment.startswith("[env]\n"):
                 self.config.read_string(comment)
 
-    def build_commands(self, source: Path) -> List[str]:
-        sources = [str(source)]
-        sources.extend(str(source.parent / key) for key in self.config["files"].keys())
+    def build_commands(self) -> List[str]:
+        sources = [str(self.source_path)]
+        sources.extend(
+            str(self.source_path.parent / key) for key in self.config["files"].keys()
+        )
 
-        output = str(self.build_output(source))
-
-        command = [self.cc, *self.cflags, *sources, "-o", output]
+        command = [self.cc, *self.cflags, *sources, "-o", str(self.dest_path)]
         return [" ".join(command)]
-
-    def build_output(self, source: Path) -> Path:
-        return source.with_suffix("")
 
     @property
     def cc(self) -> str:
@@ -139,7 +144,9 @@ class Environment:
         self.port = port
         self.script = script
 
-    def docker(self, target: Path, extras: Dict[Path, Path], output: TextIO):
+    def docker(self, target: Path, extras: Dict[Path, Path]) -> str:
+        output = io.StringIO()
+
         print("FROM ubuntu:latest", file=output)
         print(file=output)
 
@@ -224,6 +231,8 @@ class Environment:
         if self.port:
             print(f"EXPOSE {self.port}", file=output)
         print(f"CMD {cmd}", file=output)
+
+        return output.getvalue()
 
     def join_commands(self, commands: List[str]) -> str:
         TAB = 4 * " "

@@ -73,6 +73,8 @@ class NopTransformer:
         additional_chunks: Set[Chunk] = set()
         additional_externs: Set[Chunk] = set()
 
+        nop_names: Dict[str, str] = {}
+
         def mapper(item: BlockItem) -> BlockItem:
             if not isinstance(item, Call):
                 return item
@@ -88,6 +90,8 @@ class NopTransformer:
             )
             nblock.add_statement(item)
 
+            nop_names[nblock.name] = nop.name
+
             additional_blocks.add(nblock)
             for chunk in self._chunk_links[nop]:
                 additional_chunks.add(chunk)
@@ -101,7 +105,10 @@ class NopTransformer:
         chunks = asset.chunks + list(additional_chunks)
         extern = reduce(merge_chunks, [asset.extern, *additional_externs])
 
-        return Asset(asset.name, blocks, chunks, extern)
+        final = Asset(asset.name, blocks, chunks, extern)
+        final.attachments = dict(asset.attachments)
+        final.attachments["nops"] = nop_names
+        return final
 
 
 def copier(item: BlockItem):

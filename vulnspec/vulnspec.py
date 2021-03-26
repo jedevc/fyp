@@ -5,7 +5,8 @@ import shutil
 import subprocess
 import sys
 from pathlib import Path
-from typing import Dict, Iterable, Optional, TextIO
+from pprint import pformat
+from typing import Any, Dict, Iterable, Optional, TextIO, Tuple
 
 from .assets import Asset, AssetLoader
 from .common.data import data_path
@@ -13,7 +14,7 @@ from .common.dump import DumpType
 from .common.error import SynthError
 from .common.names import rename_blocks, rename_vars
 from .config import Configuration
-from .graph import CodeGen
+from .graph import CodeGen, Program
 from .graph.visualizer import GraphVisualizer
 from .interpret import Interpreter
 from .markov import MarkovLoader
@@ -26,9 +27,10 @@ def main() -> Optional[int]:
 
     parser_synth = subparsers.add_parser("synth")
     parser_synth.set_defaults(action=action_synth)
-    parser_synth.add_argument("infile", type=argparse.FileType("r"))
-    parser_synth.add_argument("outfile", type=argparse.FileType("w"))
+    parser_synth.add_argument("infile", type=Path)
+    parser_synth.add_argument("outfile", type=Path)
     parser_synth.add_argument("--seed", help="Random seed to use")
+    parser_synth.add_argument("--solution", type=Path, help="Generate a solution")
     parser_synth.add_argument(
         "--no-file-comment",
         dest="file_comment",
@@ -49,20 +51,20 @@ def main() -> Optional[int]:
         "--dump-block-chunk-graph",
     ]
     for dump in SYNTH_DUMP_ARGS:
-        parser_synth.add_argument(dump, type=argparse.FileType("w"))
+        parser_synth.add_argument(dump, type=Path)
 
     parser_build = subparsers.add_parser("build")
     parser_build.set_defaults(action=action_build)
-    parser_build.add_argument("infile", type=argparse.FileType("r"))
+    parser_build.add_argument("infile", type=Path)
 
     parser_strip = subparsers.add_parser("strip")
     parser_strip.set_defaults(action=action_strip_file_comment)
-    parser_strip.add_argument("infile", type=argparse.FileType("r"))
-    parser_strip.add_argument("outfile", type=argparse.FileType("w"))
+    parser_strip.add_argument("infile", type=Path)
+    parser_strip.add_argument("outfile", type=Path)
 
     parser_environ = subparsers.add_parser("environ")
     parser_environ.set_defaults(action=action_environment)
-    parser_environ.add_argument("infile", type=argparse.FileType("r"))
+    parser_environ.add_argument("infile", type=Path)
     parser_environ.add_argument("outpath", type=Path)
     parser_environ.add_argument("--seed", help="Random seed to use")
     parser_environ.add_argument(
@@ -88,32 +90,34 @@ def main() -> Optional[int]:
 
 
 def action_synth(args) -> int:
-    stream = args.infile.read()
+    stream = args.infile.read_text()
+    config = Configuration(args.outfile, stream)
 
+    dump = {
+        DumpType.AST: args.dump_ast,
+        DumpType.ASTDiagram: args.dump_ast_diagram,
+        DumpType.GraphBlock: args.dump_block_graph,
+        DumpType.GraphBlockChunk: args.dump_block_chunk_graph,
+    }
     try:
-        synthesize(
-            stream,
-            args.outfile,
-            Configuration(stream),
-            args.seed,
-            style=args.format,
-            dump={
-                DumpType.AST: args.dump_ast,
-                DumpType.ASTDiagram: args.dump_ast_diagram,
-                DumpType.GraphBlock: args.dump_block_graph,
-                DumpType.GraphBlockChunk: args.dump_block_chunk_graph,
-            },
-            file_comment=args.file_comment,
-        )
+        asset, program = synthesize(stream, args.seed, dump=dump)
     except SynthError as err:
         print(err, file=sys.stderr)
         return 1
+
+    code = gen_code(program, config, file_comment=True, style=args.format)
+    args.outfile.write_text(code)
+
+    if args.solution:
+        script = args.infile.with_suffix(".solve.py").read_text()
+        result = gen_solve(script, asset.attachments, config)
+        args.solution.write_text(result)
 
     return 0
 
 
 def action_build(args) -> int:
-    stream = args.infile.read()
+    stream = args.infile.read_text()
 
     try:
         run_commands(stream, "build")
@@ -125,12 +129,13 @@ def action_build(args) -> int:
 
 
 def action_environment(args) -> int:
-    stream = args.infile.read()
-    base = Path(args.infile.name).parent
+    stream = args.infile.read_text()
+    base = Path(args.infile).parent
 
     args.outpath.mkdir(parents=True, exist_ok=True)
+    target = args.outpath / "target.c"
 
-    config = Configuration(stream)
+    config = Configuration(target, stream)
 
     for fname in config.config["files"]:
         dstp = args.outpath / fname
@@ -159,47 +164,43 @@ def action_environment(args) -> int:
 
             copies[docker_src] = docker_dst
 
-    target = args.outpath / "target.c"
     try:
-        with target.open("w") as f:
-            synthesize(
-                stream,
-                f,
-                config,
-                args.seed,
-                style=args.format,
-            )
+        _, program = synthesize(stream, args.seed)
+        code = gen_code(program, config, style=args.format)
+        target.write_text(code)
     except SynthError as err:
         print(err, file=sys.stderr)
         return 1
 
-    for command in config.build_commands(target):
+    for command in config.build_commands():
         subprocess.run(command, shell=True, check=True)
 
     if args.extra_src:
         copies[target.name] = target.name
 
     dockerfile = args.outpath / "Dockerfile"
-    with dockerfile.open("w") as f:
-        config.environ.docker(
-            config.build_output(target).relative_to(args.outpath), copies, f
-        )
+    dockercode = config.environ.docker(
+        config.dest_path.relative_to(args.outpath), copies
+    )
+    dockerfile.write_text(dockercode)
 
     return 0
 
 
 def action_strip_file_comment(args) -> int:
-    lines = args.infile
+    lines = args.infile.read_text().rstrip().split("\n")
+    i = 0
 
     # ignore inputs that don't have a file header comment
-    if not next(lines).startswith("/*"):
+    if not lines[i].startswith("/*"):
         return 0
 
     # skip past file header comment
     while True:
         try:
-            line = next(lines)
-        except StopIteration:
+            i += 1
+            line = lines[i]
+        except IndexError:
             print(
                 "unexpected end of file while parsing header comment", file=sys.stderr
             )
@@ -217,34 +218,29 @@ def action_strip_file_comment(args) -> int:
     # strip whitespace
     while True:
         try:
-            line = next(lines)
-        except StopIteration:
+            i += 1
+            line = lines[i]
+        except IndexError:
             break
 
         if line.strip():
-            args.outfile.write(line)
             break
 
     # print all remaining lines
-    for line in lines:
-        args.outfile.write(line)
+    args.outfile.write_text("\n".join(lines[i:]))
 
     return 0
 
 
 def synthesize(
-    stream: str,
-    output: TextIO,
-    config: Configuration,
+    spec: str,
     seed: Optional[str] = None,
-    style: str = "none",
     dump: Optional[Dict[DumpType, Optional[TextIO]]] = None,
-    file_comment: bool = False,
-):
+) -> Tuple[Asset, Program]:
     if seed is not None:
         random.seed(seed)
 
-    asset = Asset.load(stream, dump=dump)
+    asset = Asset.load(spec, dump=dump)
 
     if dump and (dump_output := dump.get(DumpType.GraphBlock)):
         vis = GraphVisualizer(dump_output)
@@ -271,11 +267,43 @@ def synthesize(
 
     rename_blocks(asset, mapping)
     rename_vars(asset, mapping)
+    asset.attachments["names"] = mapping
 
     inter = Interpreter(asset)
-    prog = inter.program()
-    gen = CodeGen(prog)
-    code = gen.generate()
+    return asset, inter.program()
+
+
+def gen_solve(source: str, annotations: Dict[str, Any], config: Configuration) -> str:
+    items = {
+        "filename": str(config.dest_path),
+        **annotations,
+    }
+
+    pattern = re.compile(r"^gen_(\S+)\s*=.*$", flags=re.MULTILINE)
+
+    def subf(match: re.Match) -> str:
+        lhs = f"gen_{match.group(1)}"
+        rhs = pformat(items[match.group(1)])
+        return f"{lhs} = {rhs}"
+
+    return pattern.sub(subf, source).rstrip()
+
+
+def gen_code(
+    program: Program,
+    config: Configuration,
+    file_comment: bool = False,
+    style: str = "none",
+) -> str:
+    code = CodeGen(program).generate()
+    if style != "none":
+        proc = subprocess.run(
+            ["clang-format", f"-style={style}"],
+            input=code.encode(),
+            stdout=subprocess.PIPE,
+            check=True,
+        )
+        code = proc.stdout.decode()
 
     if file_comment:
         comment = "\n".join(
@@ -284,25 +312,14 @@ def synthesize(
                 " * Generated by vulnspec.",
                 " *",
                 " * Build:",
-                *[
-                    " > " + command
-                    for command in config.build_commands(Path(output.name))
-                ],
+                *[" > " + command for command in config.build_commands()],
                 " */",
                 "",
             ]
         )
-        print(comment, file=output, flush=True)
+        code = comment + code
 
-    if style == "none":
-        print(code, file=output, flush=True)
-    else:
-        subprocess.run(
-            ["clang-format", f"-style={style}"],
-            input=code.encode(),
-            stdout=output,
-            check=True,
-        )
+    return code
 
 
 def extract_commands(stream: str, section: str) -> Iterable[str]:

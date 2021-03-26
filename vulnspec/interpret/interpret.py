@@ -31,6 +31,8 @@ class Interpreter:
     """
 
     def __init__(self, asset: Asset):
+        self.asset = asset
+
         self.blocks: Dict[str, Block] = {block.name: block for block in asset.blocks}
 
         self.chunks: List[Chunk] = asset.chunks
