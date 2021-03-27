@@ -1,6 +1,6 @@
 import json
 import random
-from typing import Any, Dict, List, Set, Tuple
+from typing import Any, Dict, Iterable, List, Optional, Set, Tuple
 
 from .builtins import functions, types, variables
 from .common.data import data_path
@@ -12,10 +12,17 @@ class MarkovLoader:
         with data_path("markov.json").open() as f:
             self.data = json.load(f)
 
-    def model(self, name: str, size: Tuple[int, int]):
-        return self._create(self.data[name], size)
+    def model(
+        self, name: str, size: Tuple[int, int], exclude: Optional[Iterable[str]] = None
+    ):
+        return self._create(self.data[name], size, exclude)
 
-    def _create(self, model: Dict[Any, Any], size: Tuple[int, int]) -> "MarkovWrapper":
+    def _create(
+        self,
+        model: Dict[Any, Any],
+        size: Tuple[int, int],
+        exclude: Optional[Iterable[str]] = None,
+    ) -> "MarkovWrapper":
         if model["mode"] == "single":
             markov = Markov(model["table"], model["size"], model["terminal"])
         elif model["mode"] == "multi":
@@ -23,7 +30,7 @@ class MarkovLoader:
         else:
             raise KeyError()
 
-        return MarkovWrapper(markov, size)
+        return MarkovWrapper(markov, size, exclude)
 
 
 class Markov:
@@ -101,12 +108,21 @@ class MultiMarkov(Markov):
 
 
 class MarkovWrapper:
-    def __init__(self, markov: Markov, size_range: Tuple[int, int]):
+    def __init__(
+        self,
+        markov: Markov,
+        size_range: Tuple[int, int],
+        exclude: Optional[Iterable[str]] = None,
+    ):
         self.markov = markov
 
         self.min_size, self.max_size = size_range
 
-        self._exclude: Set[str] = set()
+        self._exclude: Set[str]
+        if exclude:
+            self._exclude = set(exclude)
+        else:
+            self._exclude = set()
 
     def generate(self) -> str:
         while True:

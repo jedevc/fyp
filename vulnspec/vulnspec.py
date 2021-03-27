@@ -266,8 +266,8 @@ def synthesize(
 
     mapping = {}
     mloader = MarkovLoader()
-    model_vars = mloader.model("vars", (1, 12))
-    model_funcs = mloader.model("funcs", (3, 12))
+    model_vars = mloader.model("vars", (1, 12), asset.extern.varnames)
+    model_funcs = mloader.model("funcs", (3, 12), asset.extern.varnames)
     for block in asset.blocks:
         if block.name == "main":
             continue

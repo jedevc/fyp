@@ -121,7 +121,7 @@ class Chunk:
         variables: List[ChunkVariable],
         constraint: Optional[ChunkConstraint] = None,
     ):
-        self._vars = variables
+        self.variables = variables
         self._table = {
             var.name: i
             for i, var in enumerate(variables)
@@ -129,15 +129,19 @@ class Chunk:
         }
         self.constraint = ChunkConstraint() if constraint is None else constraint
 
+    @property
+    def varnames(self) -> List[str]:
+        return [var.name for var in self.variables]
+
     def add_variable(self, variable: ChunkVariable):
         if variable.name in self._table:
             raise KeyError("variable already exists in chunk")
 
-        self._vars.append(variable)
-        self._table[variable.name] = len(self._vars) - 1
+        self.variables.append(variable)
+        self._table[variable.name] = len(self.variables) - 1
 
     def rename_variable(self, variable: ChunkVariable, name: str):
-        if variable not in self._vars:
+        if variable not in self.variables:
             raise KeyError("variable not in chunk")
 
         idx = self._table[variable.name]
@@ -151,16 +155,12 @@ class Chunk:
             raise KeyError("variable not in chunk table")
 
         idx = self._table[variable.name]
-        target = self._vars[idx]
+        target = self.variables[idx]
         if target is not variable:
             raise KeyError("variable does not match")
 
-        self._vars.remove(target)
+        self.variables.remove(target)
         self._table.pop(target.name)
-
-    @property
-    def variables(self) -> List[ChunkVariable]:
-        return self._vars
 
     def lookup(self, name: str) -> Optional[ChunkVariable]:
         if name.startswith("_"):
@@ -170,13 +170,13 @@ class Chunk:
         if i is None:
             return None
         else:
-            return self._vars[i]
+            return self.variables[i]
 
     def __contains__(self, var: Union[str, ChunkVariable]) -> bool:
         if isinstance(var, str):
             return var in self._table
         else:
-            return var in self._vars
+            return var in self.variables
 
 
 @overload
