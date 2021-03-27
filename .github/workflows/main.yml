@@ -12,7 +12,12 @@ jobs:
 
     steps:
       - uses: actions/checkout@v2
-  
+
+      - name: System dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y elfutils
+
       - name: Set up Python
         uses: actions/setup-python@v2
         with:
