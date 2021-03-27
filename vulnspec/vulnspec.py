@@ -19,6 +19,7 @@ from .graph.visualizer import GraphVisualizer
 from .interpret import Interpreter
 from .markov import MarkovLoader
 from .nops import NopTransformer
+from .solve import SolveUtils
 
 
 def main() -> Optional[int]:
@@ -67,6 +68,9 @@ def main() -> Optional[int]:
     parser_environ.add_argument("infile", type=Path)
     parser_environ.add_argument("outpath", type=Path)
     parser_environ.add_argument("--seed", help="Random seed to use")
+    parser_environ.add_argument(
+        "--solution", action="store_true", help="Generate a solution"
+    )
     parser_environ.add_argument(
         "--extra", action="append", help="Extra files to include"
     )
@@ -120,7 +124,7 @@ def action_build(args) -> int:
     stream = args.infile.read_text()
 
     try:
-        run_commands(stream, "build")
+        run_commands(stream, "build", args.outfile.parent)
     except KeyError as e:
         print(f"{e} commands not found in input file", file=sys.stderr)
         return 1
@@ -165,7 +169,7 @@ def action_environment(args) -> int:
             copies[docker_src] = docker_dst
 
     try:
-        _, program = synthesize(stream, args.seed)
+        asset, program = synthesize(stream, args.seed)
         code = gen_code(program, config, style=args.format)
         target.write_text(code)
     except SynthError as err:
@@ -173,7 +177,7 @@ def action_environment(args) -> int:
         return 1
 
     for command in config.build_commands():
-        subprocess.run(command, shell=True, check=True)
+        subprocess.run(command, cwd=args.outpath, shell=True, check=True)
 
     if args.extra_src:
         copies[target.name] = target.name
@@ -183,6 +187,13 @@ def action_environment(args) -> int:
         config.dest_path.relative_to(args.outpath), copies
     )
     dockerfile.write_text(dockercode)
+
+    if args.solution:
+        script = args.infile.with_suffix(".solve.py").read_text()
+        result = gen_solve(script, asset.attachments, config)
+
+        solvefile = args.outpath / "solve.py"
+        solvefile.write_text(result)
 
     return 0
 
@@ -274,8 +285,12 @@ def synthesize(
 
 
 def gen_solve(source: str, annotations: Dict[str, Any], config: Configuration) -> str:
+    with config.dest_path.open("rb") as binary:
+        su = SolveUtils(binary)
+
     items = {
-        "filename": str(config.dest_path),
+        "filename": f"./{config.dest_path.name}",
+        "var_locations": su.var_locations,
         **annotations,
     }
 
@@ -341,7 +356,7 @@ def extract_commands(stream: str, section: str) -> Iterable[str]:
         yield command
 
 
-def run_commands(stream: str, section: str):
+def run_commands(stream: str, section: str, cwd: Optional[Path] = None):
     for command in extract_commands(stream, section):
         print(command, file=sys.stderr, flush=True)
-        subprocess.run(command, shell=True, check=True)
+        subprocess.run(command, cwd=cwd, shell=True, check=True)

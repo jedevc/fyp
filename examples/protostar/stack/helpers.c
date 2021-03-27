@@ -3,8 +3,12 @@
 
 void flag() {
     FILE *ff = fopen("flag.txt", "r");
-    char buffer[1024];
+    if (ff == NULL) {
+        puts("Couldn't open flag file!");
+        return;
+    }
 
+    char buffer[1024];
     while (fread(&buffer, sizeof(char), 1024, ff) != 0) {
         fputs(buffer, stdout);
     }
