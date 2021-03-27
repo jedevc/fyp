@@ -10,6 +10,7 @@ class Configuration:
         "warnings": "no",
         "strip": "no",
         "debug": "no",
+        "debug_separate": "no",
     }
 
     SECURITY_DEFAULTS = {
@@ -48,14 +49,27 @@ class Configuration:
             elif comment.startswith("[env]\n"):
                 self.config.read_string(comment)
 
+    @property
+    def debug_path(self) -> Optional[Path]:
+        if self.config["compile"].getboolean("debug_separate"):
+            return self.dest_path.with_suffix(".debug")
+        else:
+            return None
+
     def build_commands(self) -> List[str]:
         sources = [str(self.source_path)]
         sources.extend(
             str(self.source_path.parent / key) for key in self.config["files"].keys()
         )
 
-        command = [self.cc, *self.cflags, *sources, "-o", str(self.dest_path)]
-        return [" ".join(command)]
+        command = " ".join([self.cc, *self.cflags, *sources, "-o", str(self.dest_path)])
+        if self.debug_path:
+            stripper = " ".join(
+                ["eu-strip", "-g", "-f", str(self.debug_path), str(self.dest_path)]
+            )
+            return [command, stripper]
+        else:
+            return [command]
 
     @property
     def cc(self) -> str:

@@ -1,3 +1,7 @@
+// [compile]
+// debug = true
+// debug_separate = true
+//
 // [files]
 // helpers.c
 //

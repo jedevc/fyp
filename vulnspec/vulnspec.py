@@ -28,8 +28,8 @@ def main() -> Optional[int]:
 
     parser_synth = subparsers.add_parser("synth")
     parser_synth.set_defaults(action=action_synth)
-    parser_synth.add_argument("infile", type=Path)
-    parser_synth.add_argument("outfile", type=Path)
+    parser_synth.add_argument("inpath", type=Path)
+    parser_synth.add_argument("outpath", type=Path)
     parser_synth.add_argument("--seed", help="Random seed to use")
     parser_synth.add_argument("--solution", type=Path, help="Generate a solution")
     parser_synth.add_argument(
@@ -56,16 +56,16 @@ def main() -> Optional[int]:
 
     parser_build = subparsers.add_parser("build")
     parser_build.set_defaults(action=action_build)
-    parser_build.add_argument("infile", type=Path)
+    parser_build.add_argument("inpath", type=Path)
 
     parser_strip = subparsers.add_parser("strip")
     parser_strip.set_defaults(action=action_strip_file_comment)
-    parser_strip.add_argument("infile", type=Path)
-    parser_strip.add_argument("outfile", type=Path)
+    parser_strip.add_argument("inpath", type=Path)
+    parser_strip.add_argument("outpath", type=Path)
 
     parser_environ = subparsers.add_parser("environ")
     parser_environ.set_defaults(action=action_environment)
-    parser_environ.add_argument("infile", type=Path)
+    parser_environ.add_argument("inpath", type=Path)
     parser_environ.add_argument("outpath", type=Path)
     parser_environ.add_argument("--seed", help="Random seed to use")
     parser_environ.add_argument(
@@ -94,8 +94,8 @@ def main() -> Optional[int]:
 
 
 def action_synth(args) -> int:
-    stream = args.infile.read_text()
-    config = Configuration(args.outfile, stream)
+    stream = args.inpath.read_text()
+    config = Configuration(args.outpath, stream)
 
     dump = {
         DumpType.AST: args.dump_ast,
@@ -110,10 +110,10 @@ def action_synth(args) -> int:
         return 1
 
     code = gen_code(program, config, file_comment=True, style=args.format)
-    args.outfile.write_text(code)
+    args.outpath.write_text(code)
 
     if args.solution:
-        script = args.infile.with_suffix(".solve.py").read_text()
+        script = args.inpath.with_suffix(".solve.py").read_text()
         result = gen_solve(script, asset.attachments, config)
         args.solution.write_text(result)
 
@@ -121,10 +121,10 @@ def action_synth(args) -> int:
 
 
 def action_build(args) -> int:
-    stream = args.infile.read_text()
+    stream = args.inpath.read_text()
 
     try:
-        run_commands(stream, "build", args.outfile.parent)
+        run_commands(stream, "build", args.inpath.parent)
     except KeyError as e:
         print(f"{e} commands not found in input file", file=sys.stderr)
         return 1
@@ -133,8 +133,8 @@ def action_build(args) -> int:
 
 
 def action_environment(args) -> int:
-    stream = args.infile.read_text()
-    base = Path(args.infile).parent
+    stream = args.inpath.read_text()
+    base = Path(args.inpath).parent
 
     args.outpath.mkdir(parents=True, exist_ok=True)
     target = args.outpath / "target.c"
@@ -189,7 +189,7 @@ def action_environment(args) -> int:
     dockerfile.write_text(dockercode)
 
     if args.solution:
-        script = args.infile.with_suffix(".solve.py").read_text()
+        script = args.inpath.with_suffix(".solve.py").read_text()
         result = gen_solve(script, asset.attachments, config)
 
         solvefile = args.outpath / "solve.py"
@@ -199,7 +199,7 @@ def action_environment(args) -> int:
 
 
 def action_strip_file_comment(args) -> int:
-    lines = args.infile.read_text().rstrip().split("\n")
+    lines = args.inpath.read_text().rstrip().split("\n")
     i = 0
 
     # ignore inputs that don't have a file header comment
@@ -238,7 +238,7 @@ def action_strip_file_comment(args) -> int:
             break
 
     # print all remaining lines
-    args.outfile.write_text("\n".join(lines[i:]))
+    args.outpath.write_text("\n".join(lines[i:]))
 
     return 0
 
@@ -285,7 +285,8 @@ def synthesize(
 
 
 def gen_solve(source: str, annotations: Dict[str, Any], config: Configuration) -> str:
-    with config.dest_path.open("rb") as binary:
+    binpath = config.debug_path if config.debug_path else config.dest_path
+    with binpath.open("rb") as binary:
         su = SolveUtils(binary)
 
     items = {
