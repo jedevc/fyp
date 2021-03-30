@@ -33,6 +33,19 @@ vulnspec build <out-file>.c
 
 ## Development
 
+### Installation in development mode
+
+Install the package again using the following command:
+
+```bash
+pip install --user --editable .
+```
+
+Changes to the local copy of the code should now be reflected to the
+installation.
+
+### Generating data files
+
 To regenerate the libraries:
 
 ```bash
