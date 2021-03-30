@@ -7,6 +7,18 @@ from .common.data import data_path
 BUILTINS_PATH = data_path("builtins")
 
 
+# This file contains a *neatish* python interface to the builtins provided in
+# the data/builtins/ directory.
+#
+# General conventions:
+#   TRANSLATIONS is a mapping from vulnspec names to raw C names
+#   PATHS is a mapping from raw C names to the paths at which they may be found
+#   CLAIMED is a set of words which *cannot* be claimed by another part of the
+#     synthesis
+#   TYPES/SIGNATURES are mappings from vulnspec names to their respective
+#     vulnspec types which can be parsed by the parser for type checking
+
+
 class BuiltinBase:
     def __init__(self, path: Path):
         with path.open() as f:
@@ -21,6 +33,8 @@ class Functions(BuiltinBase):
         self.TRANSLATIONS = self._data["translations"]
         self.PATHS = self._data["paths"]
 
+        self.CLAIMED = set(self.TRANSLATIONS.values())
+
 
 class Variables(BuiltinBase):
     def __init__(self, path: Path):
@@ -29,6 +43,8 @@ class Variables(BuiltinBase):
         self.TYPES = self._data["types"]
         self.TRANSLATIONS = self._data["translations"]
         self.PATHS = self._data["paths"]
+
+        self.CLAIMED = set(self.TRANSLATIONS.values())
 
 
 MetaType = NewType("MetaType", str)
@@ -44,6 +60,10 @@ class Types(BuiltinBase):
 
         self.TRANSLATIONS = self._data["translations"]
         self.PATHS = self._data["paths"]
+
+        self.CLAIMED = set(
+            part for tp in self.TRANSLATIONS.values() for part in tp.split()
+        )
 
     def meta(self, tp: str) -> MetaType:
         if tp in self.METAS:

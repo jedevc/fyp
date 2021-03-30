@@ -136,9 +136,9 @@ class MarkovWrapper:
             if result in ("argc", "argv"):
                 continue
             if (
-                result in types.TRANSLATIONS
-                or result in functions.TRANSLATIONS
-                or result in variables.TRANSLATIONS
+                result in types.CLAIMED
+                or result in functions.CLAIMED
+                or result in variables.CLAIMED
             ):
                 continue
 
