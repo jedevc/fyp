@@ -60,9 +60,6 @@ def rename_args(func: FunctionDefinition, mapping: Dict[str, str]):
         func.args[i] = narg
 
     def mapper(item: BlockItem) -> BlockItem:
-        if isinstance(item, Variable):
-            print(item.variable.name)
-
         if isinstance(item, Variable) and item.variable.name in nargs:
             return Variable(nargs[item.variable.name])
         else:

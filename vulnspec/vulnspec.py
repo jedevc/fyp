@@ -12,7 +12,7 @@ from .assets import Asset, AssetLoader
 from .common.data import data_path
 from .common.dump import DumpType
 from .common.error import SynthError
-from .common.names import rename_blocks, rename_vars
+from .common.names import rename_args, rename_blocks, rename_vars
 from .config import Configuration
 from .graph import CodeGen, Program
 from .graph.visualizer import GraphVisualizer
@@ -281,7 +281,16 @@ def synthesize(
     asset.attachments["names"] = mapping
 
     inter = Interpreter(asset)
-    return asset, inter.program()
+    prog = inter.program()
+
+    for func in prog.functions.values():
+        fmapping = {}
+        for var in func.args:
+            fmapping[var.name] = model_vars.generate()
+        print(fmapping)
+        rename_args(func, fmapping)
+
+    return asset, prog
 
 
 def gen_solve(source: str, annotations: Dict[str, Any], config: Configuration) -> str:

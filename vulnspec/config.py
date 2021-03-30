@@ -28,7 +28,7 @@ class Configuration:
 
     def __init__(self, source_path: Path, spec: str):
         if source_path.suffix != ".c":
-            raise ValueError()
+            raise ValueError("output path must be a C file")
 
         self.source_path = source_path
         self.dest_path = source_path.with_suffix("")
