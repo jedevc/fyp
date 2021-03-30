@@ -22,7 +22,7 @@ from .nops import NopTransformer
 from .solve import SolveUtils
 
 
-def main() -> Optional[int]:
+def main():
     parser = argparse.ArgumentParser()
     subparsers = parser.add_subparsers()
 
@@ -87,10 +87,10 @@ def main() -> Optional[int]:
     args = parser.parse_args()
 
     if hasattr(args, "action"):
-        return args.action(args)
+        sys.exit(args.action(args))
     else:
         parser.print_help()
-        return 1
+        sys.exit(1)
 
 
 def action_synth(args) -> int:
@@ -287,7 +287,6 @@ def synthesize(
         fmapping = {}
         for var in func.args:
             fmapping[var.name] = model_vars.generate()
-        print(fmapping)
         rename_args(func, fmapping)
 
     return asset, prog

@@ -1,6 +1,6 @@
 from pathlib import Path
 
-DATA_DIRECTORY = Path(__file__).parent.parent.parent / "data"
+DATA_DIRECTORY = Path(__file__).parent.parent / "data"
 
 
 def data_path(*parts: str) -> Path:

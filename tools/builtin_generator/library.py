@@ -14,6 +14,9 @@ class Library:
         self.path = path
         self.subpaths = subpaths
 
+        if not self.path.exists():
+            raise FileNotFoundError(f"library {self.name} does not exist")
+
     def build(self):
         if (self.path / "configure").exists():
             run_cmd("./configure", cwd=self.path)
