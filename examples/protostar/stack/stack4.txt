@@ -11,5 +11,6 @@ extern flag: fn () void,
 chunk (local) buffer: [64]char
 
 block main {
+    puts@libc("Ok, now for a challenge.")
     gets@libc(buffer)
 }

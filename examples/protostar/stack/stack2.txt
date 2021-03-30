@@ -1,6 +1,10 @@
 // [files]
 // helpers.c
 //
+// [compile]
+// debug = true
+// debug_separate = true
+//
 // [env]
 // type = tcp-shell-setuid
 // port = 4000
@@ -8,17 +12,18 @@
 extern flag: fn () void,
        tryagain: fn () void
 
-chunk buffer: [64]char,
-      modified: int
 chunk variable: *char
+chunk buffer: [64]char,
+      modified: int = 0
 
 block main {
     variable = getenv@libc("GREENIE")
     if variable == NULL {
-        puts@libc("please set GREENIE\n")
+        puts@libc("please set GREENIE")
+        exit@libc(1)
     }
+    ...
 
-    modified = 0
     strcpy@libc(buffer, variable)
     if modified == 0x0d0a0d0a {
         flag()

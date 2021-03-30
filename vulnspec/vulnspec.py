@@ -31,7 +31,6 @@ def main():
     parser_synth.add_argument("inpath", type=Path)
     parser_synth.add_argument("outpath", type=Path)
     parser_synth.add_argument("--seed", help="Random seed to use")
-    parser_synth.add_argument("--solution", type=Path, help="Generate a solution")
     parser_synth.add_argument(
         "--no-file-comment",
         dest="file_comment",
@@ -104,18 +103,13 @@ def action_synth(args) -> int:
         DumpType.GraphBlockChunk: args.dump_block_chunk_graph,
     }
     try:
-        asset, program = synthesize(stream, args.seed, dump=dump)
+        _, program = synthesize(stream, args.seed, dump=dump)
     except SynthError as err:
         print(err, file=sys.stderr)
         return 1
 
     code = gen_code(program, config, file_comment=True, style=args.format)
     args.outpath.write_text(code)
-
-    if args.solution:
-        script = args.inpath.with_suffix(".solve.py").read_text()
-        result = gen_solve(script, asset.attachments, config)
-        args.solution.write_text(result)
 
     return 0
 

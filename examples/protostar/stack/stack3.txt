@@ -1,6 +1,10 @@
 // [files]
 // helpers.c
 //
+// [compile]
+// debug = true
+// debug_separate = true
+//
 // [env]
 // type = tcp-shell-setuid
 // port = 4000
@@ -9,11 +13,13 @@ extern flag: fn () void,
        tryagain: fn () void
 
 chunk buffer: [64]char,
-      fp: * fn () void
+      fp: * fn () void = null
 
 block main {
-    fp = null
+    puts@libc("Hm get the flag yourself.")
     gets@libc(buffer)
+    
+    ...
 
     if fp != null {
         (*fp)()

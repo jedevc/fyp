@@ -1,9 +1,9 @@
+// [files]
+// helpers.c
+//
 // [compile]
 // debug = true
 // debug_separate = true
-//
-// [files]
-// helpers.c
 //
 // [env]
 // type = tcp-shell-setuid
@@ -13,11 +13,15 @@ extern flag: fn () void,
        tryagain: fn () void
 
 chunk buffer: [64]char,
-      modified: int
+      modified: int = 0
 
 block main {
-    modified = 0
+    puts@libc("Can you get the flag?")
+    ...
+
     gets@libc(buffer)
+    ...
+
     if modified != 0 {
         flag()
     } else {

