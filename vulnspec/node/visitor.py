@@ -10,6 +10,7 @@ if TYPE_CHECKING:
         FunctionNode,
         LiteralNode,
         RefNode,
+        SizeOfNode,
         UnaryOperationNode,
         ValueNode,
         VariableNode,
@@ -90,6 +91,9 @@ class Visitor(Generic[T]):
         pass
 
     def visit_value(self, node: "ValueNode") -> T:
+        pass
+
+    def visit_sizeof(self, node: "SizeOfNode") -> T:
         pass
 
     def visit_call(self, node: "CallNode") -> T:
@@ -222,6 +226,9 @@ class TraversalVisitor(Visitor[Optional[T]]):
         return None
 
     def visit_value(self, node: "ValueNode") -> Optional[T]:
+        return None
+
+    def visit_sizeof(self, node: "SizeOfNode") -> Optional[T]:
         return None
 
     def visit_call(self, node: "CallNode") -> Optional[T]:
@@ -361,6 +368,9 @@ class MapVisitor(Visitor[Any]):
         return node
 
     def visit_value(self, node: "ValueNode") -> "ValueNode":
+        return node
+
+    def visit_sizeof(self, node: "SizeOfNode") -> "SizeOfNode":
         return node
 
     def visit_call(self, node: "CallNode") -> "CallNode":

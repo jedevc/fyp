@@ -19,6 +19,7 @@ from ..graph import (
     Lvalue,
     Operation,
     Ref,
+    SizeOf,
     Statement,
     Value,
     Variable,
@@ -40,6 +41,7 @@ from ..node import (
     IntValueNode,
     LiteralNode,
     RefNode,
+    SizeOfNode,
     SpecNode,
     SplitNode,
     StatementNode,
@@ -249,6 +251,9 @@ class BlockifyExpressionVisitor(Visitor[Expression]):
                 return Value("false")
         else:
             raise RuntimeError()
+
+    def visit_sizeof(self, node: SizeOfNode) -> Expression:
+        return SizeOf(node.tp)
 
     def visit_cast(self, node: CastNode) -> Expression:
         return Cast(node.expr.accept(self), node.cast)

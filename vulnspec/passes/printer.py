@@ -23,6 +23,7 @@ from ..node import (
     PointerTypeNode,
     RefNode,
     SimpleTypeNode,
+    SizeOfNode,
     SpecNode,
     SplitNode,
     StatementNode,
@@ -184,6 +185,9 @@ class PrinterVisitor(Visitor[None]):
         else:
             print(node)
             raise RuntimeError()
+
+    def visit_sizeof(self, node: SizeOfNode):
+        self._print(f"sizeof({node.tp.accept(self)})")
 
     def visit_binary(self, node: BinaryOperationNode):
         self._print("(")

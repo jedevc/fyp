@@ -27,6 +27,7 @@ from ..node import (
     PointerTypeNode,
     RefNode,
     SimpleTypeNode,
+    SizeOfNode,
     SpecNode,
     SplitNode,
     StatementNode,
@@ -399,6 +400,11 @@ class Parser:
         ):
             assert self.last is not None
             node = self.node_exit(BoolValueNode(bool(self.last.lexeme)))
+        elif self.accept(TokenType.Name, "sizeof"):
+            self.expect(TokenType.ParenOpen)
+            tp = self.declaration_type()
+            self.expect(TokenType.ParenClose)
+            node = self.node_exit(SizeOfNode(tp))
         elif self.accept(TokenType.Template):
             assert self.last is not None
             name, definition = self.last.lexeme

@@ -26,6 +26,7 @@ from ..node import (
     PointerTypeNode,
     RefNode,
     SimpleTypeNode,
+    SizeOfNode,
     SpecNode,
     SplitNode,
     StringValueNode,
@@ -145,6 +146,10 @@ class VisualizerVisitor(Visitor[int]):
             return self._node(f"<{node.name}; {node.definition}>")
         else:
             raise RuntimeError()
+
+    def visit_sizeof(self, node: SizeOfNode) -> int:
+        cvar = ChunkVariable("", node.tp, None)
+        return self._node(f"sizeof({cvar.typename()})")
 
     def visit_unary(self, node: UnaryOperationNode) -> int:
         return self._connect(node.op.opstr(), node.item)

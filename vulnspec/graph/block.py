@@ -6,7 +6,7 @@ from ..node import TypeNode
 from .chunk import Chunk, ChunkVariable
 
 Lvalue = Union["Variable", "Array", "Deref"]
-Expression = Union["Operation", "Function", "Value", "Ref", "Cast", Lvalue]
+Expression = Union["Operation", "Function", "Value", "SizeOf", "Ref", "Cast", Lvalue]
 Statement = Union[
     "Assignment", "Call", "If", "While", "ExpressionStatement", "StatementGroup"
 ]
@@ -372,6 +372,18 @@ class Value(BlockItem):
 
     def __repr__(self) -> str:
         return f"<{self.__class__.__name__} {self.value}>"
+
+
+class SizeOf(BlockItem):
+    def __init__(self, tp: TypeNode, known_id: Optional[int] = None):
+        super().__init__(known_id)
+        self.tp = tp
+
+    def traverse(self, func: TraversalFunc) -> None:
+        func(self)
+
+    def map(self, func: MappingFunc) -> "SizeOf":
+        return func(SizeOf(self.tp, self.id))
 
 
 class Cast(BlockItem):

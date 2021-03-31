@@ -13,6 +13,7 @@ ExpressionNode = Union[
     "FunctionNode",
     "ValueNode",
     "RefNode",
+    "SizeOfNode",
     LvalueNode,
 ]
 
@@ -102,6 +103,15 @@ class StringValueNode(ValueNode):
     def __init__(self, value: str):
         super().__init__()
         self.value = value
+
+
+class SizeOfNode(Node):
+    def __init__(self, tp: TypeNode):
+        super().__init__()
+        self.tp = tp
+
+    def accept(self, visitor: Visitor[X]) -> X:
+        return visitor.visit_sizeof(self)
 
 
 class TemplateValueNode(ValueNode):

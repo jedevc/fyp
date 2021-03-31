@@ -26,6 +26,7 @@ from ..node import (
     PointerTypeNode,
     RefNode,
     SimpleTypeNode,
+    SizeOfNode,
     SpecNode,
     SplitNode,
     StringValueNode,
@@ -41,7 +42,7 @@ from ..parser import Lexer, Parser
 from .error import ProcessingError
 
 
-@functools.cache
+@functools.lru_cache(maxsize=None)
 def parse_typestring(typestr: str) -> TypeNode:
     lex = Lexer(typestr)
     tokens = lex.tokens_list()
@@ -240,6 +241,10 @@ class TypeCheckVisitor(TraversalVisitor[TypeNode]):
                 # FIXME: better error message needed
                 raise ProcessingError(arg, "argument type mismatch")
 
+        if vtype.variadic:
+            for arg in node.arguments[len(vtype.args) :]:
+                arg.accept(self)
+
         return vtype.ret
 
     def visit_value(self, node: ValueNode) -> TypeNode:
@@ -254,12 +259,16 @@ class TypeCheckVisitor(TraversalVisitor[TypeNode]):
         else:
             raise RuntimeError()
 
+    def visit_sizeof(self, node: SizeOfNode) -> TypeNode:
+        node.tp.accept(self)
+        return MetaTypeNode(MetaTypes.Integral)
+
     def visit_cast(self, node: CastNode) -> TypeNode:
         return node.cast
 
     def visit_literal(self, node: LiteralNode) -> TypeNode:
         if node.content == "NULL":
-            return MetaTypeNode(MetaTypes.Integral)
+            return MetaTypeNode(MetaTypes.Pointer)
         else:
             return MetaTypeNode(MetaTypes.Any)
 

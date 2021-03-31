@@ -13,6 +13,7 @@ from .block import (
     If,
     Operation,
     Ref,
+    SizeOf,
     Statement,
     StatementGroup,
     Value,
@@ -81,23 +82,33 @@ class CodeGen:
         return f"void {func.func}({args});"
 
     def _gen_func_def(self, func: FunctionDefinition) -> str:
-        lines: List[str] = []
-        if func.statics:
-            lines.extend(f"static {self._gen_decl(var)};" for var in func.statics)
-        if func.locals:
-            lines.extend(f"{self._gen_decl(var)};" for var in func.locals)
-        lines.extend(self._gen_stmt(stmt) for stmt in func.statements)
+        lines: List[str] = [self._gen_stmt(stmt) for stmt in func.statements]
 
         if func.func == "main":
-            lines.append("return 0;\n")
-            block = "{\n" + "".join(lines) + "}\n"
+            # unbuffered stdout and stderr
+            self._includes.add("stdio.h")
+            lines = (
+                ["setbuf(stdout, NULL);\nsetbuf(stderr, NULL);\n\n"]
+                + lines
+                + ["return 0;\n"]
+            )
+
+        decls: List[str] = []
+        if func.statics:
+            decls.extend(f"static {self._gen_decl(var)};\n" for var in func.statics)
+        if func.locals:
+            decls.extend(f"{self._gen_decl(var)};\n" for var in func.locals)
+        if decls:
+            lines = decls + ["\n"] + lines
+
+        block = "{\n" + "".join(lines) + "}\n"
+        if func.func == "main":
             return f"int main(int argc, char *argv[]) {block}"
         else:
             if func.args:
                 args = ", ".join(self._gen_decl(arg) for arg in func.args)
             else:
                 args = ""
-            block = "{\n" + "".join(lines) + "}\n"
             return f"void {func.func}({args}) {block}"
 
     def _gen_stmt(self, stmt: Statement) -> str:
@@ -167,10 +178,14 @@ class CodeGen:
                 self._includes.add("stdbool.h")
 
             result = expr.value
+        elif isinstance(expr, SizeOf):
+            # FIXME: this is a bit hacky
+            var = ChunkVariable("", expr.tp, None)
+            result = f"sizeof({self._gen_decl(var)})"
         elif isinstance(expr, Cast):
             # FIXME: this is a bit hacky
-            typestr = ChunkVariable("", expr.cast, None).typestr()
-            result = f"({typestr}) {self._gen_expr(expr.expr)}"
+            var = ChunkVariable("", expr.cast, None)
+            result = f"({self._gen_decl(var)}) {self._gen_expr(expr.expr)}"
         elif isinstance(expr, Deref):
             result = "*" + self._gen_expr(expr.target)
             if not force_parens:

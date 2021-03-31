@@ -16,6 +16,7 @@ from .expr import (
     LvalueNode,
     Operator,
     RefNode,
+    SizeOfNode,
     StringValueNode,
     TemplateValueNode,
     UnaryOperationNode,

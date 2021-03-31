@@ -15,6 +15,7 @@ from .block import (
     Lvalue,
     Operation,
     Ref,
+    SizeOf,
     Statement,
     StatementGroup,
     Value,
