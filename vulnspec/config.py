@@ -1,5 +1,6 @@
 import configparser
 import io
+import os
 from pathlib import Path
 from typing import Dict, Iterable, List, Optional
 
@@ -73,7 +74,10 @@ class Configuration:
 
     @property
     def cc(self) -> str:
-        return self.config["compile"]["cc"]
+        if (cc := os.getenv("CC")) :
+            return cc
+        else:
+            return self.config["compile"]["cc"]
 
     @property
     def cflags(self) -> List[str]:
