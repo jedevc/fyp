@@ -1,5 +1,5 @@
+import os
 import subprocess
-import sys
 from pathlib import Path
 
 import pytest
@@ -34,6 +34,8 @@ def test_synth(example, tmp_path):
 
     config = vulnspec.Configuration(program, stream)
 
+    devnull = open(os.devnull, "w")
+
     for _ in range(5):
         # Because the synthesis process is partly random, we repeat the
         # generation multiple times to try and ensure we acheive adequate
@@ -43,13 +45,14 @@ def test_synth(example, tmp_path):
         gen_asset, gen_program = vulnspec.synthesize(
             stream,
             dump={
-                vulnspec.DumpType.AST: sys.stderr,
-                vulnspec.DumpType.ASTDiagram: sys.stderr,
-                vulnspec.DumpType.GraphBlock: sys.stderr,
-                vulnspec.DumpType.GraphBlockChunk: sys.stderr,
+                vulnspec.DumpType.AST: devnull,
+                vulnspec.DumpType.ASTDiagram: devnull,
+                vulnspec.DumpType.GraphBlock: devnull,
+                vulnspec.DumpType.GraphBlockChunk: devnull,
             },
         )
         code = vulnspec.gen_code(gen_program, config, file_comment=True, style="webkit")
+        print(code)
         program.write_text(code)
         vulnspec.run_commands(program.read_text(), "build")
 
@@ -57,6 +60,7 @@ def test_synth(example, tmp_path):
         solve = vulnspec.gen_solve(
             path.with_suffix(".solve.py").read_text(), gen_asset.attachments, config
         )
+        print(solve)
         solvefile.write_text(solve)
 
         # attempt solution
@@ -69,3 +73,5 @@ def test_synth(example, tmp_path):
             check=True,
         )
         assert FLAG in proc.stdout.decode()
+
+    devnull.close()
