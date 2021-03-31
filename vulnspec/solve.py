@@ -19,8 +19,12 @@ class SolveUtils:
                 if die.tag != "DW_TAG_variable":
                     continue
 
-                name = die.attributes["DW_AT_name"].value.decode()
-                loc = die.attributes["DW_AT_location"].value
+                try:
+                    name = die.attributes["DW_AT_name"].value.decode()
+                    loc = die.attributes["DW_AT_location"].value
+                except KeyError:
+                    continue
+
                 locexpr = self._dwarf_parser.parse_expr(loc)
 
                 assert len(locexpr) == 1
