@@ -22,8 +22,6 @@ class NopTransformer:
         self._extern_links: Dict[Block, Set[Chunk]] = {}
 
         for asset in assets:
-            self._blocks.extend(asset.blocks)
-
             have_added = False
             for block in asset.blocks:
                 if block.constraint.nop:
@@ -31,6 +29,7 @@ class NopTransformer:
                 else:
                     continue
 
+                self._blocks.append(block)
                 self._names.add(block.name)
 
                 block_vars = Tracer(block).variables[block]

@@ -1,9 +1,12 @@
+import subprocess
 import sys
 from pathlib import Path
 
 import pytest
 
 import vulnspec
+
+FLAG = "FLAG{}"
 
 
 @pytest.mark.parametrize(
@@ -23,7 +26,11 @@ def test_synth(example, tmp_path):
 
     program = tmp_path / "program.c"
     helpers = tmp_path / "helpers.c"
+    solvefile = tmp_path / "solve.py"
+    flagfile = tmp_path / "flag.txt"
+
     helpers.symlink_to(path.parent.resolve() / "helpers.c")
+    flagfile.write_text(FLAG + "\n")
 
     config = vulnspec.Configuration(program, stream)
 
@@ -32,7 +39,8 @@ def test_synth(example, tmp_path):
         # generation multiple times to try and ensure we acheive adequate
         # coverage.
 
-        _, gen_program = vulnspec.synthesize(
+        # synthesize program
+        gen_asset, gen_program = vulnspec.synthesize(
             stream,
             dump={
                 vulnspec.DumpType.AST: sys.stderr,
@@ -43,5 +51,21 @@ def test_synth(example, tmp_path):
         )
         code = vulnspec.gen_code(gen_program, config, file_comment=True, style="webkit")
         program.write_text(code)
-
         vulnspec.run_commands(program.read_text(), "build")
+
+        # generate solution
+        solve = vulnspec.gen_solve(
+            path.with_suffix(".solve.py").read_text(), gen_asset.attachments, config
+        )
+        solvefile.write_text(solve)
+
+        # attempt solution
+        cmd = ["python", str(solvefile)]
+        proc = subprocess.run(
+            cmd,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            cwd=tmp_path,
+            check=True,
+        )
+        assert FLAG in proc.stdout.decode()
