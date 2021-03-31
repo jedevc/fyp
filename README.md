@@ -44,6 +44,23 @@ pip install --user --editable .
 Changes to the local copy of the code should now be reflected to the
 installation.
 
+### Use the dev scripts
+
+Install the pre-commit git hook:
+
+```bash
+./tools/dev/install_hooks.sh
+```
+
+Now the code will be checked for formatting, typing and that it passes tests
+before allowing a commit.
+
+To autoformat the code:
+
+```bash
+./tools/dev/autoformat.sh
+```
+
 ### Generating data files
 
 To regenerate the libraries:
