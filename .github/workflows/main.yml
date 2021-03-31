@@ -16,7 +16,7 @@ jobs:
       - name: System dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y elfutils
+          sudo apt-get install -y gcc-10 elfutils
 
       - name: Set up Python
         uses: actions/setup-python@v2
@@ -26,7 +26,6 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install black isort mypy pylint pytest
           if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
 
       - name: Check formatting with black
@@ -51,4 +50,4 @@ jobs:
 
       - name: Run tests
         run: |
-          pytest
+          CC=gcc-10 pytest
