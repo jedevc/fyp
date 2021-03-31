@@ -47,9 +47,9 @@ core:
   typemap:
     any: [void, boolean, integral, pointer, floating]
     boolean: [void, integral]
-    integral: [void, floating, pointer]
+    integral: [void, floating]
     floating: [void, complex]
-    pointer: [void]
+    pointer: [void, integral]
     complex: [void]
 
   includes:

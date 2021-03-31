@@ -34,7 +34,7 @@ def main():
     for target, generator in targets.items():
         path = Path(args.directory, f"{target}.json")
         with path.open("w") as f:
-            json.dump(generator(), f)
+            json.dump(generator(), f, indent=4)
 
 
 class Generator:

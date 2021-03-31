@@ -42,7 +42,8 @@ def main():
         if (tablename := table_tags.get(tag.kind)) :
             tables[tablename].insert(name)
 
-    json.dump({name: table.dump_dict() for name, table in tables.items()}, sys.stdout)
+    result = {name: table.dump_dict() for name, table in tables.items()}
+    json.dump(result, sys.stdout, indent=4)
 
 
 class Table:
