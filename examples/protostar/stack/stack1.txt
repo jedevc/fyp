@@ -17,10 +17,10 @@ chunk buffer: [64]char,
 
 block main {
     if argc <= 1 {
-        puts@libc("no argument specified")
-        exit@libc(1)
+        puts@libc.stdio("no argument specified")
+        exit@libc.stdlib(1)
     }
-    strcpy@libc(buffer, argv[1])
+    strcpy@libc.string(buffer, argv[1])
     ...
 
     if modified == 0x61626364 {

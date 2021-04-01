@@ -17,14 +17,14 @@ chunk buffer: [64]char,
       modified: int = 0
 
 block main {
-    variable = getenv@libc("GREENIE")
+    variable = getenv@libc.stdlib("GREENIE")
     if variable == NULL {
-        puts@libc("please set GREENIE")
-        exit@libc(1)
+        puts@libc.stdio("please set GREENIE")
+        exit@libc.stdlib(1)
     }
     ...
 
-    strcpy@libc(buffer, variable)
+    strcpy@libc.string(buffer, variable)
     if modified == 0x0d0a0d0a {
         flag()
     } else {

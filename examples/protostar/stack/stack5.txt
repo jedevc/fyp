@@ -5,5 +5,5 @@
 chunk (local) buffer: [64]char
 
 block main {
-    gets@libc(buffer)
+    gets@libc.stdio(buffer)
 }

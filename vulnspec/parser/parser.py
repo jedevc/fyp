@@ -516,6 +516,9 @@ class Parser:
         self.node_enter()
 
         var = self.expect(TokenType.Name)
+        if "@" in var.lexeme or "." in var.lexeme:
+            raise ParseError(var, "invalid characters in declared name")
+
         self.expect(TokenType.Colon, fail_msg="expected type specifier after name")
         var_type = self.declaration_type()
 

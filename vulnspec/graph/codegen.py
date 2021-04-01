@@ -61,8 +61,7 @@ class CodeGen:
     def _gen_decl(self, var: ChunkVariable) -> str:
         for tp in var.basic_types():
             try:
-                ttp = types.TRANSLATIONS[tp]
-                self._includes.add(types.PATHS[ttp])
+                self._includes.add(types.PATHS[tp])
             except KeyError:
                 pass
 
@@ -149,10 +148,10 @@ class CodeGen:
         if isinstance(expr, Variable):
             if expr.variable.name in variables.TRANSLATIONS:
                 vname = variables.TRANSLATIONS[expr.variable.name]
-                self._includes.add(variables.PATHS[vname])
+                self._includes.add(variables.PATHS[expr.variable.name])
             elif expr.variable.name in functions.TRANSLATIONS:
                 vname = functions.TRANSLATIONS[expr.variable.name]
-                self._includes.add(functions.PATHS[vname])
+                self._includes.add(functions.PATHS[expr.variable.name])
             else:
                 vname = expr.variable.name
             result = vname

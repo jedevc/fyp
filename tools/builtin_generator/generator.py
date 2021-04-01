@@ -1,7 +1,7 @@
 import argparse
 import json
 from pathlib import Path
-from typing import Any, Collection, Dict, Tuple
+from typing import Any, Collection, Dict, List, Tuple
 
 import yaml
 
@@ -9,7 +9,7 @@ from .library import Library
 from .tags import Tag, TagKind
 from .translate import translate_type, translate_types
 
-Bucket = Dict[str, Tuple[Tag, Library]]
+Bucket = List[Tuple[Tag, Library]]
 Buckets = Dict[TagKind, Bucket]
 
 
@@ -43,7 +43,7 @@ class Generator:
 
         core = config.get("core", {})
         self.core_types = core.get("types", {})
-        self.core_includes = core.get("includes", {})
+        self.core_includes = core.get("include", {})
         self.core_typemap = core.get("typemap", {})
 
         self.buckets = self._generate_buckets(build=build)
@@ -74,10 +74,9 @@ class Generator:
         tags = self._extract_tags(
             (TagKind.UNION, TagKind.STRUCT, TagKind.ENUM, TagKind.TYPEDEF)
         )
-        for (tag, lib) in tags.values():
-            paths[tag.name] = tag.path
-
-            name = f"{tag.name}@{lib.name}"
+        for (tag, lib) in tags:
+            name = f"{tag.name}@{lib.name}.{tag.shortpath}"
+            paths[name] = tag.path
             if tag.kind in (TagKind.UNION, TagKind.STRUCT, TagKind.ENUM):
                 translations[name] = f"{tag.kind.value} {tag.name}"
             else:
@@ -101,10 +100,10 @@ class Generator:
         signatures = {}
 
         tags = self._extract_tags((TagKind.FUNCTION, TagKind.PROTOTYPE))
-        for (tag, lib) in tags.values():
-            paths[tag.name] = tag.path
+        for (tag, lib) in tags:
+            name = f"{tag.name}@{lib.name}.{tag.shortpath}"
 
-            name = f"{tag.name}@{lib.name}"
+            paths[name] = tag.path
             translations[name] = tag.name
 
             args = translate_types(tag.signature, self.type_table)
@@ -123,10 +122,11 @@ class Generator:
         types = {}
 
         tags = self._extract_tags((TagKind.VARIABLE, TagKind.EXTERN))
-        for (tag, lib) in tags.values():
-            paths[tag.name] = tag.path
+        for (tag, lib) in tags:
+            name = f"{tag.name}@{lib.name}.{tag.shortpath}"
 
-            name = f"{tag.name}@{lib.name}"
+            paths[name] = tag.path
+
             translations[name] = tag.name
             types[name] = translate_type(tag.typeref, self.type_table)
 
@@ -148,7 +148,7 @@ class Generator:
         type_tags = self._extract_tags(
             (TagKind.UNION, TagKind.STRUCT, TagKind.ENUM, TagKind.TYPEDEF)
         )
-        for (tag, lib) in type_tags.values():
+        for (tag, lib) in type_tags:
             if tag.kind in (TagKind.UNION, TagKind.STRUCT, TagKind.ENUM):
                 original = f"{tag.kind.value} {tag.name}"
             else:
@@ -161,23 +161,25 @@ class Generator:
 
     def _generate_buckets(self, build=True) -> Buckets:
         buckets: Buckets = {
-            TagKind.MACRO: {},
-            TagKind.EXTERN: {},
-            TagKind.PROTOTYPE: {},
-            TagKind.FUNCTION: {},
-            TagKind.TYPEDEF: {},
-            TagKind.UNION: {},
-            TagKind.STRUCT: {},
-            TagKind.MEMBER: {},
-            TagKind.ENUM: {},
-            TagKind.ENUMERATOR: {},
-            TagKind.VARIABLE: {},
+            TagKind.MACRO: [],
+            TagKind.EXTERN: [],
+            TagKind.PROTOTYPE: [],
+            TagKind.FUNCTION: [],
+            TagKind.TYPEDEF: [],
+            TagKind.UNION: [],
+            TagKind.STRUCT: [],
+            TagKind.MEMBER: [],
+            TagKind.ENUM: [],
+            TagKind.ENUMERATOR: [],
+            TagKind.VARIABLE: [],
         }
 
         for library, data in self.libraries.items():
             # TODO: path shouldn't be relative to cwd.
             # would make more sense to be relative to the config.yaml
-            lib = Library(library, Path(data["path"]), data["includes"])
+            lib = Library(
+                library, Path(data["root"]), data["include"], data["include_paths"]
+            )
             if build:
                 lib.build()
             tags = lib.tags()
@@ -186,20 +188,18 @@ class Generator:
                 if tag.name.startswith("__"):
                     continue
                 bucket = buckets[tag.kind]
-                bucket[tag.name] = (tag, lib)
+                bucket.append((tag, lib))
 
         return buckets
 
-    def _extract_tags(
-        self, kinds: Collection[TagKind]
-    ) -> Dict[str, Tuple[Tag, Library]]:
+    def _extract_tags(self, kinds: Collection[TagKind]) -> List[Tuple[Tag, Library]]:
         if kinds is None:
-            return {}
+            return []
 
-        types = {}
+        types = []
         for kind in kinds:
-            for (tag, lib) in self.buckets[kind].values():
-                types[tag.name] = (tag, lib)
+            for (tag, lib) in self.buckets[kind]:
+                types.append((tag, lib))
 
         return types
 

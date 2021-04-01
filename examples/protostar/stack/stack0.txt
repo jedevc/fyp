@@ -16,10 +16,10 @@ chunk buffer: [64]char,
       modified: int = 0
 
 block main {
-    puts@libc("Can you get the flag?")
+    puts@libc.stdio("Can you get the flag?")
     ...
 
-    gets@libc(buffer)
+    gets@libc.stdio(buffer)
     ...
 
     if modified != 0 {

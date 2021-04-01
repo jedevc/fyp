@@ -8,6 +8,7 @@ SIMPLE_TOKENS: Dict[str, Union[TokenType, Dict[str, TokenType]]] = {
     ".": {
         "...": TokenType.Ellipsis,
         ".": TokenType.Dot,
+        # but can also appear in a word after a @
     },
     ",": TokenType.Comma,
     ":": TokenType.Colon,
@@ -231,8 +232,18 @@ class Lexer:
     def _read_name(self) -> str:
         start = self.n
 
+        in_type = False
         self._advance()
-        while self._isalnum():
+        while True:
+            if self._isalnum():
+                pass
+            elif self.ch == "@":
+                in_type = True
+            elif in_type and self.ch == ".":
+                pass
+            else:
+                break
+
             self._advance()
 
         if self.ch is not None and not self._isspace() and self.ch not in SIMPLE_TOKENS:
@@ -365,7 +376,7 @@ class Lexer:
         if self.ch is None:
             return False
         return (
-            self.ch in ("_", "@")
+            self.ch == "_"
             or "a" <= self.ch <= "z"
             or "A" <= self.ch <= "Z"
             or "0" <= self.ch <= "9"

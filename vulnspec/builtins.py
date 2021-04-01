@@ -12,7 +12,7 @@ BUILTINS_PATH = data_path("builtins")
 #
 # General conventions:
 #   TRANSLATIONS is a mapping from vulnspec names to raw C names
-#   PATHS is a mapping from raw C names to the paths at which they may be found
+#   PATHS is a mapping from vulnspec names to the paths at which they may be found
 #   CLAIMED is a set of words which *cannot* be claimed by another part of the
 #     synthesis
 #   TYPES/SIGNATURES are mappings from vulnspec names to their respective

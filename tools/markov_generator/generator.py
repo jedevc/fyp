@@ -17,7 +17,7 @@ def main():
     arg_parser.add_argument("--skip-build", dest="build", action="store_false")
     args = arg_parser.parse_args()
 
-    lib = Library("", args.library, ".")
+    lib = Library("", args.library, ".", [])
     if args.build:
         lib.build()
 

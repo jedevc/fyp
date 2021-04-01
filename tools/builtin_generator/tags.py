@@ -1,13 +1,13 @@
 from enum import Enum, unique
-from typing import Any, Dict
+from typing import Any, Dict, Optional
 
 
 class Tag:
-    def __init__(self, spec: Dict[str, str]):
+    def __init__(self, spec: Dict[str, str], path: Optional[str] = None):
         self.name = spec["name"]
         self.pattern = spec["pattern"]
         self.kind = TagKind(spec["kind"])
-        self.path = spec["path"]
+        self.path = path or spec["path"]
 
         if "signature" in spec:
             sig = spec["signature"]
@@ -21,6 +21,14 @@ class Tag:
         self.typeref = spec.get("typeref", "void").removeprefix("typename:")
         if ":" in self.typeref:
             self.typeref = " ".join(self.typeref.split(":"))
+
+    @property
+    def shortpath(self) -> str:
+        p = self.path
+        p = p.removesuffix(".h")
+        p = p.removesuffix(".c")
+        p = p.replace("/", ".")
+        return p
 
     def asdict(self) -> Dict[str, Any]:
         return {

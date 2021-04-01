@@ -16,8 +16,8 @@ chunk buffer: [64]char,
       fp: * fn () void = null
 
 block main {
-    puts@libc("Hm get the flag yourself.")
-    gets@libc(buffer)
+    puts@libc.stdio("Hm get the flag yourself.")
+    gets@libc.stdio(buffer)
     
     ...
 
