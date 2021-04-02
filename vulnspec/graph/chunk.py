@@ -163,9 +163,6 @@ class Chunk:
         self._table.pop(target.name)
 
     def lookup(self, name: str) -> Optional[ChunkVariable]:
-        if name.startswith("_"):
-            raise KeyError("cannot lookup hidden variable")
-
         i = self._table.get(name)
         if i is None:
             return None
