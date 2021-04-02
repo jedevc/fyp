@@ -21,7 +21,7 @@ from ..node import (
     FuncTypeNode,
     IfNode,
     IntValueNode,
-    LiteralNode,
+    LiteralExpressionNode,
     MetaTypeNode,
     PointerTypeNode,
     RefNode,
@@ -266,7 +266,7 @@ class TypeCheckVisitor(TraversalVisitor[TypeNode]):
     def visit_cast(self, node: CastNode) -> TypeNode:
         return node.cast
 
-    def visit_literal(self, node: LiteralNode) -> TypeNode:
+    def visit_literal_expr(self, node: LiteralExpressionNode) -> TypeNode:
         if node.content == "NULL":
             return MetaTypeNode(MetaTypes.Pointer)
         else:

@@ -5,7 +5,7 @@ from .base import Node, X
 from .types import TypeNode
 from .visitor import Visitor
 
-LvalueNode = Union["VariableNode", "ArrayNode", "DerefNode", "LiteralNode"]
+LvalueNode = Union["VariableNode", "ArrayNode", "DerefNode", "LiteralExpressionNode"]
 ExpressionNode = Union[
     "UnaryOperationNode",
     "BinaryOperationNode",
@@ -140,13 +140,13 @@ class TemplateValueNode(ValueNode):
         return node
 
 
-class LiteralNode(Node):
+class LiteralExpressionNode(Node):
     def __init__(self, content: str):
         super().__init__()
         self.content = content
 
     def accept(self, visitor: Visitor[X]) -> X:
-        return visitor.visit_literal(self)
+        return visitor.visit_literal_expr(self)
 
 
 class CastNode(Node):

@@ -5,6 +5,7 @@ from .expr import ExpressionNode, LvalueNode
 from .visitor import Visitor
 
 StatementNode = Union[
+    "LiteralStatementNode",
     "AssignmentNode",
     "CallNode",
     "SplitNode",
@@ -12,6 +13,15 @@ StatementNode = Union[
     "WhileNode",
     "ExpressionStatementNode",
 ]
+
+
+class LiteralStatementNode(Node):
+    def __init__(self, content: str):
+        super().__init__()
+        self.content = content
+
+    def accept(self, visitor: Visitor[X]) -> X:
+        return visitor.visit_literal_stmt(self)
 
 
 class CallNode(Node):

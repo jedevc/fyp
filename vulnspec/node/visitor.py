@@ -8,7 +8,7 @@ if TYPE_CHECKING:
         CastNode,
         DerefNode,
         FunctionNode,
-        LiteralNode,
+        LiteralExpressionNode,
         RefNode,
         SizeOfNode,
         UnaryOperationNode,
@@ -21,6 +21,7 @@ if TYPE_CHECKING:
         CallNode,
         ExpressionStatementNode,
         IfNode,
+        LiteralStatementNode,
         SplitNode,
         WhileNode,
     )
@@ -63,7 +64,10 @@ class Visitor(Generic[T]):
     def visit_assignment(self, node: "AssignmentNode") -> T:
         pass
 
-    def visit_literal(self, node: "LiteralNode") -> T:
+    def visit_literal_expr(self, node: "LiteralExpressionNode") -> T:
+        pass
+
+    def visit_literal_stmt(self, node: "LiteralStatementNode") -> T:
         pass
 
     def visit_cast(self, node: "CastNode") -> T:
@@ -179,7 +183,10 @@ class TraversalVisitor(Visitor[Optional[T]]):
 
         return None
 
-    def visit_literal(self, node: "LiteralNode") -> Optional[T]:
+    def visit_literal_expr(self, node: "LiteralExpressionNode") -> Optional[T]:
+        return None
+
+    def visit_literal_stmt(self, node: "LiteralStatementNode") -> Optional[T]:
         return None
 
     def visit_ref(self, node: "RefNode") -> Optional[T]:
@@ -321,7 +328,14 @@ class MapVisitor(Visitor[Any]):
 
         return node
 
-    def visit_literal(self, node: "LiteralNode") -> "LiteralNode":
+    def visit_literal_expr(
+        self, node: "LiteralExpressionNode"
+    ) -> "LiteralExpressionNode":
+        return node
+
+    def visit_literal_stmt(
+        self, node: "LiteralStatementNode"
+    ) -> "LiteralStatementNode":
         return node
 
     def visit_ref(self, node: "RefNode") -> "RefNode":

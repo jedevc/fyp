@@ -14,6 +14,7 @@ from .block import (
     If,
     Lvalue,
     Operation,
+    Raw,
     Ref,
     SizeOf,
     Statement,

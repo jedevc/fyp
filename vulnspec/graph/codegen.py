@@ -12,6 +12,7 @@ from .block import (
     FunctionDefinition,
     If,
     Operation,
+    Raw,
     Ref,
     SizeOf,
     Statement,
@@ -111,7 +112,9 @@ class CodeGen:
             return f"void {func.func}({args}) {block}"
 
     def _gen_stmt(self, stmt: Statement) -> str:
-        if isinstance(stmt, Assignment):
+        if isinstance(stmt, Raw):
+            return f"{stmt.data}\n"
+        elif isinstance(stmt, Assignment):
             return f"{self._gen_expr(stmt.target)} = {self._gen_expr(stmt.value)};\n"
         elif isinstance(stmt, If):
             lines = []
@@ -175,7 +178,6 @@ class CodeGen:
         elif isinstance(expr, Value):
             if expr.value in ("false", "true"):
                 self._includes.add("stdbool.h")
-
             result = expr.value
         elif isinstance(expr, SizeOf):
             # FIXME: this is a bit hacky

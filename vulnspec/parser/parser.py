@@ -20,7 +20,8 @@ from ..node import (
     FuncTypeNode,
     IfNode,
     IntValueNode,
-    LiteralNode,
+    LiteralExpressionNode,
+    LiteralStatementNode,
     LvalueNode,
     Node,
     Operator,
@@ -206,6 +207,12 @@ class Parser:
                 self.end_of_line(after="if")
 
             stmt = self.node_exit(IfNode(condition, statements, else_action))
+        elif self.match(TokenType.Literal) and self.peek().ttype == TokenType.Newline:
+            self.advance()
+            assert self.last is not None
+
+            stmt = LiteralStatementNode(self.last.lexeme)
+            self.expect(TokenType.Newline)
         else:
             state = (self.pos, self.current, self.last)
             try:
@@ -479,7 +486,9 @@ class Parser:
             except ParseError:
                 pass
 
-            if isinstance(expr, (LiteralNode, DerefNode, ArrayNode, VariableNode)):
+            if isinstance(
+                expr, (LiteralExpressionNode, DerefNode, ArrayNode, VariableNode)
+            ):
                 return expr
             else:
                 assert self.current is not None
@@ -490,14 +499,14 @@ class Parser:
         node: LvalueNode
         if self.accept(TokenType.Literal):
             assert self.last is not None
-            node = self.node_exit(LiteralNode(self.last.lexeme))
+            node = self.node_exit(LiteralExpressionNode(self.last.lexeme))
         elif self.accept(TokenType.Times):
             target = self.atom()
             node = self.node_exit(DerefNode(target))
         else:
             name = self.expect(TokenType.Name)
             if name.lexeme in ("null", "NULL"):
-                node = self.node_exit(LiteralNode("NULL"))
+                node = self.node_exit(LiteralExpressionNode("NULL"))
             else:
                 node = self.node_exit(VariableNode(name.lexeme))
 
@@ -645,7 +654,7 @@ class Parser:
 
         return None
 
-    def peek(self) -> Optional[Token]:
+    def peek(self) -> Token:
         """
         Lookahead to the next available token.
 
@@ -656,7 +665,8 @@ class Parser:
         if self.pos + 1 < len(self.tokens):
             return self.tokens[self.pos + 1]
         else:
-            return None
+            # HACK!
+            return Token("", 0, 0, TokenType.Unknown)
 
     def advance(self):
         """

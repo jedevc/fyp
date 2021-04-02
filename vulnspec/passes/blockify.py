@@ -18,6 +18,7 @@ from ..graph import (
     If,
     Lvalue,
     Operation,
+    Raw,
     Ref,
     SizeOf,
     Statement,
@@ -39,7 +40,8 @@ from ..node import (
     FunctionNode,
     IfNode,
     IntValueNode,
-    LiteralNode,
+    LiteralExpressionNode,
+    LiteralStatementNode,
     RefNode,
     SizeOfNode,
     SpecNode,
@@ -141,6 +143,9 @@ class BlockifyStatementVisitor(Visitor[Union[Statement]]):
     def __init__(self, parent: BlockifyVisitor):
         super().__init__()
         self.parent = parent
+
+    def visit_literal_stmt(self, node: LiteralStatementNode) -> Statement:
+        return Raw(node.content)
 
     def visit_assignment(self, node: AssignmentNode) -> Statement:
         return Assignment(
@@ -258,8 +263,8 @@ class BlockifyExpressionVisitor(Visitor[Expression]):
     def visit_cast(self, node: CastNode) -> Expression:
         return Cast(node.expr.accept(self), node.cast)
 
-    def visit_literal(self, node: LiteralNode) -> Expression:
-        return Value(node.content.rstrip(";"))
+    def visit_literal_expr(self, node: LiteralExpressionNode) -> Expression:
+        return Value(node.content.strip())
 
     def visit_unary(self, node: UnaryOperationNode) -> Expression:
         return Operation(node.op, [node.item.accept(self)])

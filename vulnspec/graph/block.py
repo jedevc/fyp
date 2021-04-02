@@ -8,7 +8,7 @@ from .chunk import Chunk, ChunkVariable
 Lvalue = Union["Variable", "Array", "Deref"]
 Expression = Union["Operation", "Function", "Value", "SizeOf", "Ref", "Cast", Lvalue]
 Statement = Union[
-    "Assignment", "Call", "If", "While", "ExpressionStatement", "StatementGroup"
+    "Raw", "Assignment", "Call", "If", "While", "ExpressionStatement", "StatementGroup"
 ]
 
 
@@ -122,6 +122,18 @@ class FunctionDefinition:
 
     def add_statement(self, statement: Statement):
         self.statements.append(statement)
+
+
+class Raw(BlockItem):
+    def __init__(self, data: str, known_id: Optional[int] = None):
+        super().__init__(known_id)
+        self.data = data
+
+    def traverse(self, func: TraversalFunc) -> None:
+        func(self)
+
+    def map(self, func: MappingFunc) -> "Raw":
+        return func(Raw(self.data, self.id))
 
 
 class Assignment(BlockItem):
