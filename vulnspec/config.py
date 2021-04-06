@@ -12,6 +12,7 @@ GENERIC_FLAGS = [
 class Configuration:
     COMPILER_DEFAULTS = {
         "cc": "gcc",
+        "arch": "default",
         "warnings": "no",
         "strip": "no",
         "debug": "no",
@@ -89,6 +90,10 @@ class Configuration:
 
         # generic flags
         flags.extend(GENERIC_FLAGS)
+
+        # architecture
+        if self.config["compile"]["arch"] != "default":
+            flags.append("-m" + self.config["compile"]["arch"])
 
         # assorted flags
         if self.config["compile"].getboolean("strip"):

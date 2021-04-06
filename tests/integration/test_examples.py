@@ -6,7 +6,7 @@ import pytest
 
 import vulnspec
 
-FLAG = "FLAG{}"
+FLAG = b"FLAG{}"
 
 
 @pytest.mark.parametrize(
@@ -19,6 +19,7 @@ FLAG = "FLAG{}"
         "protostar/stack/stack4.txt",
         "protostar/stack/stack5.txt",
         "protostar/format/format0.txt",
+        "protostar/format/format1.txt",
     ],
 )
 def test_synth(example, tmp_path):
@@ -31,7 +32,7 @@ def test_synth(example, tmp_path):
     flagfile = tmp_path / "flag.txt"
 
     helpers.symlink_to(path.parent.resolve() / "helpers.c")
-    flagfile.write_text(FLAG + "\n")
+    flagfile.write_bytes(FLAG + b"\n")
 
     config = vulnspec.Configuration(program, stream)
 
@@ -72,6 +73,6 @@ def test_synth(example, tmp_path):
             check=True,
             timeout=2,
         )
-        assert FLAG in proc.stdout.decode()
+        assert FLAG in proc.stdout
 
     devnull.close()
