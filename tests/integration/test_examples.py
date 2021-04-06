@@ -18,6 +18,7 @@ FLAG = "FLAG{}"
         "protostar/stack/stack3.txt",
         "protostar/stack/stack4.txt",
         "protostar/stack/stack5.txt",
+        "protostar/format/format0.txt",
     ],
 )
 def test_synth(example, tmp_path):
