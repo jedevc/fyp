@@ -13,7 +13,7 @@ extern flag: fn () void,
        tryagain: fn () void
 
 chunk variable: *char
-chunk buffer: [64]char = "",
+chunk buffer: [<B; 8 * random.randint(4, 16)>]char = "",
       modified: int = 0
 
 block main {
@@ -25,7 +25,7 @@ block main {
     ...
 
     strcpy@libc.string(buffer, variable)
-    if modified == 0x0d0a0d0a {
+    if modified == <X; sum(ord(random.choice(string.punctuation + string.digits + string.ascii_letters)) << i * 8 for i in range(4))> {
         flag()
     } else {
         tryagain()

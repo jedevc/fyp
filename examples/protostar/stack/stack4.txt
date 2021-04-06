@@ -8,7 +8,7 @@
 extern flag: fn () void,
        tryagain: fn () void
 
-chunk (local) buffer: [64]char
+chunk (local) buffer: [<B; 32 * random.randint(2, 8)>]char
 
 block main {
     puts@libc.stdio("Ok, now for a challenge.")

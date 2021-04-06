@@ -12,7 +12,7 @@
 extern flag: fn () void,
        tryagain: fn () void
 
-chunk buffer: [64]char = "",
+chunk buffer: [<B; 32 * random.randint(2, 8)>]char = "",
       fp: * fn () void = null
 
 block main {
