@@ -12,8 +12,8 @@
 extern flag: fn () void,
        tryagain: fn () void
 
-chunk buffer: [64]char,
-      modified: int = 0
+chunk buffer: [<B; 8 * random.randint(4, 16)>]char = "",
+      modified: int = <X; random.randint(0, 100)>
 
 block main {
     puts@libc.stdio("Can you get the flag?")
@@ -22,7 +22,7 @@ block main {
     gets@libc.stdio(buffer)
     ...
 
-    if modified != 0 {
+    if modified != <X> {
         flag()
     } else {
         tryagain()

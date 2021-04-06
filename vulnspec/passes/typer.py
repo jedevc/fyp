@@ -14,6 +14,7 @@ from ..node import (
     BoolValueNode,
     CallNode,
     CastNode,
+    ChunkNode,
     DeclarationNode,
     DerefNode,
     FloatValueNode,
@@ -92,6 +93,16 @@ class TypeCheckVisitor(TraversalVisitor[TypeNode]):
 
         super().visit_block(node)
 
+    def visit_chunk(self, node: ChunkNode):
+        super().visit_chunk(node)
+
+        initials = [var.initial for var in node.variables]
+        if any(initials) and not all(initials):
+            raise ProcessingError(
+                node,
+                "either all values in chunk must be initialized or none of them should be",
+            )
+
     def visit_split(self, node: SplitNode):
         self.block_seen_split = True
 
@@ -127,7 +138,7 @@ class TypeCheckVisitor(TraversalVisitor[TypeNode]):
             rhs_type = node.initial.accept(self)
             assert rhs_type is not None
 
-            if not type_check(self.vars[node.name], rhs_type):
+            if not type_check(self.vars[node.name], rhs_type, init=True):
                 raise ProcessingError(
                     node, "incompatible types in declaration assignment"
                 )

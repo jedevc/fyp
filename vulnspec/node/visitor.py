@@ -167,6 +167,8 @@ class TraversalVisitor(Visitor[Optional[T]]):
 
     def visit_type_array(self, node: "ArrayTypeNode") -> Optional[T]:
         node.base.accept(self)
+        if node.size:
+            node.size.accept(self)
 
         return None
 
@@ -313,6 +315,8 @@ class MapVisitor(Visitor[Any]):
 
     def visit_type_array(self, node: "ArrayTypeNode") -> "ArrayTypeNode":
         node.base = node.base.accept(self)
+        if node.size:
+            node.size = node.size.accept(self)
         return node
 
     def visit_type_func(self, node: "FuncTypeNode") -> "FuncTypeNode":

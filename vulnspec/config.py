@@ -4,6 +4,10 @@ import os
 from pathlib import Path
 from typing import Dict, Iterable, List, Optional
 
+GENERIC_FLAGS = [
+    "-fno-zero-initialized-in-bss",
+]
+
 
 class Configuration:
     COMPILER_DEFAULTS = {
@@ -82,6 +86,9 @@ class Configuration:
     @property
     def cflags(self) -> List[str]:
         flags: List[str] = []
+
+        # generic flags
+        flags.extend(GENERIC_FLAGS)
 
         # assorted flags
         if self.config["compile"].getboolean("strip"):

@@ -5,22 +5,16 @@ from .expr import (
     COMPARISON_OPERATORS,
     ArrayNode,
     BinaryOperationNode,
-    BoolValueNode,
     CastNode,
     DerefNode,
     ExpressionNode,
-    FloatValueNode,
     FunctionNode,
-    IntValueNode,
     LiteralExpressionNode,
     LvalueNode,
     Operator,
     RefNode,
     SizeOfNode,
-    StringValueNode,
-    TemplateValueNode,
     UnaryOperationNode,
-    ValueNode,
     VariableNode,
 )
 from .high import BlockNode, ChunkNode, DeclarationNode, ExternChunkNode, SpecNode
@@ -42,5 +36,13 @@ from .types import (
     SimpleTypeNode,
     TypeNode,
     type_check,
+)
+from .value import (
+    BoolValueNode,
+    FloatValueNode,
+    IntValueNode,
+    StringValueNode,
+    TemplateValueNode,
+    ValueNode,
 )
 from .visitor import MapVisitor, TraversalVisitor, Visitor

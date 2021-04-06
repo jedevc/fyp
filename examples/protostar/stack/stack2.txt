@@ -13,7 +13,7 @@ extern flag: fn () void,
        tryagain: fn () void
 
 chunk variable: *char
-chunk buffer: [64]char,
+chunk buffer: [64]char = "",
       modified: int = 0
 
 block main {

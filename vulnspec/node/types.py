@@ -1,7 +1,8 @@
-from typing import List, Optional, Union
+from typing import List, Union
 
 from ..builtins import MetaType, types
 from .base import Node, X
+from .value import IntValueNode, TemplateValueNode
 from .visitor import Visitor
 
 TypeNode = Union[
@@ -64,7 +65,9 @@ class PointerTypeNode(Node):
 
 
 class ArrayTypeNode(Node):
-    def __init__(self, base: TypeNode, size: Optional[int]):
+    def __init__(
+        self, base: TypeNode, size: Union[None, IntValueNode, TemplateValueNode]
+    ):
         super().__init__()
         self.base = base
         self.size = size
@@ -118,7 +121,9 @@ def metatype_is_reachable(start: MetaType, destination: MetaType) -> bool:
     return False
 
 
-def type_check(left: TypeNode, right: TypeNode, strict: bool = False) -> bool:
+def type_check(
+    left: TypeNode, right: TypeNode, strict: bool = False, init: bool = False
+) -> bool:
     if isinstance(left, SimpleTypeNode) and isinstance(right, SimpleTypeNode):
         if strict:
             return left.core == right.core
@@ -129,6 +134,8 @@ def type_check(left: TypeNode, right: TypeNode, strict: bool = False) -> bool:
         return type_check(left.base, right.base, strict=True)
     elif isinstance(left, ArrayTypeNode):
         if isinstance(right, ArrayTypeNode):
+            return type_check(left.base, right.base, strict=True)
+        elif init and isinstance(right, PointerTypeNode):
             return type_check(left.base, right.base, strict=True)
         else:
             return False

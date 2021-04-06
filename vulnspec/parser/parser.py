@@ -548,10 +548,18 @@ class Parser:
             base = self.declaration_type()
             return self.node_exit(PointerTypeNode(base))
         elif self.accept(TokenType.BracketOpen):
-            size = self.expect(TokenType.Integer)
+            size: Union[IntValueNode, TemplateValueNode]
+            if self.accept(TokenType.Template):
+                assert self.last is not None
+                size = TemplateValueNode(*self.last.lexeme)
+            elif self.expect(TokenType.Integer):
+                assert self.last is not None
+                size = IntValueNode(int(*self.last.lexeme), 10)
+
             self.expect(TokenType.BracketClose)
             base = self.declaration_type()
-            return self.node_exit(ArrayTypeNode(base, int(*size.lexeme)))
+
+            return self.node_exit(ArrayTypeNode(base, size))
         elif self.accept(TokenType.Reserved, ReservedWord.Function):
             args = []
             variadic = False
