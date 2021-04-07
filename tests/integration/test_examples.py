@@ -71,7 +71,7 @@ def test_synth(example, tmp_path):
             stderr=subprocess.PIPE,
             cwd=tmp_path,
             check=True,
-            timeout=2,
+            timeout=10,
         )
         assert FLAG in proc.stdout
 
