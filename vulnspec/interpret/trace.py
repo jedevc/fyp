@@ -1,7 +1,7 @@
 from typing import Dict, List, Optional, Set
 
 from ..graph import Block, BlockItem, Call, Chunk, ChunkVariable, Variable
-from .utils import find_common_prefix
+from .utils import find_common, find_deepest
 
 
 class Tracer:
@@ -19,23 +19,29 @@ class Tracer:
         self.recursive = recursive
 
         self.blocks: Set[Block] = set()
-        self.paths: Dict[Chunk, List[List[Call]]] = {}
+        self.invalid_roots: Set[Block] = set()
+
+        self.paths: Dict[Chunk, List[List[Block]]] = {}
         self.variables: Dict[Block, Set[ChunkVariable]] = {}
         self._trace(base, [])
 
-        self.prefixes = {
-            chunk: find_common_prefix(path) for chunk, path in self.paths.items()
-        }
+        self.roots: Dict[Chunk, Block] = {}
 
         self.patches: Dict[Block, List[ChunkVariable]] = {}
         self.patches[base] = []
 
         for chunk, paths in self.paths.items():
-            prefix = self.prefixes[chunk]
+            common = set(find_common(paths))
+            common = common - self.invalid_roots
+            best = find_deepest(common, paths)
+            if best is None:
+                raise RuntimeError("no possible root block")
+            self.roots[chunk] = best
+
             for path in paths:
                 collected = set()
-                for call in reversed(path[len(prefix) :]):
-                    bl = call.block
+                subpath = path[path.index(best) + 1 :]
+                for bl in reversed(subpath):
                     collected |= {
                         var for var in self.variables[bl] if var.chunk is chunk
                     }
@@ -50,22 +56,17 @@ class Tracer:
         such that no siblings of the result reference the chunk.
         """
 
-        if chunk not in self.prefixes:
-            return None
-
-        prefix = self.prefixes[chunk]
-        if len(prefix) == 0:
-            return self.base
-        else:
-            return prefix[-1].block
+        return self.roots.get(chunk)
 
     def _trace(
-        self, base: Block, prefix: List[Call], exclude: Optional[Set[Block]] = None
+        self, base: Block, prefix: List[Block], seen: Optional[Set[Block]] = None
     ):
-        exclude = set() if exclude is None else exclude
+        seen = set() if seen is None else seen
 
         chunks: Set[Chunk] = set()
         variables: Set[ChunkVariable] = set()
+
+        prefix = prefix + [base]
 
         def finder(part: BlockItem):
             nonlocal variables
@@ -75,19 +76,21 @@ class Tracer:
                     chunks.add(part.variable.chunk)
                 variables.add(part.variable)
             elif isinstance(part, Call):
-                assert exclude is not None
+                assert seen is not None
                 if self.recursive:
-                    self._trace(part.block, prefix + [part], exclude | {base})
+                    self._trace(part.block, prefix, seen | {base})
                     variables |= self.variables[part.block]
 
-        if base not in exclude:
+        should_traverse = base not in self.invalid_roots
+        if base in seen:
+            self.invalid_roots.add(base)
+        if should_traverse:
             base.traverse(finder)
 
         for chunk in chunks:
-            if chunk in self.paths:
-                self.paths[chunk].append(prefix)
-            else:
-                self.paths[chunk] = [prefix]
+            if chunk not in self.paths:
+                self.paths[chunk] = []
+            self.paths[chunk].append(prefix)
 
         self.blocks.add(base)
         self.variables[base] = variables

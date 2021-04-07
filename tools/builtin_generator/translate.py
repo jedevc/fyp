@@ -54,7 +54,7 @@ def _translate_types(tokens: List[str], type_table: Dict[str, str]) -> List[str]
 
             ret_type = result.pop()
             arg_types = _translate_types(inner, type_table)
-            result.append(f"fn ({', '.join(arg_types)}) {ret_type}")
+            result.append(f"* fn ({', '.join(arg_types)}) {ret_type}")
         else:
             key = part
             for i, key_piece in enumerate(reversed(result)):

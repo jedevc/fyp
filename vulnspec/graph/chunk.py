@@ -175,6 +175,10 @@ class Chunk:
         else:
             return var in self.variables
 
+    def __repr__(self) -> str:
+        names = ", ".join(var.name for var in self.variables)
+        return f"<{self.__class__.__name__} {names}>"
+
 
 @overload
 def merge_chunks(first: Optional[Chunk], second: Chunk) -> Chunk:

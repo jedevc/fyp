@@ -1,9 +1,12 @@
-from typing import Any, List
+from collections.abc import Collection, Sequence
+from typing import Iterable, List, Optional, TypeVar
 
 from ..graph import Block, BlockItem, Call
 
+T = TypeVar("T")
 
-def repair_calls(blocks: List[Block]) -> List[Block]:
+
+def repair_calls(blocks: Collection[Block]) -> List[Block]:
     nblocks = {
         block.name: Block(block.name, constraint=block.constraint, known_id=block.id)
         for block in blocks
@@ -23,22 +26,30 @@ def repair_calls(blocks: List[Block]) -> List[Block]:
     return list(nblocks.values())
 
 
-def find_common_prefix(lists: List[List[Any]]) -> List[Any]:
+def find_common(lists: Sequence[Collection[T]]) -> Iterable[T]:
     if len(lists) == 0:
-        return []
+        return
 
-    prefix = lists[0]
-    for li in lists[1:]:
-        mismatch = False
-        count = min(len(li), len(prefix))
-        for i in range(count):
-            if prefix[i] != li[i]:
-                mismatch = True
+    primary, others = lists[0], lists[1:]
+
+    for item in primary:
+        valid = True
+        for other in others:
+            if item not in other:
+                valid = False
                 break
 
-        if mismatch:
-            prefix = prefix[:i]
-        else:
-            prefix = prefix[:count]
+        if valid:
+            yield item
 
-    return prefix
+
+def find_deepest(items: Collection[T], lists: Sequence[Sequence[T]]) -> Optional[T]:
+    if len(items) == 0:
+        return None
+
+    primary = lists[0]
+    for item in reversed(primary):
+        if item in items:
+            return item
+
+    raise AssertionError()
