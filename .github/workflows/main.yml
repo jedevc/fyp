@@ -15,8 +15,9 @@ jobs:
 
       - name: System dependencies
         run: |
+          sudo dpkg --add-architecture i386
           sudo apt-get update
-          sudo apt-get install -y gcc-10 elfutils
+          sudo apt-get install -y gcc-10 gcc-10-multilib libc6-dev:i386 elfutils
 
       - name: Set up Python
         uses: actions/setup-python@v2

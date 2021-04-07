@@ -94,6 +94,7 @@ class Configuration:
         # architecture
         if self.config["compile"]["arch"] != "default":
             flags.append("-m" + self.config["compile"]["arch"])
+            flags.append("-maccumulate-outgoing-args")
 
         # assorted flags
         if self.config["compile"].getboolean("strip"):

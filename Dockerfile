@@ -10,10 +10,11 @@ FROM ubuntu:latest
 
 WORKDIR /fyp
 
-RUN apt-get update && \
+RUN dpkg --add-architecture i386 && \
+    apt-get update && \
     apt-get upgrade -y
 RUN apt-get install -y \
-    build-essential elfutils gcc-10 \
+    build-essential elfutils gcc-10 gcc-10-multilib libc6-dev:i386 \
     python3 python3-pip \
     clang-format 
 RUN ln -s /usr/bin/python3 /usr/bin/python && \

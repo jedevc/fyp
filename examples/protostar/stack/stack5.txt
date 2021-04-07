@@ -1,3 +1,6 @@
+// [compile]
+// arch = 32
+//
 // [env]
 // type = tcp-shell-setuid
 // port = 4000

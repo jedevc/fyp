@@ -2,6 +2,7 @@
 // helpers.c
 //
 // [compile]
+// arch = 32
 // debug = true
 // debug_separate = true
 //
