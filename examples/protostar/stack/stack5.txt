@@ -5,8 +5,12 @@
 // type = tcp-shell-setuid
 // port = 4000
 
-chunk (local) buffer: [64]char
+chunk (local) buffer: [<B; 32 * random.randint(2, 8)>]char
 
 block main {
+    printf@libc.stdio("%p\n", buffer)
+
+    ...
+
     gets@libc.stdio(buffer)
 }
