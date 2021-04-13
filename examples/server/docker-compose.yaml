@@ -1,0 +1,16 @@
+version: '3'
+
+services:
+  vulnspec-server:
+    build:
+      context: ../../
+      dockerfile: ./examples/server/Dockerfile
+
+    environment:
+      PORT: 80
+      SECRET: averysecretsecret
+
+    ports:
+      - "8000:80"
+      
+
