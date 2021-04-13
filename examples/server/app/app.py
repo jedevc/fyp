@@ -40,6 +40,15 @@ def challenge_file(name: str, seed: str, filename: str):
     return send_from_directory(chal.output, filename)
 
 
+def create_app():
+    secret = os.environ.get("SECRET")
+
+    app.config["challenges"] = Path(__file__).parent.parent / "challenges"
+    app.config["secret"] = secret
+
+    return app
+
+
 def main():
     host = os.environ.get("HOST", "0.0.0.0")
     port = int(os.environ.get("PORT", 8000))

@@ -1,16 +1,27 @@
 version: '3'
 
 services:
-  vulnspec-server:
+  caddy:
+    image: caddy:2
+    restart: unless-stopped
+    command: "caddy reverse-proxy --from ${DOMAIN:-localhost} --to vulnspec:80"
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - caddy_data:/data
+      - caddy_config:/config
+
+  vulnspec:
     build:
       context: ../../
       dockerfile: ./examples/server/Dockerfile
+    restart: unless-stopped
 
     environment:
-      PORT: 80
       SECRET: averysecretsecret
 
-    ports:
-      - "8000:80"
-      
+volumes:
+  caddy_data:
+  caddy_config:
 

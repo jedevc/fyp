@@ -16,6 +16,8 @@ COPY ./ ./
 RUN pip install .
 
 WORKDIR /usr/src/vulnspec/examples/server/
-RUN pip install flask
-CMD python -m app
+RUN pip install flask gunicorn
+
+EXPOSE 80
+CMD gunicorn "app:create_app()" -w 4 -b "0.0.0.0:80"
 
