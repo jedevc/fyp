@@ -3,16 +3,21 @@ import os
 from secrets import compare_digest
 from pathlib import Path
 
-from flask import Flask, send_from_directory, abort, request
+from flask import Flask, send_from_directory, abort, request, render_template
 
 from .challenge import Challenge
 
-app = Flask(__name__)
+app = Flask(__name__, template_folder="../templates")
 
 
 @app.route("/")
 def index():
-    return ""
+    return render_template("index.html")
+
+
+@app.route("/survey", methods=["GET", "POST"])
+def survey():
+    return render_template("survey.html")
 
 
 FILE_WHITELIST = {

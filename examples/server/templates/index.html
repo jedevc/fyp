@@ -1,0 +1,84 @@
+{% extends "base.html" %}
+{% block body %}
+<section class="section">
+  <div class="container">
+    <h1 class="title">
+      Reverse Engineering Challenge Set
+    </h1>
+    <p class="subtitle">
+      Justin's Final Year Project
+    </p>
+    <p>
+      As part of my final year project, I'm experimenting with a new
+      technique for designing hacking challenges for educational use.
+    </p>
+    <p>
+      I'd really appreciate your help! I've designed a simple challenge,
+      which you can see below, in two parts - by solving each part, you'll
+      get half of a flag (in the form <code>FLAG{...}</code>).
+    </p>
+    <p>
+      Once you've solved the challenge (or given up, that's fine too), please
+      complete and submit a short survey of how how you found the challenges.
+      All completed survey's will be eligible to win a £10 Amazon voucher,
+      plus it'll help me out a lot!
+    </p>
+  </div>
+</section>
+<section class="section">
+  <div class="container">
+    <h2 class="subtitle">The Challenge</h2>
+    <p>
+    <a class="button" href="/challenges/0/{{ seed }}/challenge">
+        <span>
+          Part 1
+        </span>
+        <span class="icon is-small">
+          <i class="fas fa-download"></i>
+        </span>
+      </a>
+      <a class="button" href="/challenges/1/{{ seed }}/challenge">
+        <span>
+          Part 2
+        </span>
+        <span class="icon is-small">
+          <i class="fas fa-download"></i>
+        </span>
+      </a>
+    </p>
+    <br />
+
+    <form style="max-width: 500px;">
+      <div class="field">
+        <label class="label">Flag submission</label>
+        <div class="control has-icons-left">
+          <input class="input" type="text" placeholder="FLAG{...}">
+          <span class="icon is-small is-left">
+            <i class="fas fa-flag"></i>
+          </span>
+        </div>
+      </div>
+      <div class="field">
+        <div class="control">
+          <button class="button is-link">Submit</button>
+        </div>
+      </div>
+    </form>
+  </div>
+</section>
+<section class="section">
+  <div class="container">
+    <h2 class="subtitle">Survey</h2>
+    <p>
+      Completing the challenge above will take you straight to the survey, or
+      if you decide to not finish it, you can go straight to the survey - all
+      completed survey's are elibile in a draw, not just the one's with
+      correct solutions!
+    </p>
+
+    <p>
+      <a class="button" href="/survey">Survey</a>
+    </p>
+  </div>
+</section>
+{% endblock %}
