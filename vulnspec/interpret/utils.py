@@ -1,5 +1,4 @@
-from collections.abc import Collection, Sequence
-from typing import Iterable, List, Optional, TypeVar
+from typing import Collection, Iterable, List, Optional, Sequence, TypeVar
 
 from ..graph import Block, BlockItem, Call
 
