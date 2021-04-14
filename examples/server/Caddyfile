@@ -2,3 +2,6 @@
     reverse_proxy http://vulnspec
 }
 
+admin.{$DOMAIN:localhost} {
+    reverse_proxy http://directus:8055
+}

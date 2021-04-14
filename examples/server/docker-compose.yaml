@@ -4,7 +4,6 @@ services:
   caddy:
     image: caddy:2
     restart: unless-stopped
-    command: "caddy reverse-proxy --from ${DOMAIN:-localhost} --to vulnspec:80"
     ports:
       - "80:80"
       - "443:443"
@@ -18,11 +17,54 @@ services:
       context: ../../
       dockerfile: ./examples/server/Dockerfile
     restart: unless-stopped
-
+    depends_on:
+      - database
+    volumes:
+      - ./:/usr/src/vulnspec/examples/server/
     environment:
       SECRET: averysecretsecret
+      DATABASE_URI: "postgresql://postgres:postgres@database:5432/postgres"
+
+  database:
+    image: postgres:12
+    volumes:
+      - database_data:/var/lib/postgresql/data
+    environment:
+      POSTGRES_USER: 'postgres'
+      POSTGRES_PASSWORD: 'postgres'
+      POSTGRES_DB: 'postgres'
+
+  cache:
+    container_name: cache
+    image: redis:6
+
+  directus:
+    container_name: directus
+    image: directus/directus:v9.0.0-rc.24
+    depends_on:
+      - cache
+      - database
+    environment:
+      KEY: '255d861b-5ea1-5996-9aa3-922530ec40b1'
+      SECRET: '6116487b-cda1-52c2-b5b5-c8022c45e263'
+
+      DB_CLIENT: 'pg'
+      DB_HOST: 'database'
+      DB_PORT: '5432'
+      DB_DATABASE: 'postgres'
+      DB_USER: 'postgres'
+      DB_PASSWORD: 'postgres'
+
+      CACHE_ENABLED: 'true'
+      CACHE_STORE: 'redis'
+      CACHE_REDIS: 'redis://cache:6379'
+
+      ADMIN_EMAIL: 'admin@example.com'
+      ADMIN_PASSWORD: 'd1r3ctu5'
 
 volumes:
   caddy_data:
   caddy_config:
+
+  database_data:
 

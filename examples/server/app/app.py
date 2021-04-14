@@ -10,6 +10,7 @@ from pathlib import Path
 from flask import Flask, send_from_directory, abort, request, render_template, make_response, redirect
 
 from .challenge import Challenge
+from .database import Session
 
 app = Flask(__name__, template_folder="../templates")
 
