@@ -13,15 +13,22 @@
       technique for designing hacking challenges for educational use.
     </p>
     <p>
-      I'd really appreciate your help! I've designed a simple challenge,
-      which you can see below, in two parts - by solving each part, you'll
-      get half of a flag (in the form <code>FLAG{...}</code>).
+      I'd really appreciate your help! I've designed a simple
+      reverse-engineering challenge, which you can see below, in two parts - by
+      solving each part, you'll get half of a flag (in the form <code>FLAG{...}</code>).
+      Unfortunately, the binaries are Linux-only, but you don't need Linux to
+      solve them if you don't want!
     </p>
     <p>
       Once you've solved the challenge (or given up, that's fine too), please
       complete and submit a short survey of how how you found the challenges.
       All completed survey's will be eligible to win a £10 Amazon voucher,
       plus it'll help me out a lot!
+    </p>
+    <p>
+      If you decide to do this, please don't discuss the challenges with anyone
+      else until you've both submitted the survey - that'll help me get the
+      most accurate results possible!
     </p>
   </div>
 </section>
@@ -48,11 +55,19 @@
     </p>
     <br />
 
-    <form style="max-width: 500px;">
+    <form method="POST" style="max-width: 500px;">
       <div class="field">
         <label class="label">Flag submission</label>
         <div class="control has-icons-left">
-          <input class="input" type="text" placeholder="FLAG{...}">
+          <input class="input {% if flag_error %}is-danger{% endif %}"
+                 type="text"
+                 name="flag"
+                 placeholder="FLAG{...}"
+                 {% if flag %}
+                 value="{{ flag }}"
+                 disabled
+                 {% endif %}
+          >
           <span class="icon is-small is-left">
             <i class="fas fa-flag"></i>
           </span>
@@ -60,7 +75,7 @@
       </div>
       <div class="field">
         <div class="control">
-          <button class="button is-link">Submit</button>
+          <button class="button is-link" {% if flag %}disabled{% endif %}>Submit</button>
         </div>
       </div>
     </form>

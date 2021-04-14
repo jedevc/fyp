@@ -1,23 +1,74 @@
 import argparse
 import os
+import datetime
+import string
+import random
+import re
 from secrets import compare_digest
 from pathlib import Path
 
-from flask import Flask, send_from_directory, abort, request, render_template
+from flask import Flask, send_from_directory, abort, request, render_template, make_response, redirect
 
 from .challenge import Challenge
 
 app = Flask(__name__, template_folder="../templates")
 
+DEFAULT_EXPIRE = datetime.timedelta(days=14)
 
-@app.route("/")
+
+def validate_flag(flag: str) -> bool:
+    match = re.match("FLAG{([^_]+)_([^_]+)}", request.form["flag"])
+    if match:
+        return match.group(1) == match.group(1)
+    else:
+        return False
+
+
+@app.route("/", methods=["GET", "POST"])
 def index():
-    return render_template("index.html")
+    if "id" in request.cookies:
+        seed = request.cookies["id"]
+    else:
+        seed = ''.join(random.choice(string.ascii_lowercase) for _ in range(16))
+
+    flag_error = False
+
+    if "flag" in request.cookies:
+        flag = request.cookies["flag"]
+    else:
+        flag = ""
+        if request.method == "POST":
+            if validate_flag(request.form["flag"]):
+                flag = request.form["flag"]
+                resp = redirect("/survey", code=303)
+                resp.set_cookie("flag", request.form["flag"], max_age=DEFAULT_EXPIRE)
+                return resp
+            else:
+                flag_error = True
+
+    resp = make_response(render_template("index.html", seed=seed, flag=flag, flag_error=flag_error))
+    resp.set_cookie("id", seed, max_age=DEFAULT_EXPIRE)
+    return resp
 
 
 @app.route("/survey", methods=["GET", "POST"])
 def survey():
-    return render_template("survey.html")
+    if "id" in request.cookies:
+        seed = request.cookies["id"]
+    else:
+        seed = ''.join(random.choice(string.ascii_lowercase) for _ in range(16))
+
+    if request.method == "POST":
+        flag = request.cookies.get("flag")
+        print(request.form, seed, flag)
+
+        resp = redirect("/", code=303)
+        resp.set_cookie("submitted", "yes", max_age=DEFAULT_EXPIRE)
+        return resp
+
+    resp = make_response(render_template("survey.html", submitted=request.cookies.get("submitted")))
+    resp.set_cookie("id", seed, max_age=DEFAULT_EXPIRE)
+    return resp
 
 
 FILE_WHITELIST = {

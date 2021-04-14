@@ -1,3 +1,249 @@
 {% extends "base.html" %}
 {% block body %}
+<section class="section">
+  <div class="container">
+    <h1 class="title">Survey</h1>
+    <p>
+      You can complete the following survey even if you haven't solved the
+      challenges!
+    </p>
+    <p>
+      <em>All</em> challenge submissions will be eligible for a £10 Amazon
+      voucher!
+    </p>
+    <h2 class="subtitle">GDPR notice</h2>
+    <p>
+      Your responses to this form will only be kept for as long as neccessary
+      to analyze all the responses, and produce my writeup. Your personal data
+      will not be shared with any third parties, and will only be used for
+      contacting you about the results of the prize draw if you win.
+    </p>
+    <p>
+      If at any time, after submitting this form you wish to remove your
+      resonse or make any changes, please contact me at the email address:
+      <code>"me" + "@" + "jedevc.com"</code>.
+    </p>
+  </div>
+</section>
+<section class="section">
+  <div class="container">
+    {% if submitted %}
+    <article class="message is-danger">
+      <div class="message-header">
+        <p>Hold up!</p>
+      </div>
+      <div class="message-body">
+        It looks like you've already submitted a response to this form! If you
+        send another response, you'll overwrite your previous submission.
+      </div>
+    </article>
+    {% endif %}
+
+    <h2 class="title">Questions</h2>
+    <form method="POST" style="max-width: 500px;">
+      <div class="field">
+        <label class="label">Name</label>
+        <div class="control has-icons-left">
+          <input name="name" class="input" type="text" placeholder="Alan Turing" required>
+          <span class="icon is-small is-left">
+            <i class="fas fa-user"></i>
+          </span>
+        </div>
+      </div>
+      <div class="field">
+        <label class="label">Contact Email</label>
+        <div class="control has-icons-left">
+          <input name="email" class="input" type="text" placeholder="alan@example.com" required>
+          <span class="icon is-small is-left">
+            <i class="fas fa-envelope"></i>
+          </span>
+        </div>
+      </div>
+
+      <h3 class="subtitle">Experience</h3>
+
+      <div class="field">
+        <label class="label">Highest Level of Study</label>
+        <div class="control">
+          <div class="select">
+            <select name="experience-level">
+              <option>(Please select)</option>
+              <option>Sixth Form</option>
+              <option>First Year Undergratuate</option>
+              <option>Second Year Undergratuate</option>
+              <option>Final Year Undergratuate</option>
+              <option>Year in Industry</option>
+              <option>Masters</option>
+              <option>PhD</option>
+              <option>Post-doc</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <div class="field">
+        <div class="control">
+          <label class="checkbox">
+            <input name="experience-uni" type="checkbox">
+            Currently studying at University
+          </label>
+        </div>
+      </div>
+
+      <p>
+        <strong>How much reverse engineering have you done before this?</strong>
+      </p>
+      <div class="control">
+        <label class="radio">
+          <input type="radio" name="experience-reversing" required>
+          None at all
+        </label>
+        <label class="radio">
+          <input type="radio" name="experience-reversing" required>
+          A little bit
+        </label>
+        <label class="radio">
+          <input type="radio" name="experience-reversing" required>
+          Quite a bit
+        </label>
+        <label class="radio">
+          <input type="radio" name="experience-reversing" required>
+          Lots and lots
+        </label>
+      </div>
+      <br />
+
+      <h3 class="subtitle">Challenges</h3>
+
+      <p>
+        <strong>How long did you spend on part 1?</strong>
+      </p>
+      <div class="control">
+        <label class="radio">
+          <input type="radio" name="challenges-part1-time" required>
+          Less than 10 minutes
+        </label>
+        <label class="radio">
+          <input type="radio" name="challenges-part1-time" required>
+          Around 20 minutes
+        </label>
+        <label class="radio">
+          <input type="radio" name="challenges-part1-time" required>
+          Around 30 minutes
+        </label>
+        <label class="radio">
+          <input type="radio" name="challenges-part1-time" required>
+          Around 45 minutes
+        </label>
+        <label class="radio">
+          <input type="radio" name="challenges-part1-time" required>
+          Around an hour
+        </label>
+        <label class="radio">
+          <input type="radio" name="challenges-part1-time" required>
+          More than an hour!
+        </label>
+      </div>
+      <br />
+
+      <p>
+        <strong>How difficult did you find part 1?</strong>
+      </p>
+      <div class="control">
+        <label class="radio">
+          <input type="radio" name="challenges-part1-difficulty" required>
+          Piece of cake
+        </label>
+        <label class="radio">
+          <input type="radio" name="challenges-part1-difficulty" required>
+          Easy
+        </label>
+        <label class="radio">
+          <input type="radio" name="challenges-part1-difficulty" required>
+          Not too easy, not too hard
+        </label>
+        <label class="radio">
+          <input type="radio" name="challenges-part1-difficulty" required>
+          Pretty hard
+        </label>
+        <label class="radio">
+          <input type="radio" name="challenges-part1-difficulty" required>
+          Really quite challenging!
+        </label>
+      </div>
+      <br />
+
+      <p>
+        <strong>Which part was more interesting?</strong>
+      </p>
+      <div class="control">
+        <label class="radio">
+          <input type="radio" name="challenges-interest" required>
+          Part 1
+        </label>
+        <label class="radio">
+          <input type="radio" name="challenges-interest" required>
+          Part 2
+        </label>
+        <label class="radio">
+          <input type="radio" name="challenges-interest" required>
+          About the same
+        </label>
+        <label class="radio">
+          <input type="radio" name="challenges-interest" required>
+          Don't know
+        </label>
+      </div>
+      <br />
+
+      <p>
+        <strong>Would you have found a Part 3 to the challenge interesting?</strong>
+      </p>
+      <div class="control">
+        <label class="radio">
+          <input type="radio" name="challenges-part3-interest" required>
+          Yes
+        </label>
+        <label class="radio">
+          <input type="radio" name="challenges-part3-interest" required>
+          No
+        </label>
+        <label class="radio">
+          <input type="radio" name="challenges-part3-interest" required>
+          Don't know
+        </label>
+      </div>
+      <br />
+
+      <h3 class="subtitle">Prize Draw</h3>
+
+      <p>
+        <strong>Do you want to be included for the prize draw?</strong>
+      </p>
+      <div class="control">
+        <label class="radio">
+          <input type="radio" name="prize-draw-include" required>
+          Yes
+        </label>
+        <label class="radio">
+          <input type="radio" name="prize-draw-include" required>
+          No
+        </label>
+      </div>
+      <br />
+
+      <h3 class="subtitle">Submission</h3>
+
+      <p>Anything else you want to tell us?</p>
+      <textarea name="other" class="textarea" placeholder="..."></textarea>
+      <br />
+
+      <div class="field">
+        <div class="control">
+          <button class="button is-link">Submit</button>
+        </div>
+      </div>
+    </form>
+  </div>
+</section>
 {% endblock %}
