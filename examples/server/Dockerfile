@@ -12,7 +12,7 @@ RUN ln -s /usr/bin/python3 /usr/bin/python && \
 ENV CC gcc-10
 
 WORKDIR /usr/src/vulnspec
-COPY requirements.txt ./
+COPY ./examples/server/requirements.txt ./
 RUN pip install -r requirements.txt
 
 COPY ./ ./
