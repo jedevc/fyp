@@ -12,11 +12,11 @@ RUN ln -s /usr/bin/python3 /usr/bin/python && \
 ENV CC gcc-10
 
 WORKDIR /usr/src/vulnspec
-COPY ./examples/server/requirements.txt ./
-RUN pip install -r requirements.txt
-
 COPY ./ ./
+RUN pip install .
+
 WORKDIR /usr/src/vulnspec/examples/server/
+RUN pip install -r requirements.txt
 
 EXPOSE 80
 CMD gunicorn "app:create_app()" -w 4 -b "0.0.0.0:80"
