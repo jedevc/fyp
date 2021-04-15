@@ -59,6 +59,9 @@
           </span>
         </div>
       </div>
+      <input type="hidden" name="flag" value="{{ flag }}">
+      <input type="hidden" name="seed" value="{{ seed }}">
+
 
       <h3 class="subtitle">Experience</h3>
 
@@ -67,15 +70,16 @@
         <div class="control">
           <div class="select">
             <select name="experience-level">
-              <option>(Please select)</option>
-              <option>Sixth Form</option>
-              <option>First Year Undergratuate</option>
-              <option>Second Year Undergratuate</option>
-              <option>Final Year Undergratuate</option>
-              <option>Year in Industry</option>
-              <option>Masters</option>
-              <option>PhD</option>
-              <option>Post-doc</option>
+              <option value="unknown">(Please select)</option>
+              <option value="sixth-form">Sixth Form</option>
+              <option value="first-year">First Year Undergratuate</option>
+              <option value="second-year">Second Year Undergratuate</option>
+              <option value="final-year">Final Year Undergratuate</option>
+              <option value="year-in-industry">Year in Industry</option>
+              <option value="masters">Masters</option>
+              <option value="phd">PhD</option>
+              <option value="post-doc">Post-doc</option>
+              <option value="other">Other</option>
             </select>
           </div>
         </div>
@@ -84,7 +88,7 @@
       <div class="field">
         <div class="control">
           <label class="checkbox">
-            <input name="experience-uni" type="checkbox">
+            <input name="experience-uni" type="checkbox" value="at-uni">
             Currently studying at University
           </label>
         </div>
@@ -95,19 +99,19 @@
       </p>
       <div class="control">
         <label class="radio">
-          <input type="radio" name="experience-reversing" required>
+          <input type="radio" name="experience-reversing" value="1" required>
           None at all
         </label>
         <label class="radio">
-          <input type="radio" name="experience-reversing" required>
+          <input type="radio" name="experience-reversing" value="2" required>
           A little bit
         </label>
         <label class="radio">
-          <input type="radio" name="experience-reversing" required>
+          <input type="radio" name="experience-reversing" value="3" required>
           Quite a bit
         </label>
         <label class="radio">
-          <input type="radio" name="experience-reversing" required>
+          <input type="radio" name="experience-reversing" value="4" required>
           Lots and lots
         </label>
       </div>
@@ -120,27 +124,27 @@
       </p>
       <div class="control">
         <label class="radio">
-          <input type="radio" name="challenges-part1-time" required>
-          Less than 10 minutes
+          <input type="radio" name="challenges-part1-time" value="10" required>
+          Around 10 minutes
         </label>
         <label class="radio">
-          <input type="radio" name="challenges-part1-time" required>
+          <input type="radio" name="challenges-part1-time" value="20" required>
           Around 20 minutes
         </label>
         <label class="radio">
-          <input type="radio" name="challenges-part1-time" required>
+          <input type="radio" name="challenges-part1-time" value="30" required>
           Around 30 minutes
         </label>
         <label class="radio">
-          <input type="radio" name="challenges-part1-time" required>
+          <input type="radio" name="challenges-part1-time" value="45" required>
           Around 45 minutes
         </label>
         <label class="radio">
-          <input type="radio" name="challenges-part1-time" required>
+          <input type="radio" name="challenges-part1-time" value="60" required>
           Around an hour
         </label>
         <label class="radio">
-          <input type="radio" name="challenges-part1-time" required>
+          <input type="radio" name="challenges-part1-time" value="60+" required>
           More than an hour!
         </label>
       </div>
@@ -151,23 +155,23 @@
       </p>
       <div class="control">
         <label class="radio">
-          <input type="radio" name="challenges-part1-difficulty" required>
+          <input type="radio" name="challenges-part1-difficulty" value="1" required>
           Piece of cake
         </label>
         <label class="radio">
-          <input type="radio" name="challenges-part1-difficulty" required>
+          <input type="radio" name="challenges-part1-difficulty" value="2" required>
           Easy
         </label>
         <label class="radio">
-          <input type="radio" name="challenges-part1-difficulty" required>
+          <input type="radio" name="challenges-part1-difficulty" value="3" required>
           Not too easy, not too hard
         </label>
         <label class="radio">
-          <input type="radio" name="challenges-part1-difficulty" required>
+          <input type="radio" name="challenges-part1-difficulty" value="4" required>
           Pretty hard
         </label>
         <label class="radio">
-          <input type="radio" name="challenges-part1-difficulty" required>
+          <input type="radio" name="challenges-part1-difficulty" value="5" required>
           Really quite challenging!
         </label>
       </div>
@@ -178,19 +182,19 @@
       </p>
       <div class="control">
         <label class="radio">
-          <input type="radio" name="challenges-interest" required>
+          <input type="radio" name="challenges-interest" value="part 1" required>
           Part 1
         </label>
         <label class="radio">
-          <input type="radio" name="challenges-interest" required>
+          <input type="radio" name="challenges-interest" value="part 2" required>
           Part 2
         </label>
         <label class="radio">
-          <input type="radio" name="challenges-interest" required>
+          <input type="radio" name="challenges-interest" value="same" required>
           About the same
         </label>
         <label class="radio">
-          <input type="radio" name="challenges-interest" required>
+          <input type="radio" name="challenges-interest" value="unknown" required>
           Don't know
         </label>
       </div>
@@ -201,15 +205,15 @@
       </p>
       <div class="control">
         <label class="radio">
-          <input type="radio" name="challenges-part3-interest" required>
+          <input type="radio" name="challenges-part3-interest" value="yes" required>
           Yes
         </label>
         <label class="radio">
-          <input type="radio" name="challenges-part3-interest" required>
+          <input type="radio" name="challenges-part3-interest" value="no" required>
           No
         </label>
         <label class="radio">
-          <input type="radio" name="challenges-part3-interest" required>
+          <input type="radio" name="challenges-part3-interest" value="unknown" required>
           Don't know
         </label>
       </div>
@@ -222,11 +226,11 @@
       </p>
       <div class="control">
         <label class="radio">
-          <input type="radio" name="prize-draw-include" required>
+          <input type="radio" name="prize-draw-include" value="yes" required>
           Yes
         </label>
         <label class="radio">
-          <input type="radio" name="prize-draw-include" required>
+          <input type="radio" name="prize-draw-include" value="no" required>
           No
         </label>
       </div>

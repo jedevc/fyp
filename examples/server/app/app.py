@@ -1,16 +1,24 @@
 import argparse
-import os
 import datetime
-import string
+import os
 import random
 import re
-from secrets import compare_digest
+import string
 from pathlib import Path
+from secrets import compare_digest
 
-from flask import Flask, send_from_directory, abort, request, render_template, make_response, redirect
+from flask import (
+    Flask,
+    abort,
+    make_response,
+    redirect,
+    render_template,
+    request,
+    send_from_directory,
+)
 
 from .challenge import Challenge
-from .database import Session
+from .survey import submit
 
 app = Flask(__name__, template_folder="../templates")
 
@@ -18,7 +26,7 @@ DEFAULT_EXPIRE = datetime.timedelta(days=14)
 
 
 def validate_flag(flag: str) -> bool:
-    match = re.match("FLAG{([^_]+)_([^_]+)}", request.form["flag"])
+    match = re.match("FLAG{([^_]+)_([^_]+)}", flag)
     if match:
         return match.group(1) == match.group(1)
     else:
@@ -30,7 +38,7 @@ def index():
     if "id" in request.cookies:
         seed = request.cookies["id"]
     else:
-        seed = ''.join(random.choice(string.ascii_lowercase) for _ in range(16))
+        seed = "".join(random.choice(string.ascii_lowercase) for _ in range(16))
 
     flag_error = False
 
@@ -47,7 +55,9 @@ def index():
             else:
                 flag_error = True
 
-    resp = make_response(render_template("index.html", seed=seed, flag=flag, flag_error=flag_error))
+    resp = make_response(
+        render_template("index.html", seed=seed, flag=flag, flag_error=flag_error)
+    )
     resp.set_cookie("id", seed, max_age=DEFAULT_EXPIRE)
     return resp
 
@@ -57,17 +67,25 @@ def survey():
     if "id" in request.cookies:
         seed = request.cookies["id"]
     else:
-        seed = ''.join(random.choice(string.ascii_lowercase) for _ in range(16))
+        seed = "".join(random.choice(string.ascii_lowercase) for _ in range(16))
+
+    flag = request.cookies.get("flag")
 
     if request.method == "POST":
-        flag = request.cookies.get("flag")
-        print(request.form, seed, flag)
+        submit(request.form)
 
         resp = redirect("/", code=303)
         resp.set_cookie("submitted", "yes", max_age=DEFAULT_EXPIRE)
         return resp
 
-    resp = make_response(render_template("survey.html", submitted=request.cookies.get("submitted")))
+    resp = make_response(
+        render_template(
+            "survey.html",
+            seed=seed,
+            flag=flag,
+            submitted=request.cookies.get("submitted"),
+        )
+    )
     resp.set_cookie("id", seed, max_age=DEFAULT_EXPIRE)
     return resp
 
@@ -123,4 +141,3 @@ def main():
     app.config["secret"] = args.secret
 
     app.run(host=host, port=port)
-

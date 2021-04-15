@@ -6,6 +6,6 @@ isort \
     --force-grid-wrap=0 \
     --use-parentheses \
     --line-width=88 \
-    vulnspec/ tools/ tests/
+    vulnspec/ tools/ tests/ examples/
 
-black vulnspec/ tools/ tests/
+black vulnspec/ tools/ tests/ examples/

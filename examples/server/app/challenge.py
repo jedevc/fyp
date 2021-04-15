@@ -1,7 +1,8 @@
 import subprocess
-from typing import Dict
 from pathlib import Path
-from vulnspec import synthesize, gen_code, gen_solve, Configuration
+from typing import Dict
+
+from vulnspec import Configuration, gen_code, gen_solve, synthesize
 
 challenge_root = Path("/tmp/ctf")
 
@@ -9,7 +10,9 @@ challenge_root = Path("/tmp/ctf")
 class Challenge:
     _source_cache: Dict[Path, str] = {}
 
-    def __init__(self, source: Path, output: Path, seed: str, force_recreate: bool = False):
+    def __init__(
+        self, source: Path, output: Path, seed: str, force_recreate: bool = False
+    ):
         self.source = source
         if source in Challenge._source_cache:
             self.stream = Challenge._source_cache[source]
@@ -53,5 +56,6 @@ class Challenge:
 
     @staticmethod
     def create(source: Path, seed: str) -> "Challenge":
-        return Challenge(source, challenge_root / source.with_suffix("").name / seed, seed)
-
+        return Challenge(
+            source, challenge_root / source.with_suffix("").name / seed, seed
+        )
