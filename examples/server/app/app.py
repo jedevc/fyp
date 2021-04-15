@@ -49,7 +49,7 @@ def index():
         if request.method == "POST":
             if validate_flag(request.form["flag"]):
                 flag = request.form["flag"]
-                resp = redirect("/survey", code=303)
+                resp = redirect("/success", code=303)
                 resp.set_cookie("flag", request.form["flag"], max_age=DEFAULT_EXPIRE)
                 return resp
             else:
@@ -60,6 +60,15 @@ def index():
     )
     resp.set_cookie("id", seed, max_age=DEFAULT_EXPIRE)
     return resp
+
+
+@app.route("/success")
+def success():
+    if "flag" not in request.cookies:
+        return redirect("/", code=302)
+
+    flag = request.cookies["flag"]
+    return render_template("success.html", flag=flag)
 
 
 @app.route("/survey", methods=["GET", "POST"])

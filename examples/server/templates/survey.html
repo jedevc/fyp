@@ -37,6 +37,17 @@
         send another response, you'll overwrite your previous submission.
       </div>
     </article>
+    {% elif not flag %}
+    <article class="message is-warning">
+      <div class="message-header">
+        <p>Hold up!</p>
+      </div>
+      <div class="message-body">
+        It looks like you haven't solved the challenge and submitted a flag yet
+        - that's fine, you can complete the survey without it, but it does help
+        if you can give it a try!
+      </div>
+    </article>
     {% endif %}
 
     <h2 class="title">Questions</h2>
