@@ -8,21 +8,20 @@ from .parser.token import RESERVED_WORDS
 
 
 class MarkovLoader:
-    def __init__(self):
+    def __init__(self, exclude: Optional[Iterable[str]]):
+        self._exclude: Set[str]
+        if exclude:
+            self._exclude = set(exclude)
+        else:
+            self._exclude = set()
+
         with data_path("markov.json").open() as f:
             self.data = json.load(f)
 
-    def model(
-        self, name: str, size: Tuple[int, int], exclude: Optional[Iterable[str]] = None
-    ):
-        return self._create(self.data[name], size, exclude)
+    def model(self, name: str, size: Tuple[int, int]) -> "MarkovWrapper":
+        return self._create(self.data[name], size)
 
-    def _create(
-        self,
-        model: Dict[Any, Any],
-        size: Tuple[int, int],
-        exclude: Optional[Iterable[str]] = None,
-    ) -> "MarkovWrapper":
+    def _create(self, model: Dict[Any, Any], size: Tuple[int, int]) -> "MarkovWrapper":
         if model["mode"] == "single":
             markov = Markov(model["table"], model["size"], model["terminal"])
         elif model["mode"] == "multi":
@@ -30,7 +29,7 @@ class MarkovLoader:
         else:
             raise KeyError()
 
-        return MarkovWrapper(markov, size, exclude)
+        return MarkovWrapper(markov, size, self._exclude)
 
 
 class Markov:
@@ -112,17 +111,17 @@ class MarkovWrapper:
         self,
         markov: Markov,
         size_range: Tuple[int, int],
-        exclude: Optional[Iterable[str]] = None,
+        exclude: Optional[Set[str]] = None,
     ):
         self.markov = markov
 
         self.min_size, self.max_size = size_range
 
         self._exclude: Set[str]
-        if exclude:
-            self._exclude = set(exclude)
-        else:
+        if exclude is None:
             self._exclude = set()
+        else:
+            self._exclude = exclude
 
     def generate(self) -> str:
         while True:
@@ -132,6 +131,8 @@ class MarkovWrapper:
             if result in self._exclude:
                 continue
             if result in RESERVED_WORDS:
+                continue
+            if result in C_RESERVED_WORDS:
                 continue
             if result in ("argc", "argv"):
                 continue
@@ -146,3 +147,39 @@ class MarkovWrapper:
 
         self._exclude.add(result)
         return result
+
+
+C_RESERVED_WORDS = {
+    "auto",
+    "break",
+    "case",
+    "char",
+    "const",
+    "continue",
+    "default",
+    "do",
+    "double",
+    "else",
+    "enum",
+    "extern",
+    "float",
+    "for",
+    "goto",
+    "if",
+    "int",
+    "long",
+    "register",
+    "return",
+    "short",
+    "signed",
+    "sizeof",
+    "static",
+    "struct",
+    "switch",
+    "typedef",
+    "union",
+    "unsigned",
+    "void",
+    "volatile",
+    "while",
+}
