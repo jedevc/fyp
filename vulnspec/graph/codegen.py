@@ -14,7 +14,8 @@ from .block import (
     Operation,
     Raw,
     Ref,
-    SizeOf,
+    SizeOfExpr,
+    SizeOfType,
     Statement,
     StatementGroup,
     Value,
@@ -179,10 +180,12 @@ class CodeGen:
             if expr.value in ("false", "true"):
                 self._includes.add("stdbool.h")
             result = expr.value
-        elif isinstance(expr, SizeOf):
+        elif isinstance(expr, SizeOfType):
             # FIXME: this is a bit hacky
-            var = ChunkVariable("", expr.tp, None)
+            var = ChunkVariable("", expr.target, None)
             result = f"sizeof({self._gen_decl(var)})"
+        elif isinstance(expr, SizeOfExpr):
+            result = f"sizeof({self._gen_expr(expr.target)})"
         elif isinstance(expr, Cast):
             # FIXME: this is a bit hacky
             var = ChunkVariable("", expr.cast, None)

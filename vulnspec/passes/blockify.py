@@ -20,7 +20,8 @@ from ..graph import (
     Operation,
     Raw,
     Ref,
-    SizeOf,
+    SizeOfExpr,
+    SizeOfType,
     Statement,
     Value,
     Variable,
@@ -43,7 +44,8 @@ from ..node import (
     LiteralExpressionNode,
     LiteralStatementNode,
     RefNode,
-    SizeOfNode,
+    SizeOfExprNode,
+    SizeOfTypeNode,
     SpecNode,
     SplitNode,
     StatementNode,
@@ -257,8 +259,11 @@ class BlockifyExpressionVisitor(Visitor[Expression]):
         else:
             raise RuntimeError()
 
-    def visit_sizeof(self, node: SizeOfNode) -> Expression:
-        return SizeOf(node.tp)
+    def visit_sizeof_expr(self, node: SizeOfExprNode) -> Expression:
+        return SizeOfExpr(node.target.accept(self))
+
+    def visit_sizeof_type(self, node: SizeOfTypeNode) -> Expression:
+        return SizeOfType(node.target)
 
     def visit_cast(self, node: CastNode) -> Expression:
         return Cast(node.expr.accept(self), node.cast)

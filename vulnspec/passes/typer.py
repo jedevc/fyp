@@ -27,7 +27,8 @@ from ..node import (
     PointerTypeNode,
     RefNode,
     SimpleTypeNode,
-    SizeOfNode,
+    SizeOfExprNode,
+    SizeOfTypeNode,
     SpecNode,
     SplitNode,
     StringValueNode,
@@ -270,8 +271,12 @@ class TypeCheckVisitor(TraversalVisitor[TypeNode]):
         else:
             raise RuntimeError()
 
-    def visit_sizeof(self, node: SizeOfNode) -> TypeNode:
-        node.tp.accept(self)
+    def visit_sizeof_expr(self, node: SizeOfExprNode) -> TypeNode:
+        node.target.accept(self)
+        return MetaTypeNode(MetaTypes.Integral)
+
+    def visit_sizeof_type(self, node: SizeOfTypeNode) -> TypeNode:
+        node.target.accept(self)
         return MetaTypeNode(MetaTypes.Integral)
 
     def visit_cast(self, node: CastNode) -> TypeNode:

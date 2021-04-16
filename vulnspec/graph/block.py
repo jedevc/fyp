@@ -6,7 +6,9 @@ from ..node import TypeNode
 from .chunk import Chunk, ChunkVariable
 
 Lvalue = Union["Variable", "Array", "Deref"]
-Expression = Union["Operation", "Function", "Value", "SizeOf", "Ref", "Cast", Lvalue]
+Expression = Union[
+    "Operation", "Function", "Value", "SizeOfExpr", "SizeOfType", "Ref", "Cast", Lvalue
+]
 Statement = Union[
     "Raw", "Assignment", "Call", "If", "While", "ExpressionStatement", "StatementGroup"
 ]
@@ -386,16 +388,28 @@ class Value(BlockItem):
         return f"<{self.__class__.__name__} {self.value}>"
 
 
-class SizeOf(BlockItem):
-    def __init__(self, tp: TypeNode, known_id: Optional[int] = None):
+class SizeOfType(BlockItem):
+    def __init__(self, target: TypeNode, known_id: Optional[int] = None):
         super().__init__(known_id)
-        self.tp = tp
+        self.target = target
 
     def traverse(self, func: TraversalFunc) -> None:
         func(self)
 
-    def map(self, func: MappingFunc) -> "SizeOf":
-        return func(SizeOf(self.tp, self.id))
+    def map(self, func: MappingFunc) -> "SizeOfType":
+        return func(SizeOfType(self.target, self.id))
+
+
+class SizeOfExpr(BlockItem):
+    def __init__(self, target: Expression, known_id: Optional[int] = None):
+        super().__init__(known_id)
+        self.target = target
+
+    def traverse(self, func: TraversalFunc) -> None:
+        func(self)
+
+    def map(self, func: MappingFunc) -> "SizeOfExpr":
+        return func(SizeOfExpr(self.target, self.id))
 
 
 class Cast(BlockItem):

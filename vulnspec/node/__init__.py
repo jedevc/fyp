@@ -13,7 +13,8 @@ from .expr import (
     LvalueNode,
     Operator,
     RefNode,
-    SizeOfNode,
+    SizeOfExprNode,
+    SizeOfTypeNode,
     UnaryOperationNode,
     VariableNode,
 )

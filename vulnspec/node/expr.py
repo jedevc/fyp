@@ -16,7 +16,8 @@ ExpressionNode = Union[
     "FunctionNode",
     "ValueNode",
     "RefNode",
-    "SizeOfNode",
+    "SizeOfExprNode",
+    "SizeOfTypeNode",
     LvalueNode,
 ]
 
@@ -77,13 +78,22 @@ ARITHMETIC_OPERATORS = (
 )
 
 
-class SizeOfNode(Node):
-    def __init__(self, tp: TypeNode):
+class SizeOfExprNode(Node):
+    def __init__(self, target: ExpressionNode):
         super().__init__()
-        self.tp = tp
+        self.target = target
 
     def accept(self, visitor: Visitor[X]) -> X:
-        return visitor.visit_sizeof(self)
+        return visitor.visit_sizeof_expr(self)
+
+
+class SizeOfTypeNode(Node):
+    def __init__(self, target: TypeNode):
+        super().__init__()
+        self.target = target
+
+    def accept(self, visitor: Visitor[X]) -> X:
+        return visitor.visit_sizeof_type(self)
 
 
 class LiteralExpressionNode(Node):

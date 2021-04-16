@@ -28,7 +28,8 @@ from ..node import (
     PointerTypeNode,
     RefNode,
     SimpleTypeNode,
-    SizeOfNode,
+    SizeOfExprNode,
+    SizeOfTypeNode,
     SpecNode,
     SplitNode,
     StringValueNode,
@@ -90,16 +91,16 @@ class VisualizerVisitor(Visitor[int]):
         return root
 
     def visit_type_simple(self, node: SimpleTypeNode):
-        raise NotImplementedError()
+        return self._node(ChunkVariable("", node, None).typename())
 
     def visit_type_pointer(self, node: PointerTypeNode):
-        raise NotImplementedError()
+        return self._node(ChunkVariable("", node, None).typename())
 
     def visit_type_array(self, node: ArrayTypeNode):
-        raise NotImplementedError()
+        return self._node(ChunkVariable("", node, None).typename())
 
     def visit_type_func(self, node: FuncTypeNode):
-        raise NotImplementedError()
+        return self._node(ChunkVariable("", node, None).typename())
 
     def visit_block(self, node: BlockNode) -> int:
         return self._connect(f"block {node.name}", node.statements)
@@ -149,9 +150,11 @@ class VisualizerVisitor(Visitor[int]):
         else:
             raise RuntimeError()
 
-    def visit_sizeof(self, node: SizeOfNode) -> int:
-        cvar = ChunkVariable("", node.tp, None)
-        return self._node(f"sizeof({cvar.typename()})")
+    def visit_sizeof_expr(self, node: SizeOfExprNode) -> int:
+        return self._connect("sizeof", node.target)
+
+    def visit_sizeof_type(self, node: SizeOfTypeNode) -> int:
+        return self._connect("sizeof", node.target)
 
     def visit_unary(self, node: UnaryOperationNode) -> int:
         return self._connect(node.op.opstr(), node.item)

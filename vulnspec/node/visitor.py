@@ -10,7 +10,8 @@ if TYPE_CHECKING:
         FunctionNode,
         LiteralExpressionNode,
         RefNode,
-        SizeOfNode,
+        SizeOfExprNode,
+        SizeOfTypeNode,
         UnaryOperationNode,
         ValueNode,
         VariableNode,
@@ -97,7 +98,10 @@ class Visitor(Generic[T]):
     def visit_value(self, node: "ValueNode") -> T:
         pass
 
-    def visit_sizeof(self, node: "SizeOfNode") -> T:
+    def visit_sizeof_expr(self, node: "SizeOfExprNode") -> T:
+        pass
+
+    def visit_sizeof_type(self, node: "SizeOfTypeNode") -> T:
         pass
 
     def visit_call(self, node: "CallNode") -> T:
@@ -237,7 +241,12 @@ class TraversalVisitor(Visitor[Optional[T]]):
     def visit_value(self, node: "ValueNode") -> Optional[T]:
         return None
 
-    def visit_sizeof(self, node: "SizeOfNode") -> Optional[T]:
+    def visit_sizeof_expr(self, node: "SizeOfExprNode") -> Optional[T]:
+        node.target.accept(self)
+        return None
+
+    def visit_sizeof_type(self, node: "SizeOfTypeNode") -> Optional[T]:
+        node.target.accept(self)
         return None
 
     def visit_call(self, node: "CallNode") -> Optional[T]:
@@ -388,7 +397,12 @@ class MapVisitor(Visitor[Any]):
     def visit_value(self, node: "ValueNode") -> "ValueNode":
         return node
 
-    def visit_sizeof(self, node: "SizeOfNode") -> "SizeOfNode":
+    def visit_sizeof_expr(self, node: "SizeOfExprNode") -> "SizeOfExprNode":
+        node.target.accept(self)
+        return node
+
+    def visit_sizeof_type(self, node: "SizeOfTypeNode") -> "SizeOfTypeNode":
+        node.target.accept(self)
         return node
 
     def visit_call(self, node: "CallNode") -> "CallNode":

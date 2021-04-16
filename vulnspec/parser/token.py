@@ -109,6 +109,9 @@ class ReservedWord:
 
     As = "as"
 
+    SizeOf = "sizeof"
+    SizeOfExpr = "sizeofexpr"
+
 
 RESERVED_WORDS = {
     ReservedWord.Block,
@@ -120,6 +123,8 @@ RESERVED_WORDS = {
     ReservedWord.Else,
     ReservedWord.While,
     ReservedWord.As,
+    ReservedWord.SizeOf,
+    ReservedWord.SizeOfExpr,
 }
 
 
