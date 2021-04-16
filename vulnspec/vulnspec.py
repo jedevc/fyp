@@ -6,7 +6,7 @@ import subprocess
 import sys
 from pathlib import Path
 from pprint import pformat
-from typing import Any, Dict, Iterable, Optional, TextIO, Tuple
+from typing import Any, Dict, Iterable, Optional, Tuple
 
 from .assets import Asset, AssetLoader
 from .common.data import data_path
@@ -240,7 +240,7 @@ def action_strip_file_comment(args) -> int:
 def synthesize(
     spec: str,
     seed: Optional[str] = None,
-    dump: Optional[Dict[DumpType, Optional[TextIO]]] = None,
+    dump: Optional[Dict[DumpType, Optional[Path]]] = None,
 ) -> Tuple[Asset, Program]:
     if seed is not None:
         random.seed(seed)
@@ -248,11 +248,13 @@ def synthesize(
     asset = Asset.load(spec, dump=dump)
 
     if dump and (dump_output := dump.get(DumpType.GraphBlock)):
-        vis = GraphVisualizer(dump_output)
-        vis.generate_block_graph(asset.blocks, asset.chunks, asset.extern)
+        with dump_output.open("w") as f:
+            vis = GraphVisualizer(f)
+            vis.generate_block_graph(asset.blocks, asset.chunks, asset.extern)
     if dump and (dump_output := dump.get(DumpType.GraphBlockChunk)):
-        vis = GraphVisualizer(dump_output)
-        vis.generate_block_chunk_graph(asset.blocks, asset.chunks, asset.extern)
+        with dump_output.open("w") as f:
+            vis = GraphVisualizer(f)
+            vis.generate_block_chunk_graph(asset.blocks, asset.chunks, asset.extern)
 
     nops = AssetLoader(data_path("nops")).list(external=True)
     noper = NopTransformer(nops)

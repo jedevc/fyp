@@ -31,7 +31,7 @@ class Asset:
     def load(
         source: Union[str, TextIO, Path],
         external: bool = False,
-        dump: Optional[Dict[DumpType, Optional[TextIO]]] = None,
+        dump: Optional[Dict[DumpType, Optional[Path]]] = None,
     ) -> "Asset":
         if isinstance(source, str):
             return Asset._load("", source, external=external, dump=dump)
@@ -49,7 +49,7 @@ class Asset:
         name: str,
         stream: str,
         external: bool = False,
-        dump: Optional[Dict[DumpType, Optional[TextIO]]] = None,
+        dump: Optional[Dict[DumpType, Optional[Path]]] = None,
     ) -> "Asset":
         lex = Lexer(stream)
         tokens = lex.tokens_list()
@@ -57,11 +57,13 @@ class Asset:
         parser = Parser(tokens)
         spec = parser.parse()
         if dump and (output := dump.get(DumpType.AST)):
-            printer = PrinterVisitor(output)
-            spec.accept(printer)
+            with output.open("w") as f:
+                printer = PrinterVisitor(f)
+                spec.accept(printer)
         if dump and (output := dump.get(DumpType.ASTDiagram)):
-            visualizer = VisualizerVisitor(output)
-            spec.accept(visualizer)
+            with output.open("w") as f:
+                visualizer = VisualizerVisitor(f)
+                spec.accept(visualizer)
 
         template_visitor = TemplaterVisitor()
         spec.accept(template_visitor)

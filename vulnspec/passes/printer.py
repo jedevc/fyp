@@ -20,6 +20,8 @@ from ..node import (
     FuncTypeNode,
     IfNode,
     IntValueNode,
+    LiteralExpressionNode,
+    LiteralStatementNode,
     PointerTypeNode,
     RefNode,
     SimpleTypeNode,
@@ -29,6 +31,7 @@ from ..node import (
     StatementNode,
     StringValueNode,
     TemplateValueNode,
+    UnaryOperationNode,
     ValueNode,
     VariableNode,
     Visitor,
@@ -135,6 +138,12 @@ class PrinterVisitor(Visitor[None]):
         node.cast.accept(self)
         self._print(")")
 
+    def visit_literal_expr(self, node: LiteralExpressionNode):
+        self._print(f"$({node.content.strip()})")
+
+    def visit_literal_stmt(self, node: LiteralStatementNode):
+        self._print(f"$({node.content.strip()})")
+
     def visit_variable(self, node: VariableNode):
         self._print(node.name)
 
@@ -188,6 +197,12 @@ class PrinterVisitor(Visitor[None]):
 
     def visit_sizeof(self, node: SizeOfNode):
         self._print(f"sizeof({node.tp.accept(self)})")
+
+    def visit_unary(self, node: UnaryOperationNode):
+        self._print("(")
+        self._print(node.op.opstr())
+        node.item.accept(self)
+        self._print(")")
 
     def visit_binary(self, node: BinaryOperationNode):
         self._print("(")

@@ -36,7 +36,7 @@ def test_synth(example, tmp_path):
 
     config = vulnspec.Configuration(program, stream)
 
-    devnull = open(os.devnull, "w")
+    devnull = Path(os.devnull)
 
     for _ in range(5):
         # Because the synthesis process is partly random, we repeat the
@@ -74,5 +74,3 @@ def test_synth(example, tmp_path):
             timeout=10,
         )
         assert FLAG in proc.stdout
-
-    devnull.close()

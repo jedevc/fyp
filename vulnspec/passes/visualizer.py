@@ -22,6 +22,8 @@ from ..node import (
     FuncTypeNode,
     IfNode,
     IntValueNode,
+    LiteralExpressionNode,
+    LiteralStatementNode,
     Node,
     PointerTypeNode,
     RefNode,
@@ -184,6 +186,12 @@ class VisualizerVisitor(Visitor[int]):
 
     def visit_exprstmt(self, node: ExpressionStatementNode) -> int:
         return node.expression.accept(self)
+
+    def visit_literal_expr(self, node: LiteralExpressionNode) -> int:
+        return self._node(f"$({node.content.strip()})")
+
+    def visit_literal_stmt(self, node: LiteralStatementNode) -> int:
+        return self._node(f"$({node.content.strip()})")
 
     def _connect(self, msg: str, children: Union[Node, Collection[Node]]) -> int:
         root = self._node(msg)
