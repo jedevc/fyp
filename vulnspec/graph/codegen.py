@@ -133,11 +133,13 @@ class CodeGen:
                     cond = self._gen_expr(condition, force_parens=True)
                     lines.append("} " + f"else if {cond}" + " {\n")
                     lines.extend([self._gen_stmt(stmt) for stmt in statements])
-            lines.append("}")
+            lines.append("}\n")
             return "".join(lines)
         elif isinstance(stmt, While):
             block = (
-                "{\n" + "".join(self._gen_stmt(stmt) for stmt in stmt.statements) + "}"
+                "{\n"
+                + "".join(self._gen_stmt(stmt) for stmt in stmt.statements)
+                + "}\n"
             )
             return f"while {self._gen_expr(stmt.condition, force_parens=True)} {block}"
         elif isinstance(stmt, ExpressionStatement):
