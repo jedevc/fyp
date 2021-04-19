@@ -1,7 +1,7 @@
-import random
 from typing import Dict, List, Set
 
 from ..assets import Asset
+from ..common import probability as prob
 from ..graph import (
     Block,
     BlockItem,
@@ -111,7 +111,9 @@ class Interpreter:
             elif block.constraint.inline:
                 self.inline_blocks.add(blname)
             else:
-                if random.random() > 0.5:
+                if prob.select(
+                    (prob.Blocks.FUNCTION, True), (prob.Blocks.INLINE, False)
+                ):
                     self.func_blocks.add(blname)
                 else:
                     self.inline_blocks.add(blname)
@@ -125,7 +127,7 @@ class Interpreter:
             elif chunk.constraint.isglobal:
                 self.global_chunks.add(chunk)
             else:
-                if random.random() > 0.5:
+                if prob.select((prob.Chunks.LOCAL, True), (prob.Chunks.GLOBAL, False)):
                     self.local_chunks.add(chunk)
                 else:
                     self.global_chunks.add(chunk)

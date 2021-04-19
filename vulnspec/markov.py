@@ -53,6 +53,8 @@ class Markov:
         return complete
 
     def choose(self, prefix: str) -> str:
+        # TODO: use random.choices
+
         prefix = prefix[-self.size :]
         assert len(prefix) <= self.size
 

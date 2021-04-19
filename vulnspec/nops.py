@@ -3,6 +3,7 @@ from functools import reduce
 from typing import Dict, Iterable, List, Set
 
 from .assets import Asset
+from .common import probability as prob
 from .common.error import SynthError
 from .common.names import generate_unique_name
 from .graph import Block, BlockItem, Call, Chunk, merge_chunks
@@ -77,7 +78,7 @@ class NopTransformer:
         def mapper(item: BlockItem) -> BlockItem:
             if not isinstance(item, Call):
                 return item
-            if random.random() > 1.0:
+            if prob.select((prob.NOPs.IGNORE, True), (prob.NOPs.TRANSFORM, False)):
                 return item
 
             # create a variation of the block
