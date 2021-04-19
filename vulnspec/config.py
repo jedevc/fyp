@@ -62,16 +62,37 @@ class Configuration:
         else:
             return None
 
-    def build_commands(self) -> List[str]:
-        sources = [str(self.source_path)]
+    def build_commands(
+        self, relative: bool = False, absolute: bool = False
+    ) -> List[str]:
+        assert not (relative and absolute)
+
+        def translate_path(p: Path) -> str:
+            if relative:
+                return p.name
+            elif absolute:
+                return str(p.absolute())
+            else:
+                return str(p)
+
+        sources = [translate_path(self.source_path)]
         sources.extend(
-            str(self.source_path.parent / key) for key in self.config["files"].keys()
+            translate_path(self.source_path.parent / key)
+            for key in self.config["files"].keys()
         )
 
-        command = " ".join([self.cc, *self.cflags, *sources, "-o", str(self.dest_path)])
+        command = " ".join(
+            [self.cc, *self.cflags, *sources, "-o", translate_path(self.dest_path)]
+        )
         if self.debug_path:
             stripper = " ".join(
-                ["eu-strip", "-g", "-f", str(self.debug_path), str(self.dest_path)]
+                [
+                    "eu-strip",
+                    "-g",
+                    "-f",
+                    translate_path(self.debug_path),
+                    translate_path(self.dest_path),
+                ]
             )
             return [command, stripper]
         else:
@@ -147,7 +168,7 @@ class Configuration:
             access,
             interface,
             method,
-            int(env["port"]) if env["port"] else None,
+            int(env["port"]) if env["port"] else 4000,
             Path(env["script"]) if env["script"] else None,
         )
 
@@ -161,7 +182,7 @@ class Environment:
         access: str,
         interface: str,
         method: str,
-        port: Optional[int] = None,
+        port: int = 4000,
         script: Optional[Path] = None,
     ):
         assert access in ("raw", "tcp", "ssh")
@@ -240,7 +261,6 @@ class Environment:
         if self.access == "raw":
             cmd = binary
         elif self.access == "tcp":
-            assert self.port is not None
             cmd = f'ncat -lkp {self.port} -c "{binary}"'
         elif self.access == "ssh":
             shell = binary
