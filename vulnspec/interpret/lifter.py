@@ -135,7 +135,9 @@ class UsageCapture:
         return UsageCapture(new.var, self._replace(self.capture, new.capture))
 
     def maximal(self, other: "UsageCapture") -> "UsageCapture":
-        return UsageCapture(self.var, self._maximal(self.capture, other.capture))
+        return UsageCapture(
+            self.var, self._simplify(self._maximal(self.capture, other.capture))
+        )
 
     def _nvar(self, target: Expression) -> ChunkVariable:
         if isinstance(target, Variable):
@@ -182,6 +184,8 @@ class UsageCapture:
             raise RuntimeError()
 
     def _simplify(self, target: Any) -> Any:
+        # NOTE: commented out code are "interesting" invalid transformations
+
         if isinstance(target, Lifter.VRef):
             return self._simplify(Ref(target.target))
 
@@ -190,14 +194,15 @@ class UsageCapture:
         elif isinstance(target, Ref):
             if isinstance(target.target, Deref):
                 return self._simplify(target.target.target)
-            elif isinstance(target.target, Array):
-                return self._simplify(target.target.target)
+            # elif isinstance(target.target, Array):
+            #    return self._simplify(target.target.target)
         elif isinstance(target, Deref):
             if isinstance(target.target, Ref):
                 return self._simplify(target.target.target)
         elif isinstance(target, Array):
-            if isinstance(target.target, Ref):
-                return self._simplify(target.target.target)
+            pass
+            # if isinstance(target.target, Ref):
+            #     return self._simplify(target.target.target)
         else:
             raise RuntimeError()
 
@@ -208,8 +213,8 @@ class UsageCapture:
         elif isinstance(target, Ref):
             if isinstance(result, Deref):
                 return result.target
-            elif isinstance(result, Array):
-                return result.target
+            # elif isinstance(result, Array):
+            #     return result.target
             else:
                 return Ref(result)
         elif isinstance(target, Deref):
@@ -218,10 +223,11 @@ class UsageCapture:
             else:
                 return Deref(result)
         elif isinstance(target, Array):
-            if isinstance(result, Ref):
-                return result.target
-            else:
-                return Array(result, target.index)
+            return Array(result, target.index)
+            # if isinstance(result, Ref):
+            #     return result.target
+            # else:
+            #     return Array(result, target.index)
         else:
             raise RuntimeError()
 
@@ -250,10 +256,13 @@ class UsageCapture:
                 common = self._maximal(first.target, second.target)
                 return Array(common, first.index)
             else:
-                return self._maximal(first.target, second.target)
+                return Deref(self._maximal(first.target, second.target))
         elif isinstance(first, Deref) and isinstance(second, Array):
             return self._maximal(first.target, second.target)
         elif isinstance(first, Array) and isinstance(second, Deref):
             return self._maximal(first.target, second.target)
         else:
             raise RuntimeError()
+
+    def __repr__(self) -> str:
+        return repr(self.capture)
