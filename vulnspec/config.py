@@ -233,7 +233,7 @@ class Environment:
         if self.method == "raw":
             pass
         elif self.method == "basic":
-            print(f"RUN echo '$flag' > {flagdest}", file=output)
+            print(f'RUN echo "$flag" > {flagdest}', file=output)
             print(file=output)
         elif self.method == "setuid":
             commands = [
@@ -278,6 +278,8 @@ class Environment:
         else:
             print("USER $user", file=output)
             print(file=output)
+
+        print(f"WORKDIR {Environment.DIRECTORY}", file=output)
 
         if self.port:
             print(f"EXPOSE {self.port}", file=output)
