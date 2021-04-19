@@ -152,6 +152,7 @@ class MarkovWrapper:
 
 
 C_RESERVED_WORDS = {
+    "and",
     "auto",
     "break",
     "case",
@@ -170,6 +171,7 @@ C_RESERVED_WORDS = {
     "if",
     "int",
     "long",
+    "or",
     "register",
     "return",
     "short",
