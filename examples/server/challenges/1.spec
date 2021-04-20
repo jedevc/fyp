@@ -6,9 +6,9 @@ template <flag1len; len(flag1)>
 template <flag2len; len(flag2)>
 
 template <keyrep; 4>
-template <key; ''.join(random.choice(string.ascii_lowercase) for i in range(keyrep)) * (flag1len // keyrep + 1)>
+template <key; ''.join(random.choice(string.ascii_lowercase) for i in range(keyrep)) * (flag2len // keyrep + 1)>
 
-template <flagt; ''.join(chr(ord(ch) ^ ord(k)) for ch, k in zip(flag1, key))>
+template <flagt; ''.join(chr(ord(ch) ^ ord(k)) for ch, k in zip(flag2, key))>
 template <flagtlen; len(flagt)>
 
 chunk i : int

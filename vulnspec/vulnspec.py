@@ -6,7 +6,7 @@ import subprocess
 import sys
 from pathlib import Path
 from pprint import pformat
-from typing import Any, Dict, Iterable, Optional, Tuple
+from typing import Any, Dict, Iterable, Optional, Tuple, Union
 
 from .assets import Asset, AssetLoader
 from .common.data import data_path
@@ -31,6 +31,7 @@ def main():
     parser_synth.add_argument("inpath", type=Path)
     parser_synth.add_argument("outpath", type=Path)
     parser_synth.add_argument("--seed", help="Random seed to use")
+    parser_synth.add_argument("--template", action="append")
     parser_synth.add_argument(
         "--no-file-comment",
         dest="file_comment",
@@ -67,6 +68,7 @@ def main():
     parser_environ.add_argument("inpath", type=Path)
     parser_environ.add_argument("outpath", type=Path)
     parser_environ.add_argument("--seed", help="Random seed to use")
+    parser_environ.add_argument("--template", action="append")
     parser_environ.add_argument(
         "--solution", action="store_true", help="Generate a solution"
     )
@@ -96,6 +98,12 @@ def action_synth(args) -> int:
     stream = args.inpath.read_text()
     config = Configuration(args.outpath, stream)
 
+    templates = {}
+    if args.template:
+        for templ in args.template:
+            name, value = templ.split("=")
+            templates[name] = value
+
     dump = {
         DumpType.AST: args.dump_ast,
         DumpType.ASTDiagram: args.dump_ast_diagram,
@@ -103,7 +111,7 @@ def action_synth(args) -> int:
         DumpType.GraphBlockChunk: args.dump_block_chunk_graph,
     }
     try:
-        _, program = synthesize(stream, args.seed, dump=dump)
+        _, program = synthesize(stream, args.seed, templates, dump=dump)
     except SynthError as err:
         print(err, file=sys.stderr)
         return 1
@@ -162,8 +170,14 @@ def action_environment(args) -> int:
 
             copies[docker_src] = docker_dst
 
+    templates = {}
+    if args.template:
+        for templ in args.template:
+            name, value = templ.split("=")
+            templates[name] = value
+
     try:
-        asset, program = synthesize(stream, args.seed)
+        asset, program = synthesize(stream, args.seed, templates)
         code = gen_code(program, config, style=args.format)
         target.write_text(code)
     except SynthError as err:
@@ -240,12 +254,13 @@ def action_strip_file_comment(args) -> int:
 def synthesize(
     spec: str,
     seed: Optional[str] = None,
+    templates: Optional[Dict[str, Union[str, int, float, bool]]] = None,
     dump: Optional[Dict[DumpType, Optional[Path]]] = None,
 ) -> Tuple[Asset, Program]:
     if seed is not None:
         random.seed(seed)
 
-    asset = Asset.load(spec, dump=dump)
+    asset = Asset.load(spec, templates=templates, dump=dump)
 
     if dump and (dump_output := dump.get(DumpType.GraphBlock)):
         with dump_output.open("w") as f:

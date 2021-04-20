@@ -26,7 +26,9 @@ class Challenge:
         self.output.mkdir(parents=True)
 
         # synthesize
-        asset, program = synthesize(self.stream, seed)
+        asset, program = synthesize(
+            self.stream, seed=seed + str(self.source), templates={"seed": seed}
+        )
         config = Configuration(self.c, self.stream)
         code = gen_code(program, config, style="webkit")
         self.c.write_text(code)

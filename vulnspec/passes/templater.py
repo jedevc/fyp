@@ -1,5 +1,5 @@
 import re
-from typing import Dict, Union
+from typing import Dict, Optional, Union
 
 from ..builtins import functions, types, variables
 from ..node import (
@@ -33,9 +33,11 @@ class TemplaterVisitor(MapVisitor):
     REF = re.compile(r"<\s*([^ ;]*)\s*>")
     ASSIGN = re.compile(r"<\s*([^ ;]*)\s*;(.*)>")
 
-    def __init__(self):
+    def __init__(
+        self, predefined: Optional[Dict[str, Union[str, int, float, bool]]] = None
+    ):
         super().__init__()
-        self.instantiations: Dict[str, Union[str, int, float]] = {}
+        self.instantiations: Dict[str, Union[str, int, float, bool]] = predefined or {}
 
     def evaluate(self, name: str, definition: str) -> Union[str, bool, int, float]:
         # pylint: disable=eval-used

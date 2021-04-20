@@ -31,16 +31,29 @@ class Asset:
     def load(
         source: Union[str, TextIO, Path],
         external: bool = False,
+        templates: Optional[Dict[str, Union[str, int, float, bool]]] = None,
         dump: Optional[Dict[DumpType, Optional[Path]]] = None,
     ) -> "Asset":
         if isinstance(source, str):
-            return Asset._load("", source, external=external, dump=dump)
+            return Asset._load(
+                "", source, external=external, templates=templates, dump=dump
+            )
         elif isinstance(source, Path):
             return Asset._load(
-                str(source), source.read_text(), external=external, dump=dump
+                str(source),
+                source.read_text(),
+                external=external,
+                templates=templates,
+                dump=dump,
             )
         elif isinstance(source, TextIOWrapper):
-            return Asset._load(source.name, source.read(), external=external, dump=dump)
+            return Asset._load(
+                source.name,
+                source.read(),
+                external=external,
+                templates=templates,
+                dump=dump,
+            )
         else:
             raise TypeError()
 
@@ -49,6 +62,7 @@ class Asset:
         name: str,
         stream: str,
         external: bool = False,
+        templates: Optional[Dict[str, Union[str, int, float, bool]]] = None,
         dump: Optional[Dict[DumpType, Optional[Path]]] = None,
     ) -> "Asset":
         lex = Lexer(stream)
@@ -65,7 +79,7 @@ class Asset:
                 visualizer = VisualizerVisitor(f)
                 spec.accept(visualizer)
 
-        template_visitor = TemplaterVisitor()
+        template_visitor = TemplaterVisitor(templates)
         spec.accept(template_visitor)
 
         type_visitor = TypeCheckVisitor(require_main=not external)
