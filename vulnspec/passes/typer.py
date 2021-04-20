@@ -4,6 +4,7 @@ from typing import Dict, Optional
 from ..builtins import MetaTypes, functions, types, variables
 from ..node import (
     ARITHMETIC_OPERATORS,
+    BITWISE_OPERATORS,
     BOOLEAN_OPERATORS,
     COMPARISON_OPERATORS,
     ArrayNode,
@@ -251,6 +252,7 @@ class TypeCheckVisitor(TraversalVisitor[TypeNode]):
             assert type_result is not None
             if not type_check(varg, type_result):
                 # FIXME: better error message needed
+                print(varg, type_result)
                 raise ProcessingError(arg, "argument type mismatch")
 
         if vtype.variadic:
@@ -336,7 +338,7 @@ class TypeCheckVisitor(TraversalVisitor[TypeNode]):
             ):
                 raise ProcessingError(node, "operands are not the same type")
             return MetaTypeNode(MetaTypes.Boolean)
-        elif node.op in ARITHMETIC_OPERATORS:
+        elif node.op in ARITHMETIC_OPERATORS or node.op in BITWISE_OPERATORS:
             if not type_check(left_type, right_type) and not type_check(
                 right_type, left_type
             ):

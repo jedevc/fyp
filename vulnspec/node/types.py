@@ -125,11 +125,12 @@ def type_check(
     left: TypeNode, right: TypeNode, strict: bool = False, init: bool = False
 ) -> bool:
     if isinstance(left, SimpleTypeNode) and isinstance(right, SimpleTypeNode):
-        if strict:
-            return left.core == right.core
-        else:
+        if left.core.split("@")[0] == right.core.split("@")[0]:
+            return True
+        elif not strict:
             return metatype_is_reachable(right.meta, left.meta)
-
+        else:
+            return False
     elif isinstance(left, PointerTypeNode) and isinstance(right, PointerTypeNode):
         return type_check(left.base, right.base, strict=True)
     elif isinstance(left, ArrayTypeNode):
@@ -141,7 +142,6 @@ def type_check(
             return False
     elif isinstance(left, PointerTypeNode) and isinstance(right, ArrayTypeNode):
         return type_check(left.base, right.base, strict=True)
-
     elif isinstance(left, FuncTypeNode) and isinstance(right, FuncTypeNode):
         if len(left.args) != len(right.args):
             return False
@@ -154,7 +154,6 @@ def type_check(
                 break
 
         return success
-
     elif not strict:
         return metatype_is_reachable(right.meta, left.meta)
     else:

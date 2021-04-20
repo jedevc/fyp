@@ -154,7 +154,7 @@ class Generator:
             else:
                 original = tag.name
 
-            new = f"{tag.name}@{lib.name}"
+            new = f"{tag.name}@{lib.name}.{tag.shortpath}"
             type_table[original] = new
 
         return type_table
