@@ -84,6 +84,12 @@ class Lifter:
         """
 
         captures = Lifter.capture_usages(base, var)
+        if len(captures) == 0:
+            raise ValueError()
+        elif len(captures) == 1:
+            # HACK: get the maximal
+            captures.append(captures[0])
+
         root = reduce(UsageCapture.maximal, captures)
         root_var = root.nvar()
         root_inv = root.invert()
@@ -262,9 +268,9 @@ class UsageCapture:
             else:
                 return Deref(self._maximal(first.target, second.target))
         elif isinstance(first, Deref) and isinstance(second, Array):
-            return self._maximal(first.target, second.target)
+            return Deref(self._maximal(first.target, second.target))
         elif isinstance(first, Array) and isinstance(second, Deref):
-            return self._maximal(first.target, second.target)
+            return Deref(self._maximal(first.target, second.target))
         else:
             raise RuntimeError()
 
