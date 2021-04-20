@@ -29,9 +29,11 @@ def rename_blocks(asset: Asset, mapping: Dict[str, str]):
 
 
 def rename_vars(asset: Asset, mapping: Dict[str, str]):
+    found = set()
     for chunk in asset.chunks:
         for var in chunk.variables:
             if var.name in mapping:
+                found.add(var)
                 chunk.rename_variable(var, mapping[var.name])
 
     for var in asset.extern.variables:
@@ -41,7 +43,7 @@ def rename_vars(asset: Asset, mapping: Dict[str, str]):
     # traverse the block graph (to get all those chunk-less variables)
     def traverser(item: BlockItem):
         if isinstance(item, Variable):
-            if item.variable.name in mapping:
+            if item.variable.name in mapping and item.variable not in found:
                 item.variable.name = mapping[item.variable.name]
 
     for block in asset.blocks:

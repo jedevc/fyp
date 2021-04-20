@@ -60,6 +60,8 @@ from ..node import (
 )
 from .error import ProcessingError
 
+PRINTABLE = set(string.printable) - set("\x0b\x0c")
+
 
 class BlockifyVisitor(Visitor[None]):
     def __init__(self, chunks: List[Chunk], extern: Chunk):
@@ -239,7 +241,7 @@ class BlockifyExpressionVisitor(Visitor[Expression]):
 
     def visit_value(self, node: ValueNode) -> Expression:
         if isinstance(node, StringValueNode):
-            if any(ch not in string.printable for ch in node.value):
+            if any(ch not in PRINTABLE for ch in node.value):
                 result = '"' + "".join(f"\\x{ord(ch):02x}" for ch in node.value) + '"'
             else:
                 result = json.dumps(node.value)
