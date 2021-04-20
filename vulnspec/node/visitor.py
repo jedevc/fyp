@@ -129,6 +129,8 @@ class TraversalVisitor(Visitor[Optional[T]]):
     """
 
     def visit_spec(self, node: "SpecNode") -> Optional[T]:
+        for templ in node.templates:
+            templ.accept(self)
         for chunk in node.chunks:
             chunk.accept(self)
         for block in node.blocks:
@@ -283,6 +285,8 @@ class TraversalVisitor(Visitor[Optional[T]]):
 
 class MapVisitor(Visitor[Any]):
     def visit_spec(self, node: "SpecNode") -> "SpecNode":
+        for i, templ in enumerate(node.templates):
+            node.templates[i] = templ.accept(self)
         for i, chunk in enumerate(node.chunks):
             node.chunks[i] = chunk.accept(self)
         for i, block in enumerate(node.blocks):

@@ -84,6 +84,7 @@ class Parser:
 
         chunks = []
         blocks = []
+        templs = []
         while self.pos < len(self.tokens):
             if self.accept(TokenType.EOF):
                 break
@@ -100,10 +101,20 @@ class Parser:
                 chunks.append(self.extern_chunk())
             elif self.current.lexeme == ReservedWord.Block:
                 blocks.append(self.block())
+            elif self.current.lexeme == ReservedWord.Template:
+                self.node_enter()
+
+                self.advance()
+                self.expect(TokenType.Template)
+
+                assert self.last is not None
+                name, definition = self.last.lexeme
+                templ = self.node_exit(TemplateValueNode(name, definition))
+                templs.append(templ)
             else:
                 raise ParseError(self.current, "unknown statement type")
 
-        return self.node_exit(SpecNode(chunks, blocks))
+        return self.node_exit(SpecNode(chunks, blocks, templs))
 
     def chunk(self) -> ChunkNode:
         """

@@ -4,6 +4,7 @@ from .base import Node, X
 from .expr import ExpressionNode
 from .stmt import StatementNode
 from .types import TypeNode
+from .value import TemplateValueNode
 from .visitor import Visitor
 
 
@@ -52,10 +53,16 @@ class BlockNode(Node):
 
 
 class SpecNode(Node):
-    def __init__(self, chunks: List[ChunkNode], blocks: List[BlockNode]):
+    def __init__(
+        self,
+        chunks: List[ChunkNode],
+        blocks: List[BlockNode],
+        templates: List[TemplateValueNode],
+    ):
         super().__init__()
         self.chunks = chunks
         self.blocks = blocks
+        self.templates = templates
 
     def accept(self, visitor: Visitor[X]) -> X:
         return visitor.visit_spec(self)
