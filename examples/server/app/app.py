@@ -22,6 +22,12 @@ from .survey import submit
 
 app = Flask(__name__, template_folder="../templates")
 
+
+@app.context_processor
+def inject_app_title():
+    return dict(title=os.environ.get("TITLE", "Vulnspec Server"))
+
+
 DEFAULT_EXPIRE = datetime.timedelta(days=14)
 
 

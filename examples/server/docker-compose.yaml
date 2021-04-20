@@ -24,6 +24,8 @@ services:
     volumes:
       - ./:/usr/src/vulnspec/examples/server/
     environment:
+      DOMAIN: "${DOMAIN:-localhost}"
+      TITLE: "${VULNSPEC_TITLE:-Vulnspec Server}"
       SECRET: "${VULNSPEC_SECRET}"
       DATABASE_URI: "postgresql://${DATABASE_USERNAME}:${DATABASE_PASSWORD}@database:5432/${DATABASE_DB}"
 
