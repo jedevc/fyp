@@ -25,24 +25,32 @@ class Challenge:
             return
         self.output.mkdir(parents=True)
 
-        # synthesize
-        asset, program = synthesize(
-            self.stream, seed=seed + str(self.source), templates={"seed": seed}
-        )
-        config = Configuration(self.c, self.stream)
-        code = gen_code(program, config, style="webkit")
-        self.c.write_text(code)
+        while True:
+            # synthesize
+            asset, program = synthesize(
+                self.stream, seed=seed + str(self.source), templates={"seed": seed}
+            )
+            config = Configuration(self.c, self.stream)
+            code = gen_code(program, config, style="webkit")
+            self.c.write_text(code)
 
-        # build
-        for command in config.build_commands():
-            subprocess.run(command, cwd=output, shell=True, check=True)
-        assert self.binary.exists()
+            # build
+            try:
+                for command in config.build_commands():
+                    subprocess.run(command, cwd=output, shell=True, check=True)
+                assert self.binary.exists()
+            except subprocess.CalledProcessError:
+                seed += 'a'
+                continue
 
-        # solve (optional)
-        if (solve := self.source.with_suffix(".solve.py")).exists():
-            solve_script = solve.read_text()
-            solve_script = gen_solve(solve_script, asset.attachments, config)
-            self.solve.write_text(solve_script)
+            # solve (optional)
+            if (solve := self.source.with_suffix(".solve.py")).exists():
+                solve_script = solve.read_text()
+                solve_script = gen_solve(solve_script, asset.attachments, config)
+                self.solve.write_text(solve_script)
+
+            # all successful
+            break
 
     @property
     def c(self) -> Path:

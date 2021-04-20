@@ -32,19 +32,35 @@ DEFAULT_EXPIRE = datetime.timedelta(days=14)
 
 
 def validate_flag(flag: str) -> bool:
-    match = re.match("FLAG{([^_]+)_([^_]+)}", flag)
+    match = re.match("FLAG{(\d+)_(\d+)}", flag)
     if match:
-        return match.group(1) == match.group(1)
+        a = int(match.group(1))
+        b = int(match.group(2))
+        return a * 2 + 42 == b
     else:
         return False
 
 
+@app.route("/notice")
+def notice():
+    if request.args.get("confirm"):
+        if "id" in request.cookies:
+            seed = request.cookies["id"]
+        else:
+            seed = "".join(random.choice(string.ascii_lowercase) for _ in range(16))
+
+        resp = make_response(redirect("/", code=303))
+        resp.set_cookie("id", seed, max_age=DEFAULT_EXPIRE, secure=True)
+        return resp
+    else:
+        return render_template("notice.html")
+
+
 @app.route("/", methods=["GET", "POST"])
 def index():
-    if "id" in request.cookies:
-        seed = request.cookies["id"]
-    else:
-        seed = "".join(random.choice(string.ascii_lowercase) for _ in range(16))
+    if not "id" in request.cookies:
+        return redirect("/notice", 302)
+    seed = request.cookies["id"]
 
     flag_error = False
 
@@ -56,16 +72,12 @@ def index():
             if validate_flag(request.form["flag"]):
                 flag = request.form["flag"]
                 resp = redirect("/success", code=303)
-                resp.set_cookie("flag", request.form["flag"], max_age=DEFAULT_EXPIRE)
+                resp.set_cookie("flag", request.form["flag"], max_age=DEFAULT_EXPIRE, secure=True)
                 return resp
             else:
                 flag_error = True
 
-    resp = make_response(
-        render_template("index.html", seed=seed, flag=flag, flag_error=flag_error)
-    )
-    resp.set_cookie("id", seed, max_age=DEFAULT_EXPIRE)
-    return resp
+    return render_template("index.html", seed=seed, flag=flag, flag_error=flag_error)
 
 
 @app.route("/success")
@@ -79,30 +91,25 @@ def success():
 
 @app.route("/survey", methods=["GET", "POST"])
 def survey():
-    if "id" in request.cookies:
-        seed = request.cookies["id"]
-    else:
-        seed = "".join(random.choice(string.ascii_lowercase) for _ in range(16))
+    if not "id" in request.cookies:
+        return redirect("/notice", 302)
+    seed = request.cookies["id"]
 
     flag = request.cookies.get("flag")
 
     if request.method == "POST":
         submit(request.form)
 
-        resp = redirect("/", code=303)
-        resp.set_cookie("submitted", "yes", max_age=DEFAULT_EXPIRE)
+        resp = make_response(redirect("/", code=303))
+        resp.set_cookie("submitted", "yes", max_age=DEFAULT_EXPIRE, secure=True)
         return resp
 
-    resp = make_response(
-        render_template(
-            "survey.html",
-            seed=seed,
-            flag=flag,
-            submitted=request.cookies.get("submitted"),
-        )
+    return render_template(
+        "survey.html",
+        seed=seed,
+        flag=flag,
+        submitted=request.cookies.get("submitted"),
     )
-    resp.set_cookie("id", seed, max_age=DEFAULT_EXPIRE)
-    return resp
 
 
 FILE_WHITELIST = {
