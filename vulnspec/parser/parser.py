@@ -304,6 +304,9 @@ class Parser:
             {
                 TokenType.Plus: Operator.Add,
                 TokenType.Minus: Operator.Subtract,
+                TokenType.BitwiseAnd: Operator.BitwiseAnd,
+                TokenType.BitwiseOr: Operator.BitwiseOr,
+                TokenType.BitwiseXor: Operator.BitwiseXor,
             },
         )
 
@@ -330,6 +333,7 @@ class Parser:
             self.atom,
             {
                 TokenType.BooleanNot: Operator.Not,
+                TokenType.BitwiseNot: Operator.BitwiseNot,
                 TokenType.Minus: Operator.Negate,
             },
         )

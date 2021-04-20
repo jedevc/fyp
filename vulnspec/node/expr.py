@@ -41,6 +41,11 @@ class Operator(Enum):
     And = 13
     Or = 14
 
+    BitwiseNot = 15
+    BitwiseAnd = 16
+    BitwiseOr = 17
+    BitwiseXor = 18
+
     def opstr(self) -> str:
         return {
             Operator.Add: "+",
@@ -57,6 +62,10 @@ class Operator(Enum):
             Operator.Not: "!",
             Operator.And: "&&",
             Operator.Or: "||",
+            Operator.BitwiseNot: "~",
+            Operator.BitwiseAnd: "&",
+            Operator.BitwiseOr: "|",
+            Operator.BitwiseXor: "^",
         }[self]
 
 
@@ -75,6 +84,12 @@ ARITHMETIC_OPERATORS = (
     Operator.Multiply,
     Operator.Divide,
     Operator.Negate,
+)
+BITWISE_OPERATORS = (
+    Operator.BitwiseAnd,
+    Operator.BitwiseOr,
+    Operator.BitwiseXor,
+    Operator.BitwiseNot,
 )
 
 

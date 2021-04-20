@@ -216,6 +216,7 @@ class Interpreter:
                                     break
 
                         narg = Lifter.rewrite(target, current)
+                        print(target, current, narg)
                         args.append(narg.capture)
                 else:
                     args = []

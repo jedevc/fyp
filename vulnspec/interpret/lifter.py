@@ -237,9 +237,13 @@ class UsageCapture:
             assert isinstance(common, (Variable, Array, Deref))
             return Ref(common)
         elif isinstance(first, Ref):
-            return first
+            common = self._maximal(first.target, second)
+            assert isinstance(common, (Variable, Array, Deref))
+            return Ref(common)
         elif isinstance(second, Ref):
-            return second
+            common = self._maximal(first, second.target)
+            assert isinstance(common, (Variable, Array, Deref))
+            return Ref(common)
         elif isinstance(first, Variable):
             return first
         elif isinstance(second, Variable):

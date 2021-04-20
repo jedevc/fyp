@@ -1,3 +1,5 @@
+import json
+import string
 from typing import Dict, List, Optional, Tuple, Union
 
 from ..builtins import functions, variables
@@ -237,7 +239,11 @@ class BlockifyExpressionVisitor(Visitor[Expression]):
 
     def visit_value(self, node: ValueNode) -> Expression:
         if isinstance(node, StringValueNode):
-            return Value('"' + node.value + '"')
+            if any(ch not in string.printable for ch in node.value):
+                result = '"' + "".join(f"\\x{ord(ch):02x}" for ch in node.value) + '"'
+            else:
+                result = json.dumps(node.value)
+            return Value(result)
         elif isinstance(node, IntValueNode):
             if node.base == 2:
                 return Value(bin(node.value))

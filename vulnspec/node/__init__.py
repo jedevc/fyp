@@ -1,6 +1,7 @@
 from .base import Node
 from .expr import (
     ARITHMETIC_OPERATORS,
+    BITWISE_OPERATORS,
     BOOLEAN_OPERATORS,
     COMPARISON_OPERATORS,
     ArrayNode,

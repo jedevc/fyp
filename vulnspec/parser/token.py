@@ -47,9 +47,10 @@ class TokenType(Enum):
     BitwiseAnd = 31
     BitwiseOr = 32
     BitwiseNot = 33
-    BooleanAnd = 34
-    BooleanOr = 35
-    BooleanNot = 36
+    BitwiseXor = 34
+    BooleanAnd = 35
+    BooleanOr = 36
+    BooleanNot = 37
 
 
 PRINTABLE_NAMES = {
@@ -88,6 +89,7 @@ PRINTABLE_NAMES = {
     TokenType.BitwiseAnd: "bitwise and",
     TokenType.BitwiseOr: "bitwise or",
     TokenType.BitwiseNot: "bitwise not",
+    TokenType.BitwiseXor: "bitwise xor",
     TokenType.BooleanNot: "boolean not",
     TokenType.BooleanOr: "boolean or",
     TokenType.BooleanNot: "boolean not",

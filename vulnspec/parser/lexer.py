@@ -38,6 +38,7 @@ SIMPLE_TOKENS: Dict[str, Union[TokenType, Dict[str, TokenType]]] = {
         "|": TokenType.BitwiseOr,
     },
     "~": TokenType.BitwiseNot,
+    "^": TokenType.BitwiseXor,
     "[": TokenType.BracketOpen,
     "]": TokenType.BracketClose,
     "(": TokenType.ParenOpen,
