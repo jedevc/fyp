@@ -300,7 +300,9 @@ class Lexer:
         assert self.ch == quote
         self._advance()
 
-        return self.stream[start + 1 : self.n - 1]
+        s = self.stream[start + 1 : self.n - 1]
+        s = s.encode("utf8").decode("unicode_escape")
+        return s
 
     def _try_read_template(self) -> Optional[Tuple[str, Optional[str]]]:
         state = (self.n, self.ch, self.ch_prev)
