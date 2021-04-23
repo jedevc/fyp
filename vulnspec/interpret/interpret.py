@@ -54,7 +54,6 @@ class Interpreter:
         for blname, block in self.blocks.items():
             block = self._apply_inline_calls(block)
             self.blocks[blname] = block
-
         self.blocks = {
             block.name: block for block in repair_calls(list(self.blocks.values()))
         }
@@ -68,6 +67,9 @@ class Interpreter:
             block = self._apply_lifts(block)
             block = self._apply_calls(block)
             self.blocks[blname] = block
+        self.blocks = {
+            block.name: block for block in repair_calls(list(self.blocks.values()))
+        }
 
     def program(self) -> Program:
         program = Program()
