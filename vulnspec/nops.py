@@ -19,6 +19,7 @@ class NopTransformer:
         self._blocks: List[Block] = []
         self._names: Set[str] = set()
 
+        self._block_links: Dict[Block, Set[Block]] = {}
         self._chunk_links: Dict[Block, Set[Chunk]] = {}
         self._extern_links: Dict[Block, Set[Chunk]] = {}
 
@@ -33,7 +34,9 @@ class NopTransformer:
                 self._blocks.append(block)
                 self._names.add(block.name)
 
-                block_vars = Tracer(block).variables[block]
+                trace = Tracer(block)
+                block_vars = trace.variables[block]
+                self._block_links[block] = trace.blocks - set([block])
                 self._chunk_links[block] = {
                     var.chunk
                     for var in block_vars
@@ -93,10 +96,12 @@ class NopTransformer:
             nop_names[nblock.name] = nop.name
 
             additional_blocks.add(nblock)
-            for chunk in self._chunk_links[nop]:
-                additional_chunks.add(chunk)
-            for extern in self._extern_links[nop]:
-                additional_externs.add(extern)
+            for blockl in self._block_links[nop]:
+                additional_blocks.add(blockl)
+            for chunkl in self._chunk_links[nop]:
+                additional_chunks.add(chunkl)
+            for externl in self._extern_links[nop]:
+                additional_externs.add(externl)
 
             return Call(nblock)
 
