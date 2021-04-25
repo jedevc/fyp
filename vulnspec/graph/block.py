@@ -5,7 +5,7 @@ from ..node import Operator as OperatorType
 from ..node import TypeNode
 from .chunk import Chunk, ChunkVariable
 
-Lvalue = Union["Variable", "Array", "Deref"]
+Lvalue = Union["Variable", "Array", "Deref", "Value"]
 Expression = Union[
     "Operation", "Function", "Value", "SizeOfExpr", "SizeOfType", "Ref", "Cast", Lvalue
 ]

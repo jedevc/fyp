@@ -1,6 +1,5 @@
 {
     "metas": [
-        "any",
         "pointer",
         "void",
         "boolean",
@@ -9,13 +8,6 @@
         "complex"
     ],
     "meta_graph": {
-        "any": [
-            "void",
-            "boolean",
-            "integral",
-            "pointer",
-            "floating"
-        ],
         "pointer": [
             "void",
             "integral"

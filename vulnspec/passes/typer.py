@@ -292,7 +292,7 @@ class TypeCheckVisitor(TraversalVisitor[TypeNode]):
         if node.content == "NULL":
             return MetaTypeNode(MetaTypes.Pointer)
         else:
-            return MetaTypeNode(MetaTypes.Any)
+            return MetaTypeNode(MetaTypes.Universal)
 
     def visit_array(self, node: ArrayNode) -> TypeNode:
         index_type = node.index.accept(self)

@@ -217,6 +217,9 @@ class BlockifyLvalueVisitor(Visitor[Lvalue]):
             node.index.accept(BlockifyExpressionVisitor(self.parent)),
         )
 
+    def visit_literal_expr(self, node: LiteralExpressionNode) -> Lvalue:
+        return Value(node.content.strip())
+
 
 class BlockifyExpressionVisitor(Visitor[Expression]):
     def __init__(self, parent: BlockifyVisitor):

@@ -24,7 +24,7 @@ class SimpleTypeNode(Node):
 
     @property
     def meta(self) -> MetaType:
-        return types.META_PARENTS.get(self.core, MetaTypes.Any)
+        return types.META_PARENTS.get(self.core, MetaTypes.Universal)
 
     def __repr__(self) -> str:
         return f"<{self.__class__.__name__} {self.core}>"
@@ -105,8 +105,7 @@ class FuncTypeNode(Node):
 def metatype_is_reachable(start: MetaType, destination: MetaType) -> bool:
     if start == destination:
         return True
-    if MetaTypes.Any in (start, destination):
-        # NOTE: special exception!
+    if MetaTypes.Universal in (start, destination):
         return True
 
     stack = [start]

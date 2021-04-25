@@ -1,8 +1,6 @@
 ---
 core:
   types:
-    any:
-
     pointer:
 
     void:
@@ -45,7 +43,6 @@ core:
       - long double complex
 
   typemap:
-    any: [void, boolean, integral, pointer, floating]
     boolean: [void, integral]
     integral: [void, floating]
     floating: [void, complex]

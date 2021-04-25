@@ -78,10 +78,12 @@ types = Types(BUILTINS_PATH / "types.json")
 
 
 class MetaTypes:
-    Any = types.meta("any")
     Pointer = types.meta("pointer")
     Void = types.meta("void")
     Boolean = types.meta("boolean")
     Integral = types.meta("integral")
     Floating = types.meta("floating")
     Complex = types.meta("complex")
+
+    # not part of the graph, but useful for entirely avoiding constraints
+    Universal = MetaType("universal")
