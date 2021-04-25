@@ -121,40 +121,20 @@ def metatype_is_reachable(start: MetaType, destination: MetaType) -> bool:
     return False
 
 
-def type_check(
-    left: TypeNode, right: TypeNode, strict: bool = False, init: bool = False
-) -> bool:
+def type_check(left: TypeNode, right: TypeNode) -> bool:
     if isinstance(left, SimpleTypeNode) and isinstance(right, SimpleTypeNode):
-        if left.core.split("@")[0] == right.core.split("@")[0]:
-            return True
-        elif not strict:
-            return metatype_is_reachable(right.meta, left.meta)
-        else:
-            return False
-    elif isinstance(left, PointerTypeNode) and isinstance(right, PointerTypeNode):
-        return type_check(left.base, right.base, strict=True)
-    elif isinstance(left, ArrayTypeNode):
-        if isinstance(right, ArrayTypeNode):
-            return type_check(left.base, right.base, strict=True)
-        elif init and isinstance(right, PointerTypeNode):
-            return type_check(left.base, right.base, strict=True)
-        else:
-            return False
-    elif isinstance(left, PointerTypeNode) and isinstance(right, ArrayTypeNode):
-        return type_check(left.base, right.base, strict=True)
+        return left.core.split("@")[0] == right.core.split("@")[
+            0
+        ] or metatype_is_reachable(right.meta, left.meta)
+    elif isinstance(left, (ArrayTypeNode, PointerTypeNode)) and isinstance(
+        right, (ArrayTypeNode, PointerTypeNode)
+    ):
+        return type_check(left.base, right.base)
     elif isinstance(left, FuncTypeNode) and isinstance(right, FuncTypeNode):
         if len(left.args) != len(right.args):
             return False
-
-        success = type_check(left.ret, right.ret, strict=True)
-        for i in range(len(left.args)):
-            success &= type_check(left.args[i], right.args[i], strict=True)
-            if not success:
-                # early exit
-                break
-
-        return success
-    elif not strict:
-        return metatype_is_reachable(right.meta, left.meta)
+        if not type_check(left.ret, right.ret):
+            return False
+        return all(type_check(la, ra) for la, ra in zip(left.args, right.args))
     else:
-        return False
+        return metatype_is_reachable(right.meta, left.meta)

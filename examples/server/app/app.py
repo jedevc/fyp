@@ -32,7 +32,7 @@ DEFAULT_EXPIRE = datetime.timedelta(days=14)
 
 
 def validate_flag(flag: str) -> bool:
-    match = re.match("FLAG{(\d+)_(\d+)}", flag)
+    match = re.match(r"FLAG{(\d+)_(\d+)}", flag)
     if match:
         a = int(match.group(1))
         b = int(match.group(2))
@@ -72,7 +72,9 @@ def index():
             if validate_flag(request.form["flag"]):
                 flag = request.form["flag"]
                 resp = redirect("/success", code=303)
-                resp.set_cookie("flag", request.form["flag"], max_age=DEFAULT_EXPIRE, secure=True)
+                resp.set_cookie(
+                    "flag", request.form["flag"], max_age=DEFAULT_EXPIRE, secure=True
+                )
                 return resp
             else:
                 flag_error = True

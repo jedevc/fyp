@@ -40,7 +40,7 @@ class Challenge:
                     subprocess.run(command, cwd=output, shell=True, check=True)
                 assert self.binary.exists()
             except subprocess.CalledProcessError:
-                seed += 'a'
+                seed += "a"
                 continue
 
             # solve (optional)

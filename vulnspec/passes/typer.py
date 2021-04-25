@@ -140,7 +140,9 @@ class TypeCheckVisitor(TraversalVisitor[TypeNode]):
             rhs_type = node.initial.accept(self)
             assert rhs_type is not None
 
-            if not type_check(self.vars[node.name], rhs_type, init=True):
+            if isinstance(node.vartype, FuncTypeNode):
+                raise ProcessingError(node, "cannot assign to function")
+            if not type_check(node.vartype, rhs_type):
                 raise ProcessingError(
                     node, "incompatible types in declaration assignment"
                 )
@@ -211,6 +213,8 @@ class TypeCheckVisitor(TraversalVisitor[TypeNode]):
 
         if isinstance(lhs_type, FuncTypeNode):
             raise ProcessingError(node.target, "cannot assign to function")
+        if isinstance(lhs_type, ArrayTypeNode):
+            raise ProcessingError(node.target, "cannot assign to array")
         if not type_check(lhs_type, rhs_type):
             raise ProcessingError(node, "incompatible types in assignment")
 
@@ -330,7 +334,7 @@ class TypeCheckVisitor(TraversalVisitor[TypeNode]):
             if not type_check(bool_type, left_type):
                 raise ProcessingError(node.left, "left operand should be boolean")
             if not type_check(bool_type, right_type):
-                raise ProcessingError(node.left, "right operand should be boolean")
+                raise ProcessingError(node.right, "right operand should be boolean")
             return bool_type
         elif node.op in COMPARISON_OPERATORS:
             if not type_check(left_type, right_type) and not type_check(
@@ -339,10 +343,11 @@ class TypeCheckVisitor(TraversalVisitor[TypeNode]):
                 raise ProcessingError(node, "operands are not the same type")
             return MetaTypeNode(MetaTypes.Boolean)
         elif node.op in ARITHMETIC_OPERATORS or node.op in BITWISE_OPERATORS:
-            if not type_check(left_type, right_type) and not type_check(
-                right_type, left_type
-            ):
+            if type_check(left_type, right_type):
+                return left_type
+            if type_check(right_type, left_type):
+                return right_type
+            else:
                 raise ProcessingError(node, "operands are not the same type")
-            return left_type
         else:
             raise RuntimeError()
