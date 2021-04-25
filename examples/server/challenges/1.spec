@@ -30,7 +30,7 @@ block main {
     ...
     
     fd = fopen@libc.stdio("/dev/null", "w")
-    fwrite@libc.stdio(flag as *void, sizeof(char) as size_t@libc.stdint, <flagtlen> as size_t@libc.stdint, fd)
+    fwrite@libc.stdio(flag as *void, sizeof(char), <flagtlen>, fd)
     fclose@libc.stdio(fd)
     puts@libc.stdio("Wait, I've lost it!")
 
