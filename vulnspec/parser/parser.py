@@ -263,7 +263,7 @@ class Parser:
         """
 
         return self.binary(
-            self.conjunction, self.conjunction, {TokenType.BooleanOr: Operator.Or}
+            self.conjunction, self.disjunction, {TokenType.BooleanOr: Operator.Or}
         )
 
     def conjunction(self) -> ExpressionNode:
@@ -272,7 +272,7 @@ class Parser:
         """
 
         return self.binary(
-            self.comparison, self.comparison, {TokenType.BooleanAnd: Operator.And}
+            self.comparison, self.conjunction, {TokenType.BooleanAnd: Operator.And}
         )
 
     def comparison(self) -> ExpressionNode:
