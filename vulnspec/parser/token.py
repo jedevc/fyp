@@ -1,3 +1,4 @@
+import json
 from enum import Enum, unique
 from typing import Any
 
@@ -51,6 +52,9 @@ class TokenType(Enum):
     BooleanAnd = 35
     BooleanOr = 36
     BooleanNot = 37
+
+    def __str__(self):
+        return str(self.name)
 
 
 PRINTABLE_NAMES = {
@@ -151,10 +155,15 @@ class Token:
         self.ttype = ttype
         self.lexeme = lexeme
 
-    def __str__(self):
+    def show(self, prefix: str = "") -> str:
         parts = []
+        if prefix:
+            parts.append(prefix)
         if self.ttype:
-            parts.append(f"ttype={self.ttype}")
+            parts.append(str(self.ttype))
         if self.lexeme:
-            parts.append(f"lexeme={self.lexeme}")
-        return f"<Token {' '.join(parts)}>"
+            parts.append(json.dumps(self.lexeme))
+        return f"<{' '.join(parts)}>"
+
+    def __str__(self) -> str:
+        return self.show("Token")

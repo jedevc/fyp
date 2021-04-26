@@ -5,6 +5,7 @@ from typing import Any, Dict, Iterable, List, Optional, TextIO, Union
 from .common.dump import DumpType
 from .graph import Block, Chunk
 from .parser import Lexer, Parser
+from .parser.token import TokenType
 from .passes import (
     BlockifyVisitor,
     ChunkifyVisitor,
@@ -67,6 +68,13 @@ class Asset:
     ) -> "Asset":
         lex = Lexer(stream)
         tokens = lex.tokens_list()
+        if dump and (output := dump.get(DumpType.Tokens)):
+            with output.open("w") as f:
+                for token in tokens:
+                    if token.ttype in (TokenType.Newline, TokenType.EOF):
+                        print(token.show(), file=f)
+                    else:
+                        print(token.show(), end=", ", file=f)
 
         parser = Parser(tokens)
         spec = parser.parse()

@@ -46,6 +46,7 @@ def main():
     )
 
     SYNTH_DUMP_ARGS = [
+        "--dump-tokens",
         "--dump-ast",
         "--dump-ast-diagram",
         "--dump-block-graph",
@@ -105,6 +106,7 @@ def action_synth(args) -> int:
             templates[name] = value
 
     dump = {
+        DumpType.Tokens: args.dump_tokens,
         DumpType.AST: args.dump_ast,
         DumpType.ASTDiagram: args.dump_ast_diagram,
         DumpType.GraphBlock: args.dump_block_graph,

@@ -135,11 +135,11 @@ class BlockifyVisitor(Visitor[None]):
             return ChunkVariable(name, None, None)
         elif name in self.blocks:
             return ChunkVariable(name, None, None)
-        elif (var := self.extern.lookup(name)) :
+        elif var := self.extern.lookup(name):
             return var
         else:
             for chunk in self.chunks:
-                if (var := chunk.lookup(name)) :
+                if var := chunk.lookup(name):
                     return var
 
             raise KeyError(f"variable {name} not found")

@@ -3,8 +3,9 @@ import enum
 
 @enum.unique
 class DumpType(enum.Enum):
-    AST = 1
-    ASTDiagram = 2
+    Tokens = 1
+    AST = 2
+    ASTDiagram = 3
 
-    GraphBlock = 3
-    GraphBlockChunk = 4
+    GraphBlock = 4
+    GraphBlockChunk = 5

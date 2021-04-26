@@ -7,7 +7,6 @@ from ..node import (
     AssignmentNode,
     BinaryOperationNode,
     BlockNode,
-    BoolValueNode,
     CallNode,
     CastNode,
     ChunkNode,
@@ -15,11 +14,9 @@ from ..node import (
     DerefNode,
     ExpressionStatementNode,
     ExternChunkNode,
-    FloatValueNode,
     FunctionNode,
     FuncTypeNode,
     IfNode,
-    IntValueNode,
     LiteralExpressionNode,
     LiteralStatementNode,
     PointerTypeNode,
@@ -30,8 +27,6 @@ from ..node import (
     SpecNode,
     SplitNode,
     StatementNode,
-    StringValueNode,
-    TemplateValueNode,
     UnaryOperationNode,
     ValueNode,
     VariableNode,
@@ -179,22 +174,7 @@ class PrinterVisitor(Visitor[None]):
         self._print(")")
 
     def visit_value(self, node: ValueNode):
-        if isinstance(node, StringValueNode):
-            self._print(repr(node.value))
-        elif isinstance(node, IntValueNode):
-            self._print(str(node.value))
-        elif isinstance(node, FloatValueNode):
-            self._print(f"{node.left}.{node.right}")
-        elif isinstance(node, BoolValueNode):
-            if node.value:
-                self._print("true")
-            else:
-                self._print("false")
-        elif isinstance(node, TemplateValueNode):
-            self._print(f"<{node.name}; {node.definition}>")
-        else:
-            print(node)
-            raise RuntimeError()
+        self._print(str(node))
 
     def visit_sizeof_expr(self, node: SizeOfExprNode):
         self._print(f"sizeof({node.target.accept(self)})")

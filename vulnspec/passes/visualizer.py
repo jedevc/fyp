@@ -9,7 +9,6 @@ from ..node import (
     AssignmentNode,
     BinaryOperationNode,
     BlockNode,
-    BoolValueNode,
     CallNode,
     CastNode,
     ChunkNode,
@@ -17,11 +16,9 @@ from ..node import (
     DerefNode,
     ExpressionStatementNode,
     ExternChunkNode,
-    FloatValueNode,
     FunctionNode,
     FuncTypeNode,
     IfNode,
-    IntValueNode,
     LiteralExpressionNode,
     LiteralStatementNode,
     Node,
@@ -32,8 +29,6 @@ from ..node import (
     SizeOfTypeNode,
     SpecNode,
     SplitNode,
-    StringValueNode,
-    TemplateValueNode,
     UnaryOperationNode,
     ValueNode,
     VariableNode,
@@ -134,21 +129,7 @@ class VisualizerVisitor(Visitor[int]):
         return self._connect("apply", [node.target, *node.arguments])
 
     def visit_value(self, node: ValueNode) -> int:
-        if isinstance(node, StringValueNode):
-            return self._node(repr(node.value))
-        elif isinstance(node, IntValueNode):
-            return self._node(str(node.value))
-        elif isinstance(node, FloatValueNode):
-            return self._node(f"{node.left}.{node.right}")
-        elif isinstance(node, BoolValueNode):
-            if node.value:
-                return self._node("true")
-            else:
-                return self._node("false")
-        elif isinstance(node, TemplateValueNode):
-            return self._node(f"<{node.name}; {node.definition}>")
-        else:
-            raise RuntimeError()
+        return self._node(str(node))
 
     def visit_sizeof_expr(self, node: SizeOfExprNode) -> int:
         return self._connect("sizeof", node.target)
@@ -222,10 +203,11 @@ class VisualizerVisitor(Visitor[int]):
         identifier = self._counter
         self._counter += 1
 
-        if msg is None:
-            self._command(f"{identifier} [style=invis]")
+        if msg:
+            msg = json.dumps(msg)
+            self._command(f"{identifier} [label={msg}]")
         else:
-            self._command(f"{identifier} [label={json.dumps(msg)}]")
+            self._command(f"{identifier} [style=invis]")
 
         return identifier
 

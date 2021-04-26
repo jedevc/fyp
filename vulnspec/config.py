@@ -100,7 +100,7 @@ class Configuration:
 
     @property
     def cc(self) -> str:
-        if (cc := os.getenv("CC")) :
+        if cc := os.getenv("CC"):
             return cc
         else:
             return self.config["compile"]["cc"]

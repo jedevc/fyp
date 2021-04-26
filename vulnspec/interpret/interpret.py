@@ -213,7 +213,7 @@ class Interpreter:
                             current = self.maximals[block.name][arg.name]
                         except KeyError:
                             for chunk in self.chunks:
-                                if (var := chunk.lookup(arg.name)) :
+                                if var := chunk.lookup(arg.name):
                                     current = UsageCapture(var, Variable(var))
                                     break
 

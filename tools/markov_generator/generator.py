@@ -39,7 +39,7 @@ def main():
             continue
         name = tag.name.strip("_")
 
-        if (tablename := table_tags.get(tag.kind)) :
+        if tablename := table_tags.get(tag.kind):
             tables[tablename].insert(name)
 
     result = {name: table.dump_dict() for name, table in tables.items()}
