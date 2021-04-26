@@ -502,10 +502,12 @@ class Parser:
         if self.accept(TokenType.ParenOpen):
             expr = self.expression()
             self.expect(TokenType.ParenClose)
+
+            state = (self.pos, self.current, self.last)
             try:
                 expr = self.array(expr)
             except ParseError:
-                pass
+                self.pos, self.current, self.last = state
 
             if isinstance(
                 expr, (LiteralExpressionNode, DerefNode, ArrayNode, VariableNode)
@@ -531,10 +533,11 @@ class Parser:
             else:
                 node = self.node_exit(VariableNode(name.lexeme))
 
+        state = (self.pos, self.current, self.last)
         try:
             node = self.array(node)
         except ParseError:
-            pass
+            self.pos, self.current, self.last = state
 
         return node
 
@@ -686,9 +689,6 @@ class Parser:
     def peek(self) -> Token:
         """
         Lookahead to the next available token.
-
-        This is used to prevent requiring backtracking, since the grammar is
-        LL(1) we can just use lookahead.
         """
 
         if self.pos + 1 < len(self.tokens):
