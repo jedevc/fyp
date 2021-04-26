@@ -181,7 +181,7 @@ class TypeCheckVisitor(TraversalVisitor[TypeNode]):
             return parse_typestring(functions.SIGNATURES[node.name])
         elif node.name in self.blocks:
             if "func" in self.blocks[node.name].constraints:
-                return FuncTypeNode(SimpleTypeNode("void"), [])
+                return FuncTypeNode(MetaTypeNode(MetaTypes.Void), [])
             else:
                 raise ProcessingError(
                     node,

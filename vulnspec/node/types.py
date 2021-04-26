@@ -127,6 +127,11 @@ def type_check(ctx: TypeNode, tp: TypeNode, strict: bool = False) -> bool:
     if isinstance(ctx, MetaTypeNode) or isinstance(tp, MetaTypeNode):
         return metatype_is_reachable(tp.meta, ctx.meta)
     elif isinstance(ctx, SimpleTypeNode) and isinstance(tp, SimpleTypeNode):
+        if ctx.core == "void":
+            return type_check(MetaTypeNode(MetaTypes.Void), tp, strict=strict)
+        if tp.core == "void":
+            return type_check(ctx, MetaTypeNode(MetaTypes.Void), strict=strict)
+
         lcore = ctx.core.split("@")[0]
         rcore = tp.core.split("@")[0]
         if lcore == rcore:
