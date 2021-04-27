@@ -110,7 +110,7 @@ class NopTransformer:
         chunks = asset.chunks + list(additional_chunks)
         extern = reduce(merge_chunks, [asset.extern, *additional_externs])
 
-        final = Asset(asset.name, blocks, chunks, extern)
+        final = Asset(asset.name, blocks, chunks, extern, asset.includes)
         final.attachments = dict(asset.attachments)
         final.attachments["nops"] = nop_names
         return final

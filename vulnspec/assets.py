@@ -18,13 +18,20 @@ from .passes import (
 
 class Asset:
     def __init__(
-        self, name: str, blocks: List[Block], chunks: List[Chunk], extern: Chunk
+        self,
+        name: str,
+        blocks: List[Block],
+        chunks: List[Chunk],
+        extern: Chunk,
+        includes: List[str],
     ):
         self.name = name
 
         self.blocks = blocks
         self.chunks = chunks
         self.extern = extern
+
+        self.includes = includes
 
         self.attachments: Dict[str, Any] = {}
 
@@ -102,7 +109,7 @@ class Asset:
         spec.accept(block_visitor)
         blocks = block_visitor.result()
 
-        asset = Asset(name, blocks, chunks, extern)
+        asset = Asset(name, blocks, chunks, extern, spec.includes)
         asset.attachments["templates"] = template_visitor.instantiations
         return asset
 

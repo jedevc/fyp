@@ -105,6 +105,7 @@ class ReservedWord:
     Chunk = "chunk"
     Extern = "extern"
     Template = "template"
+    Include = "include"
 
     Function = "fn"
 
@@ -125,6 +126,7 @@ RESERVED_WORDS = {
     ReservedWord.Chunk,
     ReservedWord.Extern,
     ReservedWord.Template,
+    ReservedWord.Include,
     ReservedWord.Function,
     ReservedWord.Call,
     ReservedWord.If,

@@ -58,11 +58,13 @@ class SpecNode(Node):
         chunks: List[ChunkNode],
         blocks: List[BlockNode],
         templates: List[TemplateValueNode],
+        includes: List[str],
     ):
         super().__init__()
         self.chunks = chunks
         self.blocks = blocks
         self.templates = templates
+        self.includes = includes
 
     def accept(self, visitor: Visitor[X]) -> X:
         return visitor.visit_spec(self)

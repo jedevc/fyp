@@ -74,6 +74,9 @@ class Interpreter:
     def program(self) -> Program:
         program = Program()
 
+        for include in self.asset.includes:
+            program.add_include(include)
+
         # create functions
         for blname, block in self.blocks.items():
             if blname not in self.func_blocks:

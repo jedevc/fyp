@@ -63,7 +63,7 @@ class Parser:
 
         self.starts: List[int] = []
 
-    def parse(self) -> Node:
+    def parse(self) -> SpecNode:
         """
         Perform the main parse operation.
 
@@ -85,6 +85,7 @@ class Parser:
         chunks = []
         blocks = []
         templs = []
+        includes = []
         while self.pos < len(self.tokens):
             if self.accept(TokenType.EOF):
                 break
@@ -111,10 +112,14 @@ class Parser:
                 name, definition = self.last.lexeme
                 templ = self.node_exit(TemplateValueNode(name, definition))
                 templs.append(templ)
+            elif self.current.lexeme == ReservedWord.Include:
+                self.advance()
+                include = self.expect(TokenType.String)
+                includes.append(include.lexeme)
             else:
                 raise ParseError(self.current, "unknown statement type")
 
-        return self.node_exit(SpecNode(chunks, blocks, templs))
+        return self.node_exit(SpecNode(chunks, blocks, templs, includes))
 
     def chunk(self) -> ChunkNode:
         """

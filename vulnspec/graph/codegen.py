@@ -30,7 +30,7 @@ class CodeGen:
     def __init__(self, program: Program):
         self.program = program
 
-        self._includes: Set[str] = set()
+        self._includes: Set[str] = set(program.includes)
 
     def generate(self) -> str:
         return self._gen_program(self.program)

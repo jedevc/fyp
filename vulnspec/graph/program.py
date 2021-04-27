@@ -1,4 +1,4 @@
-from typing import Dict
+from typing import Dict, Set
 
 from .block import FunctionDefinition
 from .chunk import ChunkVariable
@@ -6,6 +6,8 @@ from .chunk import ChunkVariable
 
 class Program:
     def __init__(self):
+        self.includes: Set[str] = set()
+
         self.globals: Dict[str, ChunkVariable] = {}
         self.externs: Dict[str, ChunkVariable] = {}
 
@@ -19,3 +21,6 @@ class Program:
 
     def add_function(self, func: FunctionDefinition):
         self.functions[func.func] = func
+
+    def add_include(self, include: str):
+        self.includes.add(include)
