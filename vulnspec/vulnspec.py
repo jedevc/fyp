@@ -293,6 +293,9 @@ def synthesize(
     rename_vars(asset, mapping)
     asset.attachments["names"] = mapping
 
+    random.shuffle(asset.blocks)
+    random.shuffle(asset.chunks)
+
     inter = Interpreter(asset)
     prog = inter.program()
 
