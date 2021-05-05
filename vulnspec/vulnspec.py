@@ -26,23 +26,27 @@ def main():
     parser = argparse.ArgumentParser()
     subparsers = parser.add_subparsers()
 
-    parser_synth = subparsers.add_parser("synth")
+    parser_synth = subparsers.add_parser(
+        "synth", help="synthesize a specification into C code"
+    )
     parser_synth.set_defaults(action=action_synth)
     parser_synth.add_argument("inpath", type=Path)
     parser_synth.add_argument("outpath", type=Path)
-    parser_synth.add_argument("--seed", help="Random seed to use")
-    parser_synth.add_argument("--template", action="append")
+    parser_synth.add_argument("--seed", help="random seed to use")
+    parser_synth.add_argument(
+        "--template", action="append", help="preset value of a template"
+    )
     parser_synth.add_argument(
         "--no-file-comment",
         dest="file_comment",
         action="store_false",
-        help="Don't create a file header comment",
+        help="don't create a file header comment",
     )
     parser_synth.add_argument(
         "--format",
         choices=["none", "llvm", "google", "chromium", "mozilla", "webkit"],
         default="webkit",
-        help="Coding style to output",
+        help="coding style to output",
     )
 
     SYNTH_DUMP_ARGS = [
@@ -55,35 +59,47 @@ def main():
     for dump in SYNTH_DUMP_ARGS:
         parser_synth.add_argument(dump, type=Path)
 
-    parser_build = subparsers.add_parser("build")
+    parser_build = subparsers.add_parser(
+        "build", help="execute the build commands in a C file header"
+    )
     parser_build.set_defaults(action=action_build)
     parser_build.add_argument("inpath", type=Path)
 
-    parser_strip = subparsers.add_parser("strip")
+    parser_strip = subparsers.add_parser(
+        "strip", help="strip out the build commands in a C file header"
+    )
     parser_strip.set_defaults(action=action_strip_file_comment)
     parser_strip.add_argument("inpath", type=Path)
     parser_strip.add_argument("outpath", type=Path)
 
-    parser_environ = subparsers.add_parser("environ")
+    parser_environ = subparsers.add_parser(
+        "environ", help="synthesize a specification into an environment"
+    )
     parser_environ.set_defaults(action=action_environment)
     parser_environ.add_argument("inpath", type=Path)
     parser_environ.add_argument("outpath", type=Path)
-    parser_environ.add_argument("--seed", help="Random seed to use")
-    parser_environ.add_argument("--template", action="append")
+    parser_environ.add_argument("--seed", help="random seed to use")
     parser_environ.add_argument(
-        "--solution", action="store_true", help="Generate a solution"
+        "--template", action="append", help="preset value of a template"
     )
     parser_environ.add_argument(
-        "--extra", action="append", help="Extra files to include"
+        "--solution",
+        action="store_true",
+        help="generate a solution using a .solve.py file",
     )
     parser_environ.add_argument(
-        "--extra-src", action="store_true", help="Include generated source code"
+        "--extra", action="append", help="extra files to include in the environment"
+    )
+    parser_environ.add_argument(
+        "--extra-src",
+        action="store_true",
+        help="include generated source code in the environment",
     )
     parser_environ.add_argument(
         "--format",
         choices=["none", "llvm", "google", "chromium", "mozilla", "webkit"],
         default="webkit",
-        help="Coding style to output",
+        help="coding style to output",
     )
 
     args = parser.parse_args()
