@@ -1,4 +1,8 @@
-# Final Year Project
+# Vulnspec
+
+This repository contains the source code and associated tooling for `vulnspec`,
+a domain specific programming language for designing pwnable and
+reverse-engineering CTF challenges.
 
 ## Installation
 
@@ -19,17 +23,36 @@ pip uninstall vulnspec
 
 ## Running
 
-To synthesize a program:
+Create a hello world specification:
+
+```
+// hello.spec
+block main {
+    puts@libc.stdio("Hello world!")
+}
+```
+
+To synthesize it:
 
 ```bash
-vulnspec synth <target-file> <out-file>.c
+vulnspec synth hello.spec hello.c
 ```
 
 Then to build it:
 
 ```bash
-vulnspec build <out-file>.c
+vulnspec build hello.c
 ```
+
+Finally, to run it:
+
+```bash
+./hello
+```
+
+For more examples, see the `examples/protostar/` directory for adapted versions
+of some of the protostar exercises. Or, see `examples/server/` for an example
+integration of vulnspec into a minimal CTF platform.
 
 ## Development
 
@@ -43,6 +66,14 @@ pip install --user --editable .
 
 Changes to the local copy of the code should now be reflected to the
 installation.
+
+### Run tests
+
+Integration tests using the examples can be run using pytest:
+
+```bash
+pytest
+```
 
 ### Use the dev scripts
 
@@ -62,6 +93,9 @@ To autoformat the code:
 ```
 
 ### Generating data files
+
+Firstly, ensure that libmusl 1.2.1 (available [here](https://musl.libc.org/releases.html))
+is download into `../musl-1.2.1`.
 
 To regenerate the libraries:
 
