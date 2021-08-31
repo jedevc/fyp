@@ -2,7 +2,8 @@
 
 This repository contains the source code and associated tooling for `vulnspec`,
 a domain specific programming language for designing pwnable and
-reverse-engineering CTF challenges.
+reverse-engineering CTF challenges that I designed and built for the Final Year
+Project at the University of Birmingham.
 
 ## Installation
 
