@@ -5,6 +5,8 @@ a domain specific programming language for designing pwnable and
 reverse-engineering CTF challenges that I designed and built for the Final Year
 Project at the University of Birmingham.
 
+For more information, you can see my final writeup [here](https://github.com/jedevc/fyp-report/releases/download/submission/report.pdf).
+
 ## Installation
 
 To install the project using pip (use the latest possible version of python 3.x
